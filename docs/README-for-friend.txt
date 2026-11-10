@@ -92,7 +92,23 @@ text" and save it somewhere outside the PC, such as cloud storage.
 
 
 -----------------------------------------------
-5. TROUBLESHOOTING
+5. UPDATES
+-----------------------------------------------
+
+If you used the installer, the app checks for a new version each time it
+opens. When one is ready it asks "Restart and update" or "Later". Your
+saved list is not affected. You can also check by hand from the menu:
+Help > Check for updates (press Alt if the menu bar is hidden).
+
+The portable version never updates itself. For a new version, download
+the newest file again and replace the old one. Your data stays safe.
+
+Item updates (new game items) are separate: use the Update button inside
+the app after each Star Citizen patch.
+
+
+-----------------------------------------------
+6. TROUBLESHOOTING
 -----------------------------------------------
 
 Update fails or stalls

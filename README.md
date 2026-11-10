@@ -30,3 +30,9 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - `web/loot-tracker.html`: the same tracker as a single file for a browser
 - `docs/README-for-friend.txt`: end-user install guide to send with the installer
 - `.github/workflows/release.yml`: pushing a tag like `v1.0.1` builds the Windows installer and attaches it to a GitHub Release
+
+## Releasing an update
+1. Bump `"version"` in `package.json` (for example 1.1.0 to 1.1.1) and push.
+2. `git tag v1.1.1` then `git push --tags`.
+3. The workflow builds the installer and publishes it, with `latest.yml`, to Releases.
+4. Installed copies (installer build only) check on launch, download it, and offer to restart. The portable .exe never auto-updates. The repo must be public for this to work.

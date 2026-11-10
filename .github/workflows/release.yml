@@ -11,9 +11,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+      - name: Check tag matches package.json version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json | ConvertFrom-Json).version
+          if ("v$v" -ne "${{ github.ref_name }}") { Write-Error "Tag ${{ github.ref_name }} does not match package.json version $v"; exit 1 }
       - run: npm install
       - run: npx electron-builder --win --publish never
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*.exe
+            dist/latest.yml
+            dist/*.blockmap

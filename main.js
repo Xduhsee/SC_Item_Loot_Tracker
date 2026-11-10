@@ -1,9 +1,48 @@
-const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, dialog } = require('electron');
 const path = require('path');
 const { createStore } = require('./store');
 
 let win = null;
 let store = null;
+let updater = null;
+let manualCheck = false;
+
+// Auto-update via GitHub Releases. Works for the installed (NSIS) build only,
+// never for the portable .exe or when running with `npm start`.
+function setupUpdater() {
+  if (!app.isPackaged) return;
+  try { updater = require('electron-updater').autoUpdater; } catch (e) { return; }
+  updater.autoDownload = true;
+  updater.autoInstallOnAppQuit = true;
+  updater.on('update-downloaded', (info) => {
+    dialog.showMessageBox(win, {
+      type: 'info',
+      buttons: ['Restart and update', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Update ready',
+      message: 'SC Loot Tracker ' + info.version + ' is ready to install.',
+      detail: 'Your saved list is not affected. Choosing Later installs it the next time you close the app.'
+    }).then((r) => { if (r.response === 0) updater.quitAndInstall(); }).catch(() => {});
+  });
+  updater.on('update-not-available', () => {
+    if (manualCheck) dialog.showMessageBox(win, { type: 'info', message: 'You are on the latest version (' + app.getVersion() + ').' }).catch(() => {});
+    manualCheck = false;
+  });
+  updater.on('error', (err) => {
+    if (manualCheck) dialog.showMessageBox(win, { type: 'warning', message: 'Could not check for updates.', detail: String((err && err.message) || err).slice(0, 300) }).catch(() => {});
+    manualCheck = false;
+  });
+  updater.checkForUpdates().catch(() => {});
+}
+function checkNow() {
+  if (!updater) {
+    dialog.showMessageBox(win, { type: 'info', message: 'Updates only work in the installed version.', detail: 'The portable file and development mode do not update themselves. Download the newest installer from the GitHub Releases page.' }).catch(() => {});
+    return;
+  }
+  manualCheck = true;
+  updater.checkForUpdates().catch(() => { manualCheck = false; });
+}
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -29,7 +68,8 @@ if (!app.requestSingleInstanceLock()) {
     Menu.setApplicationMenu(Menu.buildFromTemplate([
       { role: 'editMenu' },
       { role: 'viewMenu' },
-      { role: 'windowMenu' }
+      { role: 'windowMenu' },
+      { label: 'Help', submenu: [{ label: 'Check for updates', click: checkNow }, { label: 'Version ' + app.getVersion(), enabled: false }] }
     ]));
 
     win = new BrowserWindow({
@@ -60,6 +100,7 @@ if (!app.requestSingleInstanceLock()) {
 
     win.loadFile(path.join(__dirname, 'app', 'index.html'));
     win.on('closed', () => { win = null; });
+    setupUpdater();
   });
 
   app.on('window-all-closed', () => app.quit());
