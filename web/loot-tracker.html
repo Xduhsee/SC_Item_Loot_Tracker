@@ -176,6 +176,7 @@
             <option value="sizeDesc">Size (largest first)</option>
             <option value="sizeAsc">Size (smallest first)</option>
             <option value="type">Type / slot</option>
+            <option value="armor">Armor slot (head to toe)</option>
             <option value="qty">Quantity</option>
           </select>
         </label>
@@ -618,7 +619,7 @@ async function computeExactItems(cat, patchCode, progress){
 
 (function(){
   var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
-  var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, HAS_SIZES = false;
+  var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, WEIGHTBY = {}, HAS_SIZES = false;
   var armedId = null, armedTimer = null, bpShown = 60;
   var $ = function(id){ return document.getElementById(id); };
 
@@ -710,7 +711,7 @@ async function computeExactItems(cat, patchCode, progress){
 
   // ---------- catalogue index ----------
   function buildIndex(){
-    INDEX = []; BYU = {}; BPCAT = {}; SIZEBY = {}; HAS_SIZES = false;
+    INDEX = []; BYU = {}; BPCAT = {}; SIZEBY = {}; WEIGHTBY = {}; HAS_SIZES = false;
     var seen = {}, mk = {};
     var mats = (catalogue && catalogue.mats) || [];
     mats.forEach(function(m){ mk[nameKey(m.n)] = m; });
@@ -721,6 +722,7 @@ async function computeExactItems(cat, patchCode, progress){
         if (seen[k]) return; seen[k] = 1;
         INDEX.push({ n: it.n, l: nameKey(it.n), c: it.c, s: it.s, g: it.g || "", z: it.z || 0, u: it.u });
       });
+      catalogue.items.forEach(function(it){ if (it.c === "Armor" && it.g){ var wl = nameKey(it.n); if (!WEIGHTBY[wl]) WEIGHTBY[wl] = it.g; } });
       catalogue.items.forEach(function(it){ if (it.z){ HAS_SIZES = true; var l = nameKey(it.n); if (!SIZEBY[l]) SIZEBY[l] = { z: it.z, g: it.g || "" }; } });
       var have = {};
       INDEX.forEach(function(e){ var m = mk[e.l]; if (m && (e.c === "Other" || e.c === "Material")){ e.c = "Material"; e.s = m.unit; } have[e.l] = 1; });
@@ -751,6 +753,19 @@ async function computeExactItems(cat, patchCode, progress){
   }
   function describe(e){ return [e.c, e.s, e.z ? "Size " + e.z : "", e.c === "Ship component" && e.g ? "Grade " + e.g : e.g].filter(Boolean).join(" · "); }
   function sizeOf(i){ var x = SIZEBY[nameKey(i.name)]; return x ? x.z : 0; }
+  function armorRank(i){
+    var t = (i.sub || "").toLowerCase();
+    if (i.cat !== "Armor") return 99;
+    if (/helm|head/.test(t)) return 0;
+    if (/torso|core|chest/.test(t)) return 1;
+    if (/arm/.test(t)) return 2;
+    if (/leg/.test(t)) return 3;
+    if (/undersuit|suit/.test(t)) return 4;
+    if (/back|pack/.test(t)) return 5;
+    return 9;
+  }
+  var WRANK = { Light: 0, Medium: 1, Heavy: 2 };
+  function weightOf(i){ return i.cat === "Armor" ? (WEIGHTBY[nameKey(i.name)] || "") : ""; }
   function gradeOf(i){ var x = SIZEBY[nameKey(i.name)]; return x ? x.g : ""; }
 
   // ---------- autocomplete ----------
@@ -854,6 +869,13 @@ async function computeExactItems(cat, patchCode, progress){
       return r || (a.sub || "").localeCompare(b.sub || "") || byName;
     }
     if (how === "type") return a.cat.localeCompare(b.cat) || (a.sub || "").localeCompare(b.sub || "") || (zb - za) || byName;
+    if (how === "armor"){
+      var ra = armorRank(a), rb = armorRank(b);
+      if (ra !== rb) return ra - rb;
+      var wa = WRANK[weightOf(a)], wb = WRANK[weightOf(b)];
+      if (wa === undefined) wa = 3; if (wb === undefined) wb = 3;
+      return (wa - wb) || byName;
+    }
     if (how === "qty") return (b.qty - a.qty) || byName;
     return byName;
   }
@@ -897,7 +919,7 @@ async function computeExactItems(cat, patchCode, progress){
       if (armedId === i.id){ snapshot(); removeItem(items, i.id); armedId = null; commit(); return; }
       armedId = i.id; clearTimeout(armedTimer); armedTimer = setTimeout(function(){ armedId = null; renderInventory(); }, 3000); renderInventory();
     };
-    return h("div", { class: "item" }, h("div", { class: "name", text: i.name }), h("span", { class: "badge", text: [i.sub ? i.cat + " · " + i.sub : i.cat, sizeOf(i) ? "S" + sizeOf(i) : "", gradeOf(i) ? "Grade " + gradeOf(i) : ""].filter(Boolean).join(" · ") }), h("div", { class: "stepper" }, minus, qi, plus), wrap, d);
+    return h("div", { class: "item" }, h("div", { class: "name", text: i.name }), h("span", { class: "badge", text: [i.sub ? i.cat + " · " + i.sub : i.cat, sizeOf(i) ? "S" + sizeOf(i) : "", gradeOf(i) ? "Grade " + gradeOf(i) : "", weightOf(i)].filter(Boolean).join(" · ") }), h("div", { class: "stepper" }, minus, qi, plus), wrap, d);
   }
   $("addForm").addEventListener("submit", function(ev){
     ev.preventDefault();
