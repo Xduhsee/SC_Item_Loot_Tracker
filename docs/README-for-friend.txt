@@ -72,6 +72,17 @@ BLUEPRINTS tab
     charge. Only some items have sell prices, and all numbers are
     estimates.
 
+FINDER tab
+  - Search any item, or press "Find" on a row in the Inventory or
+    Blueprints tab. It shows where UEX says the item is sold and for how
+    much, which missions reward its blueprint (with drop chance), what the
+    blueprint needs, and links to the Cstone Item Finder and SC Craft Tools.
+  - Shop data comes from UEX and mission data from the Star Citizen Wiki.
+    Both are community-maintained and can lag behind a patch, so check the
+    dates shown. Loot drop locations are not available from any source, so
+    the Finder says so instead of guessing.
+  - Needs an internet connection.
+
 CRAFT LIST tab
   - On the Blueprints tab press "+ Craft list". This tab adds up the
     materials for everything on the list, compares them with what you own

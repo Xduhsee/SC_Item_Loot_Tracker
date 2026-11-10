@@ -24,7 +24,7 @@ Desktop app: same tab -> paste into the box -> Replace my list.
 ## First launch
 Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
-## Features (v1.2)
+## Features (v1.2 and v1.3)
 - Tags (Keep / Sell / Scrap / Trade) and notes on each stack, with a tag filter
 - Bulk select: move, tag or delete several stacks at once
 - Craft list: pick blueprints, see total materials against what you own
@@ -32,6 +32,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - History: log of adds, removals and moves with a session summary
 - CSV export of the inventory
 - UEX price estimates behind a manual "Refresh UEX prices" button
+- Finder tab (v1.3): UEX shops and prices, wiki blueprint missions with drop chances, links to Cstone and SC Craft Tools
 - Quick-add window on `Ctrl+Shift+L` (always on top, works over borderless windowed games)
 
 ## Repo layout

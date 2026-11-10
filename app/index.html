@@ -80,6 +80,16 @@
   .hrow:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}.hrow:last-child{border-radius:0 0 8px 8px}
   .hrow time{color:var(--mute);font-size:12px}
   .smallbtn{min-height:28px;padding:2px 10px;font-size:12px}
+  .fcard{border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-top:12px;overflow:hidden}
+  .fcard>h3{margin:0;padding:8px 12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line)}
+  .fcard .body{padding:8px 12px;font-size:13px}
+  .frow{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:5px 0;border-top:1px solid var(--line)}
+  .frow:first-child{border-top:0}
+  .frow .dim{color:var(--mute);font-size:12px}
+  .linkbtn{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:var(--accent);text-decoration:none;font-size:13px;margin:0 8px 8px 0}
+  .linkbtn:hover{border-color:var(--accent)}
+  .findbtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;font-weight:400;text-decoration:underline dotted}
+  .findbtn:hover:not(:disabled){background:none;box-shadow:none;color:var(--accent)}
   .item:last-child{border-radius:0 0 8px 8px}
   .name{overflow-wrap:anywhere}
   .badge{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
@@ -154,6 +164,7 @@
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="inv" aria-selected="true">Inventory</button>
     <button role="tab" data-tab="bp" aria-selected="false">Blueprints</button>
+    <button role="tab" data-tab="find" aria-selected="false">Finder</button>
     <button role="tab" data-tab="craft" aria-selected="false">Craft list</button>
     <button role="tab" data-tab="sets" aria-selected="false">Armor sets</button>
     <button role="tab" data-tab="new" aria-selected="false">Added this patch</button>
@@ -265,6 +276,18 @@
       <div class="stats" id="bStats"></div>
       <div id="bList"></div>
       <div class="row" style="margin-top:10px"><button class="ghost" id="bMore" type="button" hidden>Show more</button></div>
+    </div>
+  </section>
+
+  <!-- FINDER -->
+  <section id="tab-find" hidden>
+    <div class="panel">
+      <h2>Finder</h2>
+      <label>Item or blueprint
+        <span class="ac"><input id="fqIn" type="search" placeholder="Start typing an item name" maxlength="120" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" style="width:100%"><div class="acbox" id="fqBox" role="listbox" hidden></div></span>
+      </label>
+      <p class="note">Shops and prices come from UEX. Blueprint missions come from the Star Citizen Wiki. Both are community-maintained, so check the dates shown.</p>
+      <div id="fqOut"></div>
     </div>
   </section>
 
@@ -637,6 +660,42 @@ function priceFor(prices, u, name){
   var a = (u && prices.byU && prices.byU[u]) || (prices.byN && prices.byN[nameKey(name)]);
   return a ? { sell: a[0], sellMin: a[1], sellMax: a[2], buy: a[3], buyMin: a[4], buyMax: a[5], date: a[6] } : null;
 }
+
+// ---------- finder: shops + mission rewards ----------
+function buildShops(rows){
+  var byU = {}, byN = {};
+  (rows || []).forEach(function(r){
+    var t = String(r.terminal_name || "").trim(); if (!t) return;
+    var buy = Number(r.price_buy) || 0, sell = Number(r.price_sell) || 0; if (buy <= 0 && sell <= 0) return;
+    var u = String(r.item_uuid || "").toLowerCase(), id = u || nameKey(r.item_name || ""); if (!id) return;
+    var m = u ? byU : byN, l = m[id] || (m[id] = {}), d = Number(r.date_modified) || 0, old = l[t];
+    if (!old || d >= old.d) l[t] = { t: t, buy: buy, sell: sell, d: d };
+  });
+  function fin(m){ var o = {}; Object.keys(m).forEach(function(k){ o[k] = Object.keys(m[k]).map(function(t){ return m[k][t]; }); }); return o; }
+  return { byU: fin(byU), byN: fin(byN) };
+}
+function shopsFor(idx, u, name){
+  if (!idx) return [];
+  var l = (u && idx.byU[String(u).toLowerCase()]) || idx.byN[nameKey(name)] || [];
+  return l.slice().sort(function(a, b){
+    var ab = a.buy > 0 ? 0 : 1, bb = b.buy > 0 ? 0 : 1;
+    return ab - bb || (a.buy > 0 ? a.buy - b.buy : b.sell - a.sell) || a.t.localeCompare(b.t);
+  });
+}
+function missionTitle(t){ return String(t == null ? "" : t).replace(/~mission\(([^)]*)\)/g, "[$1]").replace(/\s+/g, " ").trim(); }
+function groupMissions(list){
+  var m = {}, order = [];
+  (Array.isArray(list) ? list : []).forEach(function(x){
+    if (!x) return;
+    var title = missionTitle(x.title), scope = String(x.reward_scope || ""), c = Number(x.chance); if (!title) return;
+    if (!(c >= 0 && c <= 1)) c = 1;
+    var k = title.toLowerCase() + "|" + scope.toLowerCase(), e = m[k];
+    if (!e){ e = m[k] = { title: title, scope: scope, chance: c, count: 0 }; order.push(k); }
+    e.count++; if (c > e.chance) e.chance = c;
+  });
+  return order.map(function(k){ return m[k]; }).sort(function(a, b){ return b.chance - a.chance || a.title.localeCompare(b.title); });
+}
+function chanceLabel(c){ return c >= 1 ? "Guaranteed" : Math.round(c * 1000) / 10 + "%"; }
 
 // ---------- CSV ----------
 function csvCell(v, textual){
@@ -1069,6 +1128,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       var r = await getJSON(UEX + "items_prices_all"), rows = Array.isArray(r) ? r : (r && r.data);
       if (!Array.isArray(rows) || !rows.length) throw new Error("UEX returned no prices");
+      shopIdx = buildShops(rows);
       var p = buildPrices(rows); p.fetchedAt = new Date().toISOString(); p.rows = rows.length;
       prices = p; await idbSet("prices", p);
       $("priceNote").className = "note"; render();
@@ -1302,6 +1362,7 @@ async function computeExactItems(cat, patchCode, progress){
       else vc.appendChild(document.createTextNode("buy ≈ " + fmt(Math.round(val.v)) + " aUEC"));
       meta.appendChild(vc);
     }
+    meta.appendChild(h("button", { type: "button", class: "findbtn", text: "Find", title: "Where to get this, and which missions reward the blueprint", "aria-label": "Find " + i.name, onclick: function(){ openFinder(i.name, i.sub, uuidFor(i)); } }));
     var cell = h("div", { class: "namecell" }, h("div", { class: "name", text: i.name }), meta);
     if (editNoteId === i.id){
       var ni = h("input", { class: "noteinput", value: i.note || "", maxlength: "200", placeholder: "Add a note, then press Enter", "aria-label": "Note for " + i.name });
@@ -1410,6 +1471,7 @@ async function computeExactItems(cat, patchCode, progress){
     var badges = h("span", null);
     if (b.d) badges.appendChild(h("span", { class: "badge good", text: "default" }));
     badges.appendChild(h("span", { class: "badge", text: BPCAT[b.u] || "Other" }));
+    badges.appendChild(h("button", { type: "button", class: "findbtn", text: "Find", title: "Shops and mission rewards", "aria-label": "Find " + b.n, onclick: function(){ openFinder(b.n, "", b.o); } }));
     var craft = h("span", { class: "badge " + (cs.ok ? "good" : ""), text: cs.ok ? "craftable now" : cs.have + "/" + b.ing.length + " materials" });
     var wb = h("button", { type: "button", class: "ghost smallbtn", text: wish[b.u] ? "+1 (in list: " + wish[b.u] + ")" : "+ Craft list", title: "Add to the Craft list" });
     wb.onclick = function(){ wish[b.u] = Math.min(99, (wish[b.u] || 0) + 1); save(); wb.textContent = "+1 (in list: " + wish[b.u] + ")"; };
@@ -1526,6 +1588,124 @@ async function computeExactItems(cat, patchCode, progress){
   $("hSearch").addEventListener("input", renderHist);
   twoClick($("hClear"), "Clear history", function(){ hist = []; save(); renderHist(); });
 
+  // ---------- finder ----------
+  var shopIdx = null, shopPromise = null, shopErr = "", bpCache = {}, bpErr = {}, fqName = "", fqEntry = null;
+  function ensureShops(){
+    if (shopIdx) return Promise.resolve(true);
+    if (!shopPromise) shopPromise = (async function(){
+      try {
+        var r = await getJSON(UEX + "items_prices_all"), rows = Array.isArray(r) ? r : (r && r.data);
+        if (!Array.isArray(rows) || !rows.length) throw new Error("UEX returned no data");
+        shopIdx = buildShops(rows); shopErr = ""; return true;
+      } catch (e){ shopErr = e && e.message ? e.message : String(e); return false; }
+    })().then(function(ok){ shopPromise = null; return ok; });
+    return shopPromise;
+  }
+  function ensureBp(u){
+    if (bpCache[u]) return Promise.resolve(bpCache[u]);
+    if (!/^[0-9a-f-]{30,40}$/i.test(u)){ bpErr[u] = "bad blueprint id"; return Promise.resolve(null); }
+    return getJSON(WIKI + "blueprints/" + encodeURIComponent(u)).then(function(r){
+      var d = (r && r.data) || r || {};
+      return (bpCache[u] = { ok: true, missions: groupMissions(d.unlocking_missions), ver: String(d.game_version || ""), def: !!d.is_available_by_default });
+    }).catch(function(e){ bpErr[u] = e && e.message ? e.message : String(e); return null; });
+  }
+  function pickEntry(name, sub, uuid){
+    if (uuid && BYU[uuid]) return BYU[uuid];
+    var l = ENT[nameKey(name)]; if (!l || !l.length) return null;
+    if (sub) for (var k = 0; k < l.length; k++) if (l[k].s === sub) return l[k];
+    return l[0];
+  }
+  function findBp(name, e){
+    var bps = (catalogue && catalogue.bps) || [], o = e && e.u ? String(e.u).toLowerCase() : "";
+    for (var k = 0; k < bps.length; k++) if (o && bps[k].o === o) return bps[k];
+    for (var j = 0; j < bps.length; j++) if (nameKey(bps[j].n) === nameKey(name)) return bps[j];
+    return null;
+  }
+  function fcard(title){ var body = h("div", { class: "body" }); return { el: h("div", { class: "fcard" }, h("h3", { text: title }), body), body: body }; }
+  function runFinder(){
+    var name = fqName, bp = findBp(name, fqEntry);
+    if (bp) delete bpErr[bp.u];
+    renderFinder();
+    var jobs = [ensureShops()]; if (bp) jobs.push(ensureBp(bp.u));
+    Promise.all(jobs).then(function(){ if (fqName === name) renderFinder(); });
+  }
+  function openFinder(name, sub, uuid){
+    fqName = name; fqEntry = pickEntry(name, sub, uuid); $("fqIn").value = name; showTab("find"); runFinder();
+  }
+  function renderFinder(){
+    var out = $("fqOut"); out.textContent = "";
+    if (!fqName){ out.appendChild(h("div", { class: "empty", text: "Search for an item above, or press “Find” on a row in your inventory or blueprints." })); return; }
+    var e = fqEntry, u = e && e.u ? e.u : "", bp = findBp(fqName, e);
+    // title
+    var t = fcard(fqName);
+    t.body.appendChild(h("div", { class: "meta", style: "display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" },
+      h("span", { class: "badge", text: e ? describe(e) : "Not in the item database" })));
+    t.body.appendChild(h("a", { class: "linkbtn", href: "https://finder.cstone.space/", target: "_blank", rel: "noopener noreferrer", text: "Open Cstone Item Finder" }));
+    t.body.appendChild(h("a", { class: "linkbtn", href: "https://sc-craft.tools/", target: "_blank", rel: "noopener noreferrer", text: "Open SC Craft Tools" }));
+    if (bp){
+      var wb = h("button", { type: "button", class: "ghost smallbtn", text: wish[bp.u] ? "+1 (in list: " + wish[bp.u] + ")" : "+ Craft list" });
+      wb.onclick = function(){ wish[bp.u] = Math.min(99, (wish[bp.u] || 0) + 1); save(); wb.textContent = "+1 (in list: " + wish[bp.u] + ")"; };
+      t.body.appendChild(wb);
+    }
+    out.appendChild(t.el);
+    // shops
+    var s1 = fcard("Where to buy (UEX)");
+    if (shopIdx){
+      var rows = shopsFor(shopIdx, u, fqName);
+      if (!rows.length) s1.body.appendChild(h("div", { class: "dim", text: "UEX has no shop listing for this item. It may be loot-only, a mission reward or crafted." }));
+      else {
+        var newest = 0; rows.forEach(function(r){ if (r.d > newest) newest = r.d; });
+        rows.slice(0, 12).forEach(function(r){
+          var price = r.buy > 0 ? "Costs " + fmt(r.buy) + " aUEC" : "Shop pays " + fmt(r.sell) + " aUEC";
+          s1.body.appendChild(h("div", { class: "frow" }, h("span", { text: r.t }), h("span", { text: price }), h("span", { class: "dim", text: r.d ? "updated " + new Date(r.d * 1000).toISOString().slice(0, 10) : "" })));
+        });
+        if (rows.length > 12) s1.body.appendChild(h("div", { class: "dim", style: "margin-top:6px", text: "+ " + (rows.length - 12) + " more locations" }));
+        s1.body.appendChild(h("div", { class: "dim", style: "margin-top:8px", text: "Prices are community-reported on UEX. Newest report: " + (newest ? new Date(newest * 1000).toISOString().slice(0, 10) : "unknown") + "." }));
+      }
+    } else if (shopPromise) s1.body.appendChild(h("div", { class: "dim", text: "Loading UEX shop data…" }));
+    else {
+      s1.body.appendChild(h("div", { class: "dim", text: "Could not load UEX shop data" + (shopErr ? ": " + shopErr : "") + "." }));
+      s1.body.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "Try again", style: "margin-top:6px", onclick: runFinder }));
+    }
+    out.appendChild(s1.el);
+    // blueprint
+    var s2 = fcard("Blueprint and missions (Star Citizen Wiki)");
+    if (!catalogue) s2.body.appendChild(h("div", { class: "dim", text: "Press “Update item database” (top right) to load blueprint data." }));
+    else if (!bp) s2.body.appendChild(h("div", { class: "dim", text: "No blueprint found for this item, so it can't be crafted." }));
+    else {
+      s2.body.appendChild(h("div", { text: "Craftable" + (bp.t ? " · " + bp.t : "") + (known[bp.u] ? " · you know this blueprint" : "") }));
+      s2.body.appendChild(h("div", { class: "dim", style: "margin:4px 0 8px", text: "Needs: " + (bp.ing.length ? bp.ing.map(function(i){ return i[0] + " " + fmt(i[2]) + (i[1] === "r" ? " SCU" : ""); }).join(", ") : "nothing listed") }));
+      var c = bpCache[bp.u];
+      if (!c && bpErr[bp.u]){
+        s2.body.appendChild(h("div", { class: "dim", text: "Could not load missions: " + bpErr[bp.u] + "." }));
+        s2.body.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "Try again", style: "margin-top:6px", onclick: runFinder }));
+      } else if (!c) s2.body.appendChild(h("div", { class: "dim", text: "Loading missions…" }));
+      if (c){
+        if (c.def) s2.body.appendChild(h("div", { text: "Available by default. You don't need to unlock it." }));
+        if (!c.missions.length && !c.def) s2.body.appendChild(h("div", { class: "dim", text: "No missions reward this blueprint, according to the wiki." }));
+        c.missions.forEach(function(m){
+          s2.body.appendChild(h("div", { class: "frow" }, h("span", { text: m.title + (m.count > 1 ? "  ×" + m.count + " variants" : "") }), h("span", { class: "dim", text: m.scope }), h("span", { text: chanceLabel(m.chance) })));
+        });
+        s2.body.appendChild(h("div", { class: "dim", style: "margin-top:8px", text: "Wiki data for game version " + (c.ver || "unknown") + ". Rewards change between patches, so treat this as a guide." }));
+      }
+    }
+    out.appendChild(s2.el);
+    // loot
+    var s3 = fcard("Loot locations");
+    s3.body.appendChild(h("div", { class: "dim", text: "No data source available. Neither UEX nor the wiki publishes where items drop, so this tool doesn't guess." }));
+    out.appendChild(s3.el);
+  }
+  attachAC($("fqIn"), $("fqBox"), {
+    match: function(q){ return searchIndex(q, 14); }, hint: describe,
+    label: function(e){ return e.dup ? e.n + " (" + (e.s || e.c) + ")" : e.n; },
+    onPick: function(e){ fqName = e.n; fqEntry = e; runFinder(); }
+  });
+  $("fqIn").addEventListener("keydown", function(ev){
+    if (ev.key !== "Enter") return;
+    var v = $("fqIn").value.trim(); if (!v || v === fqName) return;
+    fqName = v; fqEntry = pickEntry(v, "", ""); runFinder();
+  });
+
   // ---------- added this patch ----------
   function patchChoices(){
     var set = {};
@@ -1638,10 +1818,10 @@ async function computeExactItems(cat, patchCode, progress){
 
   // ---------- tabs ----------
   function showTab(t){
-    ["inv", "bp", "craft", "sets", "new", "hist", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
+    ["inv", "bp", "find", "craft", "sets", "new", "hist", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
     Array.prototype.forEach.call($("tabs").children, function(b){ b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"); });
     if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
-    if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
+    if (t === "find") renderFinder(); if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
   }
   $("tabs").addEventListener("click", function(e){ var b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
 
