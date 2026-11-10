@@ -36,12 +36,16 @@
     <div class="ac"><input id="qLoc" autocomplete="off" maxlength="80" placeholder="Carrying" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="lBox" role="listbox" hidden></div></div>
   </label>
 </div>
+<label>Looted at (optional)
+  <div class="ac"><input id="qSrc" autocomplete="off" maxlength="80" placeholder="Bunker, Wreck, Mission reward…" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="sBox" role="listbox" hidden></div></div>
+</label>
 <div id="msg" role="status"></div>
 <div class="hint">Enter adds the item &middot; Esc closes this window &middot; Items go straight into your list.</div>
 <script>
 (function(){
   var S = window.scStore, $ = function(id){ return document.getElementById(id); };
-  var ITEMS = [], LOCS = [], lastLoc = "";
+  var ITEMS = [], LOCS = [], SRCS = [], lastLoc = "", lastSrc = "";
+  var COMMON = ["Mission reward", "Bunker / outpost", "Derelict ship", "Wreck", "Contested zone", "NPC kill", "Crate / locker", "Crafted", "Wikelo trade", "Bought from shop"];
   function nk(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " ").toLowerCase().replace(/["'“”‘’]/g, ""); }
   function say(t, bad){ $("msg").textContent = t; $("msg").className = bad ? "err" : ""; }
 
@@ -57,13 +61,16 @@
     }).catch(function(){});
   }
   function loadLocs(){
-    var cnt = {}, names = {};
+    var cnt = {}, names = {}, sc = {}, sn = {};
     try {
       var d = S.loadSync();
+      ((d.extra && d.extra.loot) || []).forEach(function(e){ var k = nk(e && e.w); if (!k) return; sc[k] = (sc[k] || 0) + 1; sn[k] = e.w; });
       (d.items || []).forEach(function(i){ var k = nk(i.loc); if (!k) return; cnt[k] = (cnt[k] || 0) + 1; names[k] = i.loc; });
     } catch (e){}
     LOCS = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).map(function(k){ return names[k]; });
     if (!LOCS.length) LOCS = ["Carrying", "Ship inventory", "Hangar"];
+    var mine = Object.keys(sc).sort(function(a, b){ return sc[b] - sc[a]; }).map(function(k){ return sn[k]; });
+    SRCS = mine.concat(COMMON.filter(function(c){ return mine.map(nk).indexOf(nk(c)) < 0; }));
   }
 
   // small autocomplete: opts.match(q) -> [{label, hint, value, data}]
@@ -84,7 +91,7 @@
     function pick(o){ input.value = o.value; close(); onPick(o); }
     function open(){ cur = match(input.value); sel = cur.length ? 0 : -1; draw(); }
     input.addEventListener("input", open);
-    input.addEventListener("focus", function(){ if (input === $("qLoc")) open(); });
+    input.addEventListener("focus", function(){ if (input === $("qLoc") || input === $("qSrc")) open(); });
     input.addEventListener("blur", function(){ setTimeout(close, 100); });
     input.addEventListener("keydown", function(e){
       if (e.key === "ArrowDown" && cur.length){ e.preventDefault(); sel = (sel + 1) % cur.length; draw(); }
@@ -114,15 +121,20 @@
     return LOCS.filter(function(l){ return !t || nk(l).indexOf(t) >= 0; }).slice(0, 8).map(function(l){ return { label: l, value: l }; });
   }, function(){ submit(); });
 
+  ac($("qSrc"), $("sBox"), function(q){
+    var t = nk(q);
+    return SRCS.filter(function(l){ return !t || nk(l).indexOf(t) >= 0; }).slice(0, 8).map(function(l){ return { label: l, value: l }; });
+  }, function(){ submit(); });
+
   function submit(){
     var name = $("qName").value.trim().replace(/\s+/g, " "), qty = Number($("qQty").value), loc = $("qLoc").value.trim();
     if (!name || !(qty > 0)){ say("Enter an item name and a quantity above zero.", true); return; }
     var e = picked && nk(picked.n) === nk(name) ? picked : null;
     if (!e) for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].l === nk(name)){ e = ITEMS[i]; break; }
-    var item = { name: name, cat: e ? e.c : "Other", sub: e ? e.s : "", qty: qty, loc: loc || lastLoc || "Carrying" };
+    var item = { name: name, cat: e ? e.c : "Other", sub: e ? e.s : "", qty: qty, loc: loc || lastLoc || "Carrying", src: $("qSrc").value.trim() };
     S.quickAdd(item).then(function(ok){
       if (!ok){ say("Could not reach the main window.", true); return; }
-      lastLoc = item.loc; $("qLoc").value = item.loc;
+      lastLoc = item.loc; $("qLoc").value = item.loc; lastSrc = item.src;
       say("Logged " + qty + " × " + name + " to " + item.loc + ".");
       $("qName").value = ""; $("qQty").value = 1; picked = null; nameAC.close(); $("qName").focus();
     }).catch(function(){ say("Could not reach the main window.", true); });
@@ -133,7 +145,7 @@
     else if (e.key === "Enter" && !e.defaultPrevented){ e.preventDefault(); submit(); }
   });
 
-  function shown(){ loadLocs(); say(""); $("qName").value = ""; $("qQty").value = 1; picked = null; if (lastLoc) $("qLoc").value = lastLoc; else if (!$("qLoc").value) $("qLoc").value = LOCS[0] || "Carrying"; $("qName").focus(); }
+  function shown(){ loadLocs(); say(""); $("qName").value = ""; $("qQty").value = 1; picked = null; $("qSrc").value = lastSrc; if (lastLoc) $("qLoc").value = lastLoc; else if (!$("qLoc").value) $("qLoc").value = LOCS[0] || "Carrying"; $("qName").focus(); }
   if (S){
     loadCatalogue(); shown();
     if (S.onQuickShown) S.onQuickShown(shown);

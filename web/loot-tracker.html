@@ -194,6 +194,10 @@
           <input id="fLoc" placeholder="e.g. Lorville hab, Cutlass hold, Carrying" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="locBox">
           <div id="locBox" class="acbox" role="listbox" hidden></div>
         </label>
+        <label class="grow ac">Looted at (optional)
+          <input id="fSrc" placeholder="e.g. Bunker, Wreck, Mission reward, Wikelo" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="srcBox">
+          <div id="srcBox" class="acbox" role="listbox" hidden></div>
+        </label>
         <button type="submit">Add</button>
       </form>
       <div id="msg" class="msg" role="status"></div>
@@ -376,6 +380,7 @@
         <button type="button" id="exportBtn">Create backup text</button>
         <button type="button" class="ghost" id="copyBtn">Copy</button>
         <button type="button" class="ghost" id="csvBtn">Export inventory as CSV</button>
+        <button type="button" class="ghost" id="lootCsvBtn">Export loot log as CSV</button>
         <label style="flex-direction:row;align-items:center;gap:8px">
           <span>Or load a file</span>
           <input type="file" id="fileIn" accept=".json,.txt,application/json,text/plain">
@@ -485,7 +490,7 @@ function parseBackup(text){
   var hasList = Array.isArray(list) && list.length > 0;
   if (!items.length && !Object.keys(known).length && hasList) throw new Error("No valid items found");
   if (!items.length && !Object.keys(known).length && !Array.isArray(list)) throw new Error("No valid items found");
-  return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish) };
+  return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish), loot: Array.isArray(data) ? [] : sanitizeLoot(data && data.loot) };
 }
 function mergeInto(items, incoming){ incoming.forEach(function(r){ addItem(items, r); }); }
 function ownedByName(items){
@@ -659,6 +664,46 @@ function priceFor(prices, u, name){
   if (!prices) return null;
   var a = (u && prices.byU && prices.byU[u]) || (prices.byN && prices.byN[nameKey(name)]);
   return a ? { sell: a[0], sellMin: a[1], sellMax: a[2], buy: a[3], buyMin: a[4], buyMax: a[5], date: a[6] } : null;
+}
+
+// ---------- loot log (where you found things) ----------
+var LOOT_MAX = 5000;
+function sanitizeLoot(list){
+  var out = [];
+  (Array.isArray(list) ? list : []).forEach(function(e){
+    if (!e || typeof e !== "object") return;
+    var n = norm(e.n), w = norm(e.w), q = Number(e.q), t = String(e.t || "");
+    if (!n || !w || !(q > 0) || isNaN(Date.parse(t))) return;
+    out.push({ t: t, n: n.slice(0, 120), c: String(e.c || "").slice(0, 40), s: String(e.s || "").slice(0, 40), q: Math.round(q * 100) / 100, w: w.slice(0, 80) });
+  });
+  return out.slice(-LOOT_MAX);
+}
+function lootSummary(log, name){
+  var k = nameKey(name), m = {}, order = [];
+  (log || []).forEach(function(e){
+    if (nameKey(e.n) !== k) return;
+    var wk = nameKey(e.w), g = m[wk];
+    if (!g){ g = m[wk] = { w: e.w, n: 0, q: 0, last: "" }; order.push(wk); }
+    g.n++; g.q += e.q; if (e.t > g.last){ g.last = e.t; g.w = e.w; }
+  });
+  return order.map(function(x){ return m[x]; }).sort(function(a, b){ return b.n - a.n || (a.last < b.last ? 1 : -1); });
+}
+function lootSources(log){
+  var m = {}, order = [];
+  (log || []).forEach(function(e){ var k = nameKey(e.w); if (!m[k]){ m[k] = { w: e.w, c: 0 }; order.push(k); } m[k].c++; m[k].w = e.w; });
+  return order.map(function(k){ return m[k]; }).sort(function(a, b){ return b.c - a.c || a.w.localeCompare(b.w); });
+}
+function mergeLoot(a, b){
+  var seen = {}, out = [];
+  (a || []).concat(b || []).forEach(function(e){ var k = [e.t, nameKey(e.n), nameKey(e.w), e.q].join("|"); if (!seen[k]){ seen[k] = 1; out.push(e); } });
+  out.sort(function(x, y){ return x.t < y.t ? -1 : x.t > y.t ? 1 : 0; });
+  return out.slice(-LOOT_MAX);
+}
+function toLootCSV(log){
+  var head = ["Time", "Item", "Category", "Type", "Quantity", "Looted at"], NL = String.fromCharCode(13, 10);
+  var lines = [head.join(",")];
+  (log || []).forEach(function(e){ lines.push([csvCell(e.t, true), csvCell(e.n, true), csvCell(e.c, true), csvCell(e.s, true), csvCell(e.q, false), csvCell(e.w, true)].join(",")); });
+  return lines.join(NL) + NL;
 }
 
 // ---------- finder: shops + mission rewards ----------
@@ -969,7 +1014,7 @@ async function computeExactItems(cat, patchCode, progress){
   var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
   var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, WEIGHTBY = {}, HAS_SIZES = false;
   var armedId = null, armedTimer = null, bpShown = 60;
-  var wish = {}, hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
+  var wish = {}, lootlog = [], hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
   var sessionStart = new Date().toISOString();
   var $ = function(id){ return document.getElementById(id); };
 
@@ -1012,7 +1057,7 @@ async function computeExactItems(cat, patchCode, progress){
       try {
         var d = NATIVE.loadSync();
         items = sanitize(d.items || []); known = sanitizeKnown(d.known || []);
-        if (d.extra){ wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); }
+        if (d.extra){ wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); }
         if (d.restoredFrom){ $("storageWarn").textContent = "Your data file was damaged, so it was restored from the backup " + d.restoredFrom + ". The damaged file was kept next to it in the data folder."; $("storageWarn").hidden = false; }
       } catch (e){ storageOK = false; $("storageWarn").textContent = "Could not read the saved data file."; $("storageWarn").hidden = false; }
       histBase = snapItems(items);
@@ -1021,7 +1066,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       var raw = localStorage.getItem(STORE_KEY); if (raw) items = sanitize(JSON.parse(raw));
       var kr = localStorage.getItem(KNOWN_KEY); if (kr) known = sanitizeKnown(JSON.parse(kr));
-      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); }
+      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); }
     } catch (e){}
     histBase = snapItems(items);
     try { localStorage.setItem(STORE_KEY + "-t", "1"); localStorage.removeItem(STORE_KEY + "-t"); } catch (e){ storageOK = false; }
@@ -1030,7 +1075,7 @@ async function computeExactItems(cat, patchCode, progress){
   function save(){
     if (NATIVE){
       var ok = false;
-      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { wish: wish, hist: hist } }); } catch (e){}
+      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { wish: wish, hist: hist, loot: lootlog } }); } catch (e){}
       if (!ok){ $("storageWarn").textContent = "Could not write to the data file. Your latest change is NOT saved. Check disk space and folder permissions."; }
       $("storageWarn").hidden = !!ok && storageOK;
       return;
@@ -1038,7 +1083,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
       localStorage.setItem(KNOWN_KEY, JSON.stringify(Object.keys(known).map(function(u){ return { u: u, n: known[u] }; })));
-      localStorage.setItem(EXTRA_KEY, JSON.stringify({ wish: wish, hist: hist }));
+      localStorage.setItem(EXTRA_KEY, JSON.stringify({ wish: wish, hist: hist, loot: lootlog }));
     } catch (e){ storageOK = false; $("storageWarn").hidden = false; }
   }
   var idbMem = {};
@@ -1061,7 +1106,7 @@ async function computeExactItems(cat, patchCode, progress){
     idbMem[k] = v;
     return idb().then(function(db){ return new Promise(function(res, rej){ var tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = function(){ rej(tx.error); }; }); }).catch(function(){ return false; });
   }
-  function snapshot(){ undoStack.push(JSON.stringify({ i: items, k: known })); if (undoStack.length > 30) undoStack.shift(); $("undoBtn").disabled = false; }
+  function snapshot(){ undoStack.push(JSON.stringify({ i: items, k: known, ll: lootlog.length })); if (undoStack.length > 30) undoStack.shift(); $("undoBtn").disabled = false; }
   function pruneSel(){ var ids = {}; items.forEach(function(i){ ids[i.id] = 1; }); Object.keys(sel).forEach(function(id){ if (!ids[id]) delete sel[id]; }); }
   function commit(note){
     var now = new Date().toISOString(), add;
@@ -1407,6 +1452,22 @@ async function computeExactItems(cat, patchCode, progress){
     snapshot(); bulkTag(items, ids, v === "-" ? "" : v); commit(); say($("msg"), (v === "-" ? "Cleared the tag on " : "Tagged " + v + ": ") + ids.length + " stack" + (ids.length > 1 ? "s" : "") + ".");
   };
   $("bulkClear").onclick = function(){ sel = {}; renderInventory(); };
+  function logLoot(e){
+    var w = norm(e.w); if (!w) return;
+    lootlog.push({ t: new Date().toISOString(), n: norm(e.name).slice(0, 120), c: String(e.cat || "").slice(0, 40), s: String(e.sub || "").slice(0, 40), q: Math.round(Number(e.qty) * 100) / 100, w: w.slice(0, 80) });
+    if (lootlog.length > LOOT_MAX) lootlog = lootlog.slice(-LOOT_MAX);
+  }
+  var COMMON_SRC = ["Mission reward", "Bunker / outpost", "Derelict ship", "Wreck", "Contested zone", "NPC kill", "Crate / locker", "Crafted", "Wikelo trade", "Bought from shop"];
+  function matchSources(q, focusing){
+    var mine = lootSources(lootlog).map(function(e){ return { n: e.w, src: "yours", c: e.c }; }), have = {};
+    mine.forEach(function(e){ have[nameKey(e.n)] = 1; });
+    var all = mine.concat(COMMON_SRC.filter(function(n){ return !have[nameKey(n)]; }).map(function(n){ return { n: n, src: "common" }; }));
+    var toks = nameKey(q).split(" ").filter(Boolean);
+    if (focusing || !toks.length) return all.slice(0, 12);
+    return all.filter(function(e){ var l = e.n.toLowerCase(); return toks.every(function(t){ return l.indexOf(t) >= 0; }) && l !== nameKey(q); }).slice(0, 10);
+  }
+  function srcHint(e){ return e.src === "yours" ? "you logged " + e.c + "×" : "common"; }
+  attachAC($("fSrc"), $("srcBox"), { match: matchSources, hint: srcHint, showOnFocus: true, onPick: function(){ $("addForm").querySelector("button[type=submit]").focus(); } });
   $("addForm").addEventListener("submit", function(ev){
     ev.preventDefault();
     var name = $("fName").value, qty = $("fQty").value;
@@ -1416,7 +1477,8 @@ async function computeExactItems(cat, patchCode, progress){
       undoStack.pop(); $("undoBtn").disabled = !undoStack.length;
       say($("msg"), "Enter an item name and a quantity above zero.", true); return;
     }
-    say($("msg"), "Logged " + fmt(cleanQty(qty, cat)) + " × " + norm(name) + ".");
+    logLoot({ name: name, cat: cat, sub: $("fSub").value, qty: cleanQty(qty, cat), w: $("fSrc").value });
+    say($("msg"), "Logged " + fmt(cleanQty(qty, cat)) + " × " + norm(name) + (norm($("fSrc").value) ? " from " + norm($("fSrc").value) : "") + ".");
     $("fName").value = ""; $("fQty").value = 1; $("fSub").value = ""; acClose(); $("fName").focus();
     commit();
   });
@@ -1425,6 +1487,7 @@ async function computeExactItems(cat, patchCode, progress){
     if (!undoStack.length) return;
     var s = JSON.parse(undoStack.pop());
     items = sanitize(s.i); known = s.k || {};
+    if (typeof s.ll === "number" && s.ll < lootlog.length) lootlog = lootlog.slice(0, s.ll);
     $("undoBtn").disabled = !undoStack.length;
     commit("Undid the last change"); say($("msg"), "Undid the last change.");
   };
@@ -1691,8 +1754,16 @@ async function computeExactItems(cat, patchCode, progress){
     }
     out.appendChild(s2.el);
     // loot
-    var s3 = fcard("Loot locations");
-    s3.body.appendChild(h("div", { class: "dim", text: "No data source available. Neither UEX nor the wiki publishes where items drop, so this tool doesn't guess." }));
+    var s3 = fcard("Loot locations (your own log)");
+    var seen = lootSummary(lootlog, fqName);
+    if (seen.length){
+      seen.slice(0, 12).forEach(function(g){
+        s3.body.appendChild(h("div", { class: "frow" }, h("span", { text: g.w }), h("span", { text: "found " + g.n + (g.n === 1 ? " time" : " times") + " (" + fmt(g.q) + " items)" }), h("span", { class: "dim", text: "last " + g.last.slice(0, 10) })));
+      });
+      s3.body.appendChild(h("div", { class: "dim", style: "margin-top:8px", text: "This is only what you have logged yourself. It is not a complete drop list." }));
+    } else {
+      s3.body.appendChild(h("div", { class: "dim", text: "You haven't logged where this was found. Fill in “Looted at” when you add it, and it will show here. No public source lists drop locations, so this tool doesn't guess." }));
+    }
     out.appendChild(s3.el);
   }
   attachAC($("fqIn"), $("fqBox"), {
@@ -1829,7 +1900,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("exportBtn").onclick = function(){
     $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 3,
       items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc, tag: i.tag || "", note: i.note || "" }; }),
-      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish }, null, 1);
+      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog }, null, 1);
     say($("ioMsg"), "Backup created: " + items.length + " stacks, " + Object.keys(known).length + " known blueprints.");
   };
   $("copyBtn").onclick = function(){
@@ -1849,8 +1920,8 @@ async function computeExactItems(cat, patchCode, progress){
     var inc;
     try { inc = parseBackup($("io").value); } catch (e){ say($("ioMsg"), "That doesn't look like a valid backup: " + e.message, true); return; }
     snapshot();
-    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; }
-    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); }
+    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; }
+    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); }
     if (mode === "replace") commit("Replaced the list from a backup (" + inc.items.length + " stacks)"); else commit();
     say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
   }
@@ -1867,13 +1938,19 @@ async function computeExactItems(cat, patchCode, progress){
   twoClick($("clearBtn"), "Clear everything", function(){ snapshot(); items = []; known = {}; wish = {}; sel = {}; commit("Cleared the list"); say($("ioMsg"), "List cleared. Use Undo to bring it back."); });
 
   // ---------- CSV export ----------
+  $("lootCsvBtn").onclick = function(){
+    if (!lootlog.length){ say($("ioMsg"), "The loot log is empty. Fill in “Looted at” when you add items.", true); return; }
+    saveCsv("sc-loot-log-" + new Date().toISOString().slice(0, 10) + ".csv", toLootCSV(lootlog), lootlog.length + " loot entries");
+  };
   $("csvBtn").onclick = function(){
     var sorted = items.slice().sort(function(a, b){ return a.loc.localeCompare(b.loc) || a.name.localeCompare(b.name, undefined, { numeric: true }); });
     var text = toCSV(sorted, function(i){ var pi = priceInfo(i); return { size: sizeOf(i) || "", grade: gradeOf(i), weight: weightOf(i), sell: pi && pi.sell, buy: pi && pi.buy }; });
-    var name = "sc-inventory-" + new Date().toISOString().slice(0, 10) + ".csv";
+    saveCsv("sc-inventory-" + new Date().toISOString().slice(0, 10) + ".csv", text, sorted.length + " stacks");
+  };
+  function saveCsv(name, text, what){
     if (NATIVE && NATIVE.saveFile){
       NATIVE.saveFile(name, text).then(function(r){
-        if (r && r.ok) say($("ioMsg"), "Saved " + sorted.length + " stacks to " + r.path);
+        if (r && r.ok) say($("ioMsg"), "Saved " + what + " to " + r.path);
         else if (r && r.canceled) say($("ioMsg"), "Export cancelled.");
         else say($("ioMsg"), "Could not save the file.", true);
       }).catch(function(){ say($("ioMsg"), "Could not save the file.", true); });
@@ -1883,9 +1960,9 @@ async function computeExactItems(cat, patchCode, progress){
       var url = URL.createObjectURL(new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" }));
       var a = h("a", { href: url, download: name }); document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-      say($("ioMsg"), "Exported " + sorted.length + " stacks. Check your Downloads folder.");
+      say($("ioMsg"), "Exported " + what + ". Check your Downloads folder.");
     } catch (e){ say($("ioMsg"), "Could not create the file.", true); }
-  };
+  }
 
   // ---------- init ----------
   if (NATIVE){
@@ -1899,6 +1976,7 @@ async function computeExactItems(cat, patchCode, progress){
   if (NATIVE && NATIVE.onQuickAdd) NATIVE.onQuickAdd(function(p){
     snapshot();
     if (!p || !addItem(items, { name: p.name, cat: p.cat, sub: p.sub, qty: p.qty, loc: p.loc })){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return; }
+    if (p.src) logLoot({ name: p.name, cat: p.cat, sub: p.sub, qty: cleanQty(p.qty, p.cat), w: p.src });
     commit(); say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
   });
   load(); buildIndex(); render();

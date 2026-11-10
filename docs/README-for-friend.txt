@@ -55,6 +55,11 @@ INVENTORY tab
     own custom ones are remembered).
   - Click Add. Adding the same item to the same location stacks the
     quantity.
+  - "Looted at" (optional) records where you found it, for example a
+    bunker, wreck or mission. It suggests places you used before. Items
+    logged this way build your own loot log, shown in the Finder tab and
+    exportable from Data & backup as a CSV. It is only your own data, not a
+    complete drop list.
   - Use the +/- buttons or edit the numbers on a row to change quantity.
     Rows can be moved to another location or removed.
   - Use the filters and search box to find things quickly.
@@ -112,7 +117,7 @@ DATA & BACKUP tab
 QUICK ADD WINDOW (desktop app only)
   Press Ctrl+Shift+L anywhere to open a small always-on-top window. Type an
   item, a quantity and a location, press Enter, and it is added to your
-  list. Press Esc to close it. Star Citizen must run in BORDERLESS
+  list. A "Looted at" field there logs where you found it. Press Esc to close it. Star Citizen must run in BORDERLESS
   WINDOWED mode for the window to appear over the game; it will not show
   over true fullscreen. If another program already uses Ctrl+Shift+L, the
   hotkey will not work, but Tools > Quick add window in the menu still does.
