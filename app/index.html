@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://api.star-citizen.wiki https://uexcorp.space; img-src data:">
+<title>Star Citizen Loot Tracker</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#060a07; --panel:#0d1410; --panel2:#121c16; --line:#1e3a28; --text:#e0f5e6; --mute:#7da58a;
+    --accent:#39ff14; --accent2:#2fd611; --warn:#ffb454; --bad:#ff6b6b; --good:#7dffa6;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  .item>*{min-width:0}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:18px 16px 60px}
+  header.top{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+  h1{font-size:20px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px;color:var(--accent);text-shadow:0 0 14px rgba(57,255,20,.45)}
+  .sub{color:var(--mute);margin:0;font-size:13px}
+  header.top>div:first-child{flex:1 1 380px;min-width:0}
+  .upd{text-align:right;flex:0 0 auto}
+  .mini{color:var(--mute);font-size:12px;margin-top:4px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .panel h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;font-weight:600}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+  label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute)}
+  input,select,textarea,button{font:inherit;color:var(--text)}
+  input,select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:38px}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .grow{flex:1 1 200px}
+  .qty{width:92px}
+  button{background:var(--accent2);color:#04140a;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;min-height:38px;font-weight:700}
+  button:hover:not(:disabled){background:var(--accent);box-shadow:0 0 12px rgba(57,255,20,.35)}
+  button:disabled{opacity:.5;cursor:default}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--text);font-weight:500}
+  button.ghost:hover:not(:disabled){border-color:var(--accent);background:var(--panel2)}
+  button.danger{background:transparent;border:1px solid var(--line);color:var(--bad);font-weight:500}
+  button.danger.armed{background:var(--bad);color:#1a0b0b;border-color:var(--bad)}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;flex-wrap:wrap}
+  .tabs button{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--mute);padding:10px 14px;font-weight:600}
+  .tabs button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+  .tabs button:hover{background:var(--panel2)}
+  .stats{display:flex;gap:18px;color:var(--mute);font-size:13px;margin:4px 0 12px;flex-wrap:wrap}
+  .stats b{color:var(--text)}
+  .loc{margin-bottom:14px}
+  .loc h3{margin:0;padding:8px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px 8px 0 0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;color:var(--accent)}
+  .loc h3 span{color:var(--mute);text-transform:none;letter-spacing:0}
+  .item{display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
+  .item:last-child{border-radius:0 0 8px 8px}
+  .name{overflow-wrap:anywhere}
+  .badge{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+  .badge.good{color:var(--good);border-color:#1f6a3a}
+  .badge.warn{color:var(--warn);border-color:#5a4416}
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper button{width:34px;padding:0;min-height:34px}
+  .stepper input{width:74px;text-align:center;min-height:34px;padding:4px}
+  .wherewrap{position:relative;width:150px}
+  .wherewrap .acbox{left:auto;right:0;width:270px}
+  .where{width:100%;min-height:34px;padding:4px 8px;font-size:13px}
+  .empty{color:var(--mute);text-align:center;padding:28px 10px;border:1px dashed var(--line);border-radius:10px}
+  .msg{min-height:20px;font-size:13px;color:var(--good);margin-top:8px}
+  .msg.err{color:var(--bad)}
+  .banner{background:#2a2112;border:1px solid #5a4416;color:var(--warn);padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .banner.info{background:#0c2214;border-color:#1f6a3a;color:var(--accent)}
+  textarea{width:100%;min-height:110px;font:12px/1.4 ui-monospace,Consolas,monospace}
+  .note{color:var(--mute);font-size:12px;margin:8px 0 0}
+  .ac{position:relative}
+  .acbox{position:absolute;z-index:20;left:0;right:0;top:100%;margin-top:2px;background:var(--panel2);border:1px solid var(--accent2);border-radius:8px;max-height:320px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 14px rgba(57,255,20,.18)}
+  .acbox div{padding:7px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--text)}
+  .acbox div[aria-selected=true],.acbox div:hover{background:#17402a}
+  .acbox small{color:var(--mute);white-space:nowrap;font-size:11px}
+  .prog{margin:0 0 14px}
+  .bar{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--accent);box-shadow:0 0 10px var(--accent);transition:width .2s}
+  .src{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}
+  .src b{color:var(--mute);font-weight:500}
+  .bp{border:1px solid var(--line);border-top:0;background:var(--panel)}
+  .bp:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}
+  .bp:last-child{border-radius:0 0 8px 8px}
+  .bphead{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 12px}
+  .bphead input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--accent2)}
+  .bphead .name{cursor:pointer}
+  .ing{padding:4px 12px 10px 42px;font-size:13px;color:var(--mute)}
+  .ing div{display:flex;gap:10px;justify-content:space-between;max-width:460px}
+  .ing .ok{color:var(--good)} .ing .no{color:var(--bad)}
+  .grp{margin:14px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .nrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:7px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
+  .nrow:first-of-type{border-top:1px solid var(--line)}
+  @media (max-width:700px){
+    .item{grid-template-columns:1fr auto;grid-template-areas:"n b" "s w" "d d"}
+    .item .name{grid-area:n}.item .badge{grid-area:b;justify-self:end}
+    .item .stepper{grid-area:s}.item .wherewrap{grid-area:w;width:100%}
+    .wherewrap .acbox{left:0;right:0;width:auto}
+    .item .danger{grid-area:d}
+    .upd{text-align:left}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Loot Tracker</h1>
+      <p class="sub">Armor, weapons, attachments, items, materials and blueprints &mdash; by quantity and location. Fan-made, not affiliated with CIG.</p>
+    </div>
+    <div class="upd">
+      <button id="updBtn" type="button">Update item database</button>
+      <div class="mini" id="dbStatus">Item database: not downloaded yet</div>
+    </div>
+  </header>
+
+  <div id="storageWarn" class="banner" hidden>This browser is blocking saved data, so your list will disappear when you close the page. Use the Data &amp; backup tab to copy it out before you leave.</div>
+  <div id="patchBanner" class="banner info" hidden><span id="patchText"></span><button type="button" id="patchBtn">Update now</button></div>
+  <div id="prog" class="prog" hidden><div class="bar"><i id="barFill"></i></div><div class="mini" id="progText"></div></div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="inv" aria-selected="true">Inventory</button>
+    <button role="tab" data-tab="bp" aria-selected="false">Blueprints</button>
+    <button role="tab" data-tab="new" aria-selected="false">Added this patch</button>
+    <button role="tab" data-tab="data" aria-selected="false">Data &amp; backup</button>
+  </nav>
+
+  <!-- INVENTORY -->
+  <section id="tab-inv">
+    <div class="panel">
+      <h2>Add loot</h2>
+      <form id="addForm" class="row" autocomplete="off">
+        <label class="grow ac">Item (start typing)
+          <input id="fName" placeholder='e.g. Karna, Arden, suppressor, Hadanite' required maxlength="120" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="acBox">
+          <div id="acBox" class="acbox" role="listbox" hidden></div>
+        </label>
+        <label>Category
+          <select id="fCat"></select>
+        </label>
+        <label>Type
+          <input id="fSub" list="subList" placeholder="auto" maxlength="40" style="width:130px">
+        </label>
+        <label class="qty">Qty
+          <input id="fQty" type="number" min="0.01" step="any" value="1">
+        </label>
+        <label class="grow ac">Location
+          <input id="fLoc" placeholder="e.g. Lorville hab, Cutlass hold, Carrying" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="locBox">
+          <div id="locBox" class="acbox" role="listbox" hidden></div>
+        </label>
+        <button type="submit">Add</button>
+      </form>
+      <div id="msg" class="msg" role="status"></div>
+      <p class="note">Category and location stay put between adds, so a whole loot run goes in fast. Adding the same item to the same location stacks the quantity. Materials accept decimals (SCU).</p>
+      <datalist id="locList"></datalist>
+      <datalist id="subList"></datalist>
+    </div>
+
+    <div class="panel">
+      <h2>Inventory</h2>
+      <div class="row">
+        <label class="grow">Search
+          <input id="qSearch" type="search" placeholder="Filter by name">
+        </label>
+        <label>Category
+          <select id="qCat"></select>
+        </label>
+        <label>Type
+          <select id="qSub"></select>
+        </label>
+        <label>Location
+          <select id="qLoc"></select>
+        </label>
+        <label>Size
+          <select id="qSize"></select>
+        </label>
+        <label>Sort by
+          <select id="qSort">
+            <option value="name">Name</option>
+            <option value="sizeDesc">Size (largest first)</option>
+            <option value="sizeAsc">Size (smallest first)</option>
+            <option value="type">Type / slot</option>
+            <option value="qty">Quantity</option>
+          </select>
+        </label>
+        <button class="ghost" id="undoBtn" type="button" disabled>Undo last change</button>
+      </div>
+      <div class="note" id="sizeNote" hidden>Ship component sizes and grades come from the item database. Press Update to load them.</div>
+      <div class="stats" id="stats"></div>
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <!-- BLUEPRINTS -->
+  <section id="tab-bp" hidden>
+    <div class="panel">
+      <h2>Blueprints</h2>
+      <div class="row">
+        <label class="grow">Search
+          <input id="bSearch" type="search" placeholder="Search blueprints by item name">
+        </label>
+        <label>Category
+          <select id="bCat"></select>
+        </label>
+        <label>Show
+          <select id="bStatus">
+            <option value="">All</option>
+            <option value="known">Known</option>
+            <option value="unknown">Not known yet</option>
+            <option value="craftable">Craftable with my materials</option>
+            <option value="default">Unlocked by default</option>
+          </select>
+        </label>
+      </div>
+      <div class="stats" id="bStats"></div>
+      <div id="bList"></div>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="bMore" type="button" hidden>Show more</button></div>
+    </div>
+  </section>
+
+  <!-- NEW -->
+  <section id="tab-new" hidden>
+    <div class="panel">
+      <h2>Added this patch</h2>
+      <div class="row">
+        <label>Patch
+          <select id="nPatch"></select>
+        </label>
+        <button class="ghost" id="nExact" type="button" hidden>Get exact item list (downloads ~55 MB)</button>
+      </div>
+      <p class="note" id="nNote"></p>
+      <div id="nList"></div>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section id="tab-data" hidden>
+    <div class="panel">
+      <h2>Item database</h2>
+      <div class="src" id="srcInfo"></div>
+      <p class="note">Update downloads the full item and blueprint lists from the Star Citizen Wiki API and the UEX API straight into your browser, then adds anything new to autocomplete. The first update takes about a minute and downloads roughly 60 MB; the database is then kept in your browser. Neither source is run by this tool, and either can be briefly unavailable. Nothing you track is ever sent anywhere.</p>
+    </div>
+    <div class="panel">
+      <h2>Backup &amp; share</h2>
+      <div id="nativeInfo" hidden style="margin-bottom:10px"><p class="note" style="margin-top:0">Saved automatically to a file on this computer, with a dated backup copy made once a day (the last 14 are kept). Reinstalling or updating the app does not touch it.</p><div class="row"><button type="button" class="ghost" id="openFolderBtn">Open data folder</button><span class="note" id="dataPath"></span></div></div>
+      <p class="note" id="browserNote" style="margin-top:0">Your inventory and known blueprints are saved in this browser only. They do not sync between devices, and clearing browser data erases them. Copy the backup text and keep it somewhere safe, or paste it on another device to move your list.</p>
+      <div class="row" style="margin:10px 0">
+        <button type="button" id="exportBtn">Create backup text</button>
+        <button type="button" class="ghost" id="copyBtn">Copy</button>
+        <label style="flex-direction:row;align-items:center;gap:8px">
+          <span>Or load a file</span>
+          <input type="file" id="fileIn" accept=".json,.txt,application/json,text/plain">
+        </label>
+      </div>
+      <textarea id="io" spellcheck="false" placeholder="Backup text appears here. To restore, paste a backup here and choose Replace or Merge."></textarea>
+      <div class="row" style="margin-top:10px">
+        <button type="button" class="ghost" id="mergeBtn">Merge into my list</button>
+        <button type="button" class="danger" id="replaceBtn">Replace my list</button>
+        <button type="button" class="danger" id="clearBtn">Clear everything</button>
+      </div>
+      <div id="ioMsg" class="msg" role="status"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/*LOGIC*/
+var CATS = ["Armor","Weapon","Attachment","Consumable / Medical","Tool / Gadget","Material","Clothing","Ship component","Other"];
+var CATRANK = {}; CATS.forEach(function(c, i){ CATRANK[c] = i; });
+var FALLBACK_WEAPONS = ["Zenith Laser Sniper Rifle","Arclight Pistol","Coda Pistol","LH86 Pistol","Pulse Laser Pistol","S-38 Pistol","Salvo Frag Pistol","Tripledown Pistol","Yubarev Pistol","Cambio SRT","Demeco LMG","F55 LMG","FS-9 LMG","Fresnel Energy LMG","Gallant Rifle","Karna Rifle","Killshot Rifle","Lumin V SMG","P4-AR Rifle","P8-AR Rifle","Parallax Energy Assault Rifle","Pulverizer LMG","S71 Rifle","C54 SMG","Custodian SMG","P8-SC SMG","Quartz Energy SMG","Ripper SMG","BR-2 Shotgun","Deadrig Shotgun","Devastator Shotgun","Prism Laser Shotgun","R97 Shotgun","Ravager-212 Twin Shotgun","Animus Missile Launcher","Boomtube Rocket Launcher","Scourge Railgun","A03 Sniper Rifle","Arrowhead Sniper Rifle","Atzkav Sniper Rifle","P6-LR Sniper Rifle","Scalpel Sniper Rifle","GP-33 MOD Grenade Launcher"];
+var STORE_KEY = "sc-loot-tracker-v1", KNOWN_KEY = "sc-loot-known-v1";
+var MAXQ = 999999;
+
+function norm(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " "); }
+function nameKey(s){ return norm(s).toLowerCase().replace(/["'“”‘’]/g, ""); }
+function uid(){ return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+function keyOf(i){ return i.name.toLowerCase() + "|" + i.cat + "|" + i.loc.toLowerCase(); }
+function cleanQty(q, cat){
+  q = Number(q);
+  if (!isFinite(q) || q <= 0) return 0;
+  q = cat === "Material" ? Math.round(q * 100) / 100 : Math.floor(q);
+  return q > MAXQ ? MAXQ : q;
+}
+function addItem(items, o){
+  var name = norm(o.name).slice(0, 120);
+  var loc = norm(o.loc).slice(0, 80) || "Unsorted";
+  var cat = CATS.indexOf(o.cat) >= 0 ? o.cat : "Other";
+  var qty = cleanQty(o.qty, cat);
+  var sub = norm(o.sub).slice(0, 40);
+  if (!name || !(qty > 0)) return false;
+  var probe = { name: name, cat: cat, loc: loc };
+  var ex = items.find(function(i){ return keyOf(i) === keyOf(probe); });
+  if (ex){ ex.qty = Math.min(MAXQ, Math.round((ex.qty + qty) * 100) / 100); if (!ex.sub && sub) ex.sub = sub; }
+  else items.push({ id: uid(), name: name, cat: cat, sub: sub, qty: qty, loc: loc });
+  return true;
+}
+function adjust(items, id, d){
+  var i = items.find(function(x){ return x.id === id; });
+  if (!i) return false;
+  i.qty = Math.max(1, Math.min(MAXQ, Math.round((i.qty + d) * 100) / 100));
+  return true;
+}
+function setQty(items, id, q){
+  var i = items.find(function(x){ return x.id === id; });
+  q = cleanQty(q, i && i.cat);
+  if (!i || !(q > 0)) return false;
+  i.qty = q;
+  return true;
+}
+function removeItem(items, id){
+  var n = items.findIndex(function(x){ return x.id === id; });
+  if (n < 0) return false;
+  items.splice(n, 1);
+  return true;
+}
+function moveItem(items, id, newLoc){
+  var i = items.find(function(x){ return x.id === id; });
+  newLoc = norm(newLoc).slice(0, 80) || "Unsorted";
+  if (!i || newLoc === i.loc) return false;
+  i.loc = newLoc;
+  var dup = items.find(function(x){ return x !== i && keyOf(x) === keyOf(i); });
+  if (dup){ dup.qty = Math.min(MAXQ, Math.round((dup.qty + i.qty) * 100) / 100); removeItem(items, i.id); }
+  return true;
+}
+function sanitize(list){
+  var out = [];
+  if (!Array.isArray(list)) return out;
+  list.forEach(function(r){
+    if (!r || typeof r !== "object") return;
+    addItem(out, { name: r.name, cat: r.cat, sub: r.sub, qty: r.qty, loc: r.loc });
+  });
+  return out;
+}
+function sanitizeKnown(list){
+  var out = {};
+  if (!Array.isArray(list)) return out;
+  list.forEach(function(r){
+    if (!r || typeof r !== "object" || typeof r.u !== "string" || !r.u || r.u.length > 80) return;
+    out[r.u] = norm(r.n).slice(0, 120);
+  });
+  return out;
+}
+function parseBackup(text){
+  var data = JSON.parse(text);
+  var list = Array.isArray(data) ? data : (data && data.items);
+  var items = sanitize(list);
+  var known = Array.isArray(data) ? {} : sanitizeKnown(data && data.known);
+  var hasList = Array.isArray(list) && list.length > 0;
+  if (!items.length && !Object.keys(known).length && hasList) throw new Error("No valid items found");
+  if (!items.length && !Object.keys(known).length && !Array.isArray(list)) throw new Error("No valid items found");
+  return { items: items, known: known };
+}
+function mergeInto(items, incoming){ incoming.forEach(function(r){ addItem(items, r); }); }
+function ownedByName(items){
+  var m = {};
+  items.forEach(function(i){ var k = nameKey(i.name); m[k] = (m[k] || 0) + i.qty; });
+  return m;
+}
+function craftStatus(bp, owned){
+  var missing = [], have = 0;
+  bp.ing.forEach(function(g){
+    var need = Number(g[2]) || 0, got = owned[nameKey(g[0])] || 0;
+    if (got + 1e-9 >= need) have++; else missing.push(g[0]);
+  });
+  return { ok: bp.ing.length > 0 && !missing.length, missing: missing, have: have };
+}
+function verParts(v){ return String(v || "").split("-")[0].split(".").map(function(n){ return parseInt(n, 10) || 0; }); }
+function verCmp(a, b){
+  var x = verParts(a), y = verParts(b);
+  for (var i = 0; i < 4; i++){ if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); }
+  return 0;
+}
+function baseVer(code){ return String(code || "").split("-")[0]; }
+/*END LOGIC*/
+
+/*DATA*/
+var WIKI = "https://api.star-citizen.wiki/api/v2/", UEX = "https://uexcorp.space/api/2.0/";
+var UEX_SECTIONS = ["Armor","Clothing","Personal Weapons","Undersuits","Utility","Consumable","Miscellaneous"];
+var WPN = { Small: "Sidearm", Medium: "Primary", Large: "Heavy", Knife: "Melee", Grenade: "Grenade" };
+var ATT = { IronSight: "Sight / Scope", Barrel: "Barrel / Muzzle", BottomAttachment: "Underbarrel", Magazine: "Magazine", Utility: "Utility", Missile: "Missile" };
+var CLOTH = { Torso: "Torso", Legs: "Legs", Shoes: "Shoes", Hat: "Hat", Gloves: "Gloves", Backpack: "Backpack" };
+var NULLCLS_KEEP = /^(Misc|RemovableChip|Gadget|Battery|Char_Head_Piercings)$/;
+
+function attachNameSub(name){
+  var n = String(name || "").toLowerCase();
+  if (/suppress|silenc/.test(n)) return "Suppressor";
+  if (/compensat|stabili[sz]er|muzzle brake/.test(n)) return "Compensator";
+  if (/flash ?hider|flash suppress/.test(n)) return "Flash hider";
+  if (/magazine|\bmag\b|drum/.test(n)) return "Magazine";
+  if (/scope|sight|optic|reflex|telescopic|holo|\dx\b/.test(n)) return "Sight / Scope";
+  if (/laser|flashlight|torch|grip|bipod|underbarrel|light/.test(n)) return "Underbarrel";
+  return "";
+}
+function attachSub(sub, name){
+  var base = ATT[sub] || sub || "";
+  if (sub === "Barrel"){ var r = attachNameSub(name); if (r === "Suppressor" || r === "Compensator" || r === "Flash hider") return r; }
+  return base;
+}
+var SHIPSLOT = { PowerPlant: "Power plant", Cooler: "Cooler", Shield: "Shield generator", QuantumDrive: "Quantum drive", JumpDrive: "Jump drive",
+  Weapon: "Ship weapon", WeaponDefensive: "Countermeasure", MissileLauncher: "Missile rack", Missile: "Missile", Armor: "Ship armor", Turret: "Turret",
+  FuelTank: "Fuel tank", QuantumFuelTank: "Quantum fuel tank", LifeSupportGenerator: "Life support", Radar: "Radar", FlightController: "Flight blade",
+  ManneuverThruster: "Maneuver thruster", MainThruster: "Main thruster", BombRack: "Bomb rack", Bomb: "Bomb", Container: "Cargo container",
+  Salvage: "Salvage", Beam: "Tractor beam", FuelIntake: "Fuel intake", QuantumInterdictionGenerator: "Quantum interdiction" };
+function shipSlot(cls){
+  if (/^Mining\./.test(cls)) return "Mining laser";
+  var k = cls.split(".")[1] || "";
+  return SHIPSLOT[k] || k.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+function classify(type, sub, cls, name){
+  type = type || ""; sub = (sub && sub !== "UNDEFINED") ? sub : ""; cls = cls || ""; name = name || "";
+  var m;
+  if (type === "Paints" || /^Ship\.Paints/.test(cls)) return null;
+  if ((m = /^Char_Armor_(\w+)$/.exec(type))) return { c: "Armor", s: m[1], g: /^(Light|Medium|Heavy)$/.test(sub) ? sub : "" };
+  if (/^Char_Clothing_/.test(type)){ var cm = /FPS\.Clothing\.(\w+)/.exec(cls); return { c: "Clothing", s: cm ? (CLOTH[cm[1]] || cm[1]) : "", g: "" }; }
+  if (/^Char_(Accessory|Head)_/.test(type)) return { c: "Clothing", s: type.replace(/^Char_(Accessory|Head)_/, ""), g: "" };
+  if (type === "WeaponPersonal"){
+    if (sub === "Gadget") return { c: "Tool / Gadget", s: "Gadget", g: "" };
+    return { c: "Weapon", s: WPN[sub] || sub, g: "" };
+  }
+  if (type === "Grenade") return { c: "Weapon", s: "Grenade", g: "" };
+  if (type === "WeaponAttachment") return { c: "Attachment", s: attachSub(sub, name), g: "" };
+  if (/^(Food|Drink|Bottle)$/.test(type)) return { c: "Consumable / Medical", s: type === "Food" ? "Food" : "Drink", g: "" };
+  if (type === "FPS_Consumable") return sub === "Hacking" ? { c: "Tool / Gadget", s: "Hacking", g: "" } : { c: "Consumable / Medical", s: "Medical", g: "" };
+  if (type === "RemovableChip") return { c: "Tool / Gadget", s: "Data chip", g: "" };
+  if (type === "MobiGlas") return { c: "Tool / Gadget", s: "mobiGlas", g: "" };
+  if (type === "Suit") return { c: "Tool / Gadget", s: "Jetpack", g: "" };
+  if (type === "Gadget" || /^Mining\.Gadget/.test(cls)) return { c: "Tool / Gadget", s: "Gadget", g: "" };
+  if (type === "Misc" && (sub === "Harvestable" || sub === "Mineable")) return { c: "Material", s: "Mineral", g: "" };
+  if (/^Ship\.Flair/.test(cls)) return { c: "Other", s: "Decoration", g: "" };
+  if (/^Ship\./.test(cls) || /^Mining\./.test(cls)) return { c: "Ship component", s: shipSlot(cls), g: "" };
+  if (!cls && !NULLCLS_KEEP.test(type)) return null;
+  return { c: "Other", s: sub || type, g: "" };
+}
+function uexClass(section, category, name){
+  if (section === "Armor" || section === "Undersuits") return { c: "Armor", s: section === "Undersuits" ? "Undersuit" : (category || "") };
+  if (section === "Clothing") return { c: "Clothing", s: category || "" };
+  if (section === "Personal Weapons"){
+    if (category === "Attachments") return { c: "Attachment", s: attachNameSub(name) };
+    return { c: "Weapon", s: "" };
+  }
+  if (section === "Consumable") return { c: "Consumable / Medical", s: category || "" };
+  if (section === "Utility") return { c: "Tool / Gadget", s: category || "" };
+  return { c: "Other", s: category || "" };
+}
+function normWikiItem(d){
+  if (!d || !d.uuid || !d.name) return null;
+  var k = classify(d.type, d.sub_type, d.classification, d.name);
+  if (!k) return null;
+  var o = { u: String(d.uuid).toLowerCase(), n: String(d.name), c: k.c, s: k.s || "", g: k.g || "", a: "" };
+  if (k.c === "Ship component"){
+    var z = Math.floor(Number(d.size));
+    if (z >= 1 && z <= 20) o.z = z;
+    if (/^[A-D]$/.test(String(d.grade || ""))) o.g = String(d.grade);
+  }
+  return o;
+}
+function normBp(b){
+  return {
+    u: b.uuid, n: b.output_name || b.key || "Unknown", o: String(b.output_item_uuid || "").toLowerCase(),
+    t: b.craft_time_label || "", d: b.is_available_by_default ? 1 : 0, m: b.unlocking_missions_count || 0,
+    ing: (b.ingredients || []).map(function(i){ return [i.name, i.kind === "resource" ? "r" : "i", i.kind === "resource" ? i.quantity_scu : i.quantity]; })
+  };
+}
+function buildMats(bps){
+  var m = {};
+  bps.forEach(function(b){ b.ing.forEach(function(i){ var k = nameKey(i[0]); if (k && !m[k]) m[k] = { n: i[0], unit: i[1] === "r" ? "SCU" : "units" }; }); });
+  return Object.keys(m).map(function(k){ return m[k]; });
+}
+function sigKey(s){ return nameKey(s).replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean).sort().join(" "); }
+function mergeUex(items, uex){
+  var byU = {}, byN = {}, added = 0;
+  items.forEach(function(it){ byU[it.u] = it; var k = sigKey(it.n); (byN[k] = byN[k] || []).push(it); });
+  uex.forEach(function(x){
+    if (!x.n) return;
+    var hit = x.u && byU[x.u];
+    if (hit){ if (x.v) hit.a = x.v; return; }
+    var sk = sigKey(x.n), arr = byN[sk];
+    if (arr){ arr.forEach(function(it){ if (x.v && !it.a) it.a = x.v; }); return; }
+    var k = uexClass(x.section, x.category, x.n);
+    var it = { u: "uex:" + x.id, n: String(x.n), c: k.c, s: k.s || "", g: "", a: x.v || "", x: 1 };
+    items.push(it); byN[sk] = [it]; added++;
+  });
+  return added;
+}
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+async function getJSON(url){
+  var last;
+  for (var a = 0; a < 4; a++){
+    var ctl = new AbortController(), t = setTimeout(function(){ ctl.abort(); }, 60000);
+    try {
+      var r = await fetch(url, { signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) return await r.json();
+      last = new Error("HTTP " + r.status);
+      if (r.status !== 429 && r.status < 500){ last.fatal = true; throw last; }
+    } catch (e){ clearTimeout(t); if (e && e.fatal) throw e; last = e; }
+    await sleep(700 * (a + 1));
+  }
+  throw last;
+}
+async function pool(n, jobs, worker){
+  var i = 0, runners = [];
+  for (var k = 0; k < Math.min(n, jobs.length); k++)
+    runners.push((async function(){ while (i < jobs.length){ var j = jobs[i++]; await worker(j); } })());
+  await Promise.all(runners);
+}
+async function fetchPaged(base, params, mapper, onProgress){
+  var q = base + "?limit=200&" + (params ? params + "&" : "");
+  var first = await getJSON(q + "page=1");
+  var last = (first.meta && first.meta.last_page) || 1, pages = [], done = 1;
+  pages[1] = mapper(first.data || []);
+  if (onProgress) onProgress(done, last);
+  var jobs = []; for (var p = 2; p <= last; p++) jobs.push(p);
+  await pool(4, jobs, async function(p){ var r = await getJSON(q + "page=" + p); pages[p] = mapper(r.data || []); done++; if (onProgress) onProgress(done, last); });
+  var out = []; for (var p2 = 1; p2 <= last; p2++) out = out.concat(pages[p2] || []);
+  return out;
+}
+function dedupeBy(arr, key){ var seen = {}, out = []; arr.forEach(function(x){ var k = key(x); if (!seen[k]){ seen[k] = 1; out.push(x); } }); return out; }
+async function fetchVersions(){
+  var gv = await getJSON(WIKI + "game-versions");
+  var vs = dedupeBy((gv.data || []).filter(function(v){ return v && v.code; }), function(v){ return v.code; });
+  vs.sort(function(a, b){ return String(b.released_at).localeCompare(String(a.released_at)); });
+  return vs.map(function(v){ return { code: v.code, channel: v.channel, released: String(v.released_at || "").slice(0, 10), def: !!v.is_default }; });
+}
+function predecessor(versions, code){
+  var base = baseVer(code), seenSelf = false;
+  for (var i = 0; i < versions.length; i++){
+    if (versions[i].code === code){ seenSelf = true; continue; }
+    if (seenSelf && baseVer(versions[i].code) !== base) return versions[i];
+  }
+  return null;
+}
+async function fetchUex(progress){
+  var cats = await getJSON(UEX + "categories");
+  var list = (cats.data || []).filter(function(c){ return c.type === "item" && UEX_SECTIONS.indexOf(c.section) >= 0; });
+  var out = [], done = 0, failed = 0;
+  await pool(3, list, async function(c){
+    try {
+      var r = await getJSON(UEX + "items?id_category=" + c.id);
+      (r.data || []).forEach(function(x){ out.push({ id: x.id, u: String(x.uuid || "").toLowerCase(), n: x.name, section: c.section, category: c.name, v: x.game_version || "" }); });
+    } catch (e){ failed++; }
+    done++; if (progress) progress(done, list.length);
+  });
+  return { items: out, failed: failed, total: list.length };
+}
+// Runs the whole update. prev = previously stored database (or null). progress(label, fraction 0..1).
+async function runUpdate(prev, progress){
+  var P = function(label, f){ if (progress) progress(label, f); };
+  var warnings = [], srcs = {};
+  P("Checking the latest game version", 0.01);
+  var versions = await fetchVersions();
+  var latest = versions.filter(function(v){ return v.def; })[0] || versions[0];
+  if (!latest) throw new Error("The wiki API returned no game versions");
+  var prevV = predecessor(versions, latest.code);
+
+  var items = await fetchPaged(WIKI + "items", "version=" + encodeURIComponent(latest.code), function(rows){
+    return rows.map(normWikiItem).filter(Boolean);
+  }, function(d, t){ P("Downloading items (" + d + "/" + t + ")", 0.02 + 0.6 * d / t); });
+  items = dedupeBy(items, function(x){ return x.u; });
+  srcs.wiki = { ok: true, n: items.length };
+
+  var bps = [];
+  try {
+    bps = await fetchPaged(WIKI + "blueprints", "version=" + encodeURIComponent(latest.code), function(rows){ return rows.map(normBp); },
+      function(d, t){ P("Downloading blueprints (" + d + "/" + t + ")", 0.62 + 0.1 * d / t); });
+    bps = dedupeBy(bps, function(x){ return x.u; });
+    srcs.bp = { ok: true, n: bps.length };
+  } catch (e){ srcs.bp = { ok: false, n: 0, err: String(e.message || e) }; warnings.push("Blueprints could not be downloaded (" + srcs.bp.err + ")."); }
+
+  var uexAdded = 0;
+  try {
+    var u = await fetchUex(function(d, t){ P("Checking UEX (" + d + "/" + t + ")", 0.72 + 0.18 * d / t); });
+    uexAdded = mergeUex(items, u.items);
+    srcs.uex = { ok: u.failed < u.total, n: u.items.length, extra: uexAdded, failed: u.failed };
+    if (u.failed) warnings.push("UEX: " + u.failed + " of " + u.total + " categories failed to load.");
+  } catch (e){ srcs.uex = { ok: false, n: 0, err: String(e.message || e) }; warnings.push("UEX could not be reached (" + srcs.uex.err + "). Wiki data was still updated."); }
+
+  P("Working out what's new", 0.92);
+  var patch = baseVer(latest.code);
+  var diffs = JSON.parse(JSON.stringify((prev && prev.diffs) || {}));
+  var d = diffs[patch] || { items: [], bps: [], from: "", exact: false };
+  if (prev && prev.items && prev.items.length){
+    var prevSet = {}; prev.items.forEach(function(x){ prevSet[x.u] = 1; });
+    var fresh = items.filter(function(x){ return !prevSet[x.u]; }).map(function(x){ return x.u; });
+    d.items = dedupeBy(d.items.concat(fresh), function(x){ return x; });
+    if (prev.version !== latest.code && !d.from) d.from = baseVer(prev.version);
+  } else if (!d.from && prevV) d.from = baseVer(prevV.code);
+  // blueprints: compare with the stored list, or with the previous patch's list
+  try {
+    var prevBpU = null;
+    if (prev && prev.bps && prev.bps.length && prev.version !== latest.code) prevBpU = prev.bps.map(function(b){ return b.u; });
+    else if (prevV && bps.length){
+      prevBpU = await fetchPaged(WIKI + "blueprints", "version=" + encodeURIComponent(prevV.code), function(rows){ return rows.map(function(b){ return b.uuid; }); });
+    }
+    if (prevBpU && bps.length){
+      var ps = {}; prevBpU.forEach(function(x){ ps[x] = 1; });
+      d.bps = dedupeBy(d.bps.concat(bps.filter(function(b){ return !ps[b.u]; }).map(function(b){ return b.u; })), function(x){ return x; });
+    }
+  } catch (e){ warnings.push("Couldn't compare blueprints with the previous patch."); }
+  diffs[patch] = d;
+
+  P("Done", 1);
+  return { v: 2, version: latest.code, patch: patch, fetchedAt: new Date().toISOString(), versions: versions, items: items, bps: bps, mats: buildMats(bps), srcs: srcs, diffs: diffs, warnings: warnings };
+}
+// Optional: exact item diff for one patch by downloading that patch and the one before it.
+async function computeExactItems(cat, patchCode, progress){
+  var pv = predecessor(cat.versions, patchCode);
+  if (!pv) throw new Error("No earlier patch to compare with");
+  var ids = function(rows){ return rows.map(function(d){ return String(d.uuid).toLowerCase(); }); };
+  var cur = await fetchPaged(WIKI + "items", "version=" + encodeURIComponent(patchCode), ids, function(d, t){ if (progress) progress("Downloading " + baseVer(patchCode) + " (" + d + "/" + t + ")", 0.5 * d / t); });
+  var old = await fetchPaged(WIKI + "items", "version=" + encodeURIComponent(pv.code), ids, function(d, t){ if (progress) progress("Downloading " + baseVer(pv.code) + " (" + d + "/" + t + ")", 0.5 + 0.5 * d / t); });
+  var os = {}; old.forEach(function(x){ os[x] = 1; });
+  var known = {}; cat.items.forEach(function(x){ known[x.u] = 1; });
+  var fresh = dedupeBy(cur.filter(function(x){ return !os[x] && known[x]; }), function(x){ return x; });
+  var key = baseVer(patchCode), d = cat.diffs[key] || { items: [], bps: [], from: "", exact: false };
+  d.items = dedupeBy(d.items.concat(fresh), function(x){ return x; });
+  d.exact = true; d.from = baseVer(pv.code);
+  cat.diffs[key] = d;
+  return d;
+}
+/*END DATA*/
+
+(function(){
+  var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
+  var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, HAS_SIZES = false;
+  var armedId = null, armedTimer = null, bpShown = 60;
+  var $ = function(id){ return document.getElementById(id); };
+
+  function h(tag, a){
+    var e = document.createElement(tag);
+    if (a) for (var k in a){
+      var v = a[k];
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k === "value" || k === "checked" || k === "disabled" || k.slice(0, 2) === "on") e[k] = v;
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (var i = 2; i < arguments.length; i++){
+      var c = arguments[i];
+      if (c == null || c === false) continue;
+      e.append(c.nodeType ? c : document.createTextNode(String(c)));
+    }
+    return e;
+  }
+  function say(el, text, bad){ el.textContent = text; el.className = "msg" + (bad ? " err" : ""); }
+  function uniqSorted(a){
+    var seen = {}, out = [];
+    a.forEach(function(v){ if (!v) return; var k = String(v).toLowerCase(); if (!seen[k]){ seen[k] = 1; out.push(v); } });
+    return out.sort(function(x, y){ return String(x).localeCompare(String(y)); });
+  }
+  function fillSelect(sel, opts, firstLabel){
+    var cur = sel.value; sel.textContent = "";
+    if (firstLabel != null) sel.appendChild(h("option", { value: "", text: firstLabel }));
+    opts.forEach(function(v){ sel.appendChild(h("option", { value: v, text: v })); });
+    if (opts.indexOf(cur) >= 0) sel.value = cur;
+  }
+  function fillDatalist(dl, vals){ dl.textContent = ""; vals.forEach(function(v){ dl.appendChild(h("option", { value: v })); }); }
+  function fmt(n){ return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+
+  // ---------- storage ----------
+  var NATIVE = window.scStore || null;
+  function load(){
+    if (NATIVE){
+      try {
+        var d = NATIVE.loadSync();
+        items = sanitize(d.items || []); known = sanitizeKnown(d.known || []);
+        if (d.restoredFrom){ $("storageWarn").textContent = "Your data file was damaged, so it was restored from the backup " + d.restoredFrom + ". The damaged file was kept next to it in the data folder."; $("storageWarn").hidden = false; }
+      } catch (e){ storageOK = false; $("storageWarn").textContent = "Could not read the saved data file."; $("storageWarn").hidden = false; }
+      return;
+    }
+    try {
+      var raw = localStorage.getItem(STORE_KEY); if (raw) items = sanitize(JSON.parse(raw));
+      var kr = localStorage.getItem(KNOWN_KEY); if (kr) known = sanitizeKnown(JSON.parse(kr));
+    } catch (e){}
+    try { localStorage.setItem(STORE_KEY + "-t", "1"); localStorage.removeItem(STORE_KEY + "-t"); } catch (e){ storageOK = false; }
+    $("storageWarn").hidden = storageOK;
+  }
+  function save(){
+    if (NATIVE){
+      var ok = false;
+      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }) }); } catch (e){}
+      if (!ok){ $("storageWarn").textContent = "Could not write to the data file. Your latest change is NOT saved. Check disk space and folder permissions."; }
+      $("storageWarn").hidden = !!ok && storageOK;
+      return;
+    }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(items));
+      localStorage.setItem(KNOWN_KEY, JSON.stringify(Object.keys(known).map(function(u){ return { u: u, n: known[u] }; })));
+    } catch (e){ storageOK = false; $("storageWarn").hidden = false; }
+  }
+  var idbMem = null;
+  function idb(){
+    return new Promise(function(res, rej){
+      try {
+        var r = indexedDB.open("sc-loot-tracker", 1);
+        r.onupgradeneeded = function(){ r.result.createObjectStore("kv"); };
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror = function(){ rej(r.error); };
+      } catch (e){ rej(e); }
+    });
+  }
+  function idbGet(k){
+    if (NATIVE) return NATIVE.loadCatalogue().catch(function(){ return null; });
+    return idb().then(function(db){ return new Promise(function(res, rej){ var q = db.transaction("kv").objectStore("kv").get(k); q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ rej(q.error); }; }); }).catch(function(){ return idbMem; });
+  }
+  function idbSet(k, v){
+    if (NATIVE) return NATIVE.saveCatalogue(v).catch(function(){ return false; });
+    idbMem = v;
+    return idb().then(function(db){ return new Promise(function(res, rej){ var tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = function(){ rej(tx.error); }; }); }).catch(function(){ return false; });
+  }
+  function snapshot(){ undoStack.push(JSON.stringify({ i: items, k: known })); if (undoStack.length > 30) undoStack.shift(); $("undoBtn").disabled = false; }
+  function commit(){ save(); render(); }
+
+  // ---------- catalogue index ----------
+  function buildIndex(){
+    INDEX = []; BYU = {}; BPCAT = {}; SIZEBY = {}; HAS_SIZES = false;
+    var seen = {}, mk = {};
+    var mats = (catalogue && catalogue.mats) || [];
+    mats.forEach(function(m){ mk[nameKey(m.n)] = m; });
+    if (catalogue && catalogue.items){
+      catalogue.items.forEach(function(it){
+        BYU[it.u] = it;
+        var k = nameKey(it.n) + "|" + it.c + "|" + it.s;
+        if (seen[k]) return; seen[k] = 1;
+        INDEX.push({ n: it.n, l: nameKey(it.n), c: it.c, s: it.s, g: it.g || "", z: it.z || 0, u: it.u });
+      });
+      catalogue.items.forEach(function(it){ if (it.z){ HAS_SIZES = true; var l = nameKey(it.n); if (!SIZEBY[l]) SIZEBY[l] = { z: it.z, g: it.g || "" }; } });
+      var have = {};
+      INDEX.forEach(function(e){ var m = mk[e.l]; if (m && (e.c === "Other" || e.c === "Material")){ e.c = "Material"; e.s = m.unit; } have[e.l] = 1; });
+      mats.forEach(function(m){ var l = nameKey(m.n); if (!have[l]){ have[l] = 1; INDEX.push({ n: m.n, l: l, c: "Material", s: m.unit, g: "", u: "" }); } });
+      (catalogue.bps || []).forEach(function(b){ var it = BYU[b.o]; BPCAT[b.u] = it ? it.c : "Other"; });
+    } else {
+      FALLBACK_WEAPONS.forEach(function(n){ INDEX.push({ n: n, l: nameKey(n), c: "Weapon", s: "", g: "", u: "" }); });
+    }
+  }
+  function searchIndex(q, limit){
+    q = nameKey(q);
+    if (!q) return [];
+    var toks = q.split(" "), res = [];
+    for (var i = 0; i < INDEX.length; i++){
+      var e = INDEX[i], s = e.l, ok = true;
+      for (var t = 0; t < toks.length; t++) if (s.indexOf(toks[t]) < 0){ ok = false; break; }
+      if (!ok) continue;
+      var tier = s.indexOf(q) === 0 ? 0 : (s.indexOf(" " + toks[0]) >= 0 ? 1 : 2);
+      res.push({ e: e, sc: tier * 10000 + (CATRANK[e.c] || 0) * 200 + Math.min(s.length, 199) });
+    }
+    res.sort(function(a, b){ return a.sc - b.sc; });
+    return res.slice(0, limit).map(function(r){ return r.e; });
+  }
+  function exactEntry(name){
+    var l = nameKey(name);
+    for (var i = 0; i < INDEX.length; i++) if (INDEX[i].l === l) return INDEX[i];
+    return null;
+  }
+  function describe(e){ return [e.c, e.s, e.z ? "Size " + e.z : "", e.c === "Ship component" && e.g ? "Grade " + e.g : e.g].filter(Boolean).join(" · "); }
+  function sizeOf(i){ var x = SIZEBY[nameKey(i.name)]; return x ? x.z : 0; }
+  function gradeOf(i){ var x = SIZEBY[nameKey(i.name)]; return x ? x.g : ""; }
+
+  // ---------- autocomplete ----------
+  function attachAC(input, box, o){
+    var list = [], sel = -1;
+    function close(){ box.hidden = true; input.setAttribute("aria-expanded", "false"); sel = -1; }
+    function pick(e){ input.value = e.n; close(); o.onPick(e); }
+    function render(focusing){
+      box.textContent = "";
+      list = o.match(input.value, !!focusing);
+      if (!list.length){ close(); return; }
+      list.forEach(function(e, i){
+        var row = h("div", { role: "option", "aria-selected": i === sel ? "true" : "false" }, h("span", { text: e.n }), h("small", { text: o.hint(e) }));
+        row.addEventListener("mousedown", function(ev){ ev.preventDefault(); pick(e); });
+        box.appendChild(row);
+      });
+      box.hidden = false; input.setAttribute("aria-expanded", "true");
+    }
+    function move(d){
+      if (box.hidden) return;
+      sel = (sel + d + list.length) % list.length;
+      Array.prototype.forEach.call(box.children, function(c, i){ c.setAttribute("aria-selected", i === sel ? "true" : "false"); if (i === sel) c.scrollIntoView({ block: "nearest" }); });
+    }
+    input.addEventListener("input", function(){ sel = -1; render(false); if (o.onInput) o.onInput(); });
+    input.addEventListener("keydown", function(ev){
+      if (ev.key === "ArrowDown"){ ev.preventDefault(); if (box.hidden) render(false); move(1); }
+      else if (ev.key === "ArrowUp"){ ev.preventDefault(); move(-1); }
+      else if (ev.key === "Enter" && !box.hidden && sel >= 0){ ev.preventDefault(); pick(list[sel]); }
+      else if (ev.key === "Escape") close();
+    });
+    input.addEventListener("blur", function(){ setTimeout(function(){ if (document.activeElement !== input) close(); }, 120); });
+    input.addEventListener("focus", function(){ if (o.showOnFocus || input.value) render(!!o.showOnFocus); });
+    return { close: close };
+  }
+  var PLACES = [["Carrying", "on you"], ["Ship inventory", "ship"], ["Ship cargo hold", "ship"], ["Hangar", "base"], ["Hab", "base"],
+    ["Area18", "ArcCorp"], ["Lorville", "Hurston"], ["Orison", "Crusader"], ["New Babbage", "microTech"], ["Port Tressler", "microTech"],
+    ["Everus Harbor", "Hurston"], ["Seraphim Station", "Crusader"], ["Baijini Point", "ArcCorp"], ["Grim HEX", "Yela"], ["Levski", "Nyx"],
+    ["Ruin Station", "Pyro"], ["Checkmate Station", "Pyro"], ["Orbituary", "Pyro"]];
+  function locCandidates(){
+    var cnt = {}, names = {};
+    items.forEach(function(i){ var k = i.loc.toLowerCase(); cnt[k] = (cnt[k] || 0) + 1; names[k] = i.loc; });
+    var out = Object.keys(cnt).map(function(k){ return { n: names[k], src: "yours", c: cnt[k] }; })
+      .sort(function(a, b){ return b.c - a.c || a.n.localeCompare(b.n); });
+    PLACES.forEach(function(p){ if (!cnt[p[0].toLowerCase()]) out.push({ n: p[0], src: "common", tag: p[1], c: 0 }); });
+    return out;
+  }
+  function matchLocations(q, focusing){
+    var all = locCandidates(), toks = nameKey(q).split(" ").filter(Boolean);
+    if (focusing || !toks.length) return all.slice(0, 12);
+    return all.filter(function(e){
+      var l = e.n.toLowerCase();
+      return toks.every(function(t){ return l.indexOf(t) >= 0; }) && l !== nameKey(q);
+    }).sort(function(a, b){
+      var qa = nameKey(q), as = a.n.toLowerCase().indexOf(qa) === 0 ? 0 : 1, bs = b.n.toLowerCase().indexOf(qa) === 0 ? 0 : 1;
+      return (a.src === b.src ? 0 : a.src === "yours" ? -1 : 1) || as - bs || a.n.length - b.n.length;
+    }).slice(0, 10);
+  }
+  function locHint(e){ return e.src === "yours" ? "your location \u00b7 " + e.c + " stack" + (e.c > 1 ? "s" : "") : e.tag; }
+
+  var itemAC = attachAC($("fName"), $("acBox"), {
+    match: function(q){ return searchIndex(q, 14); },
+    hint: describe,
+    onPick: function(e){
+      $("fCat").value = e.c; $("fSub").value = e.s || "";
+      $("fQty").focus(); $("fQty").select();
+    },
+    onInput: function(){
+      var e = exactEntry($("fName").value);
+      if (e){ $("fCat").value = e.c; $("fSub").value = e.s || ""; }
+    }
+  });
+  function acClose(){ itemAC.close(); }
+  attachAC($("fLoc"), $("locBox"), { match: matchLocations, hint: locHint, showOnFocus: true, onPick: function(){ $("addForm").querySelector("button[type=submit]").focus(); } });
+
+  // ---------- inventory ----------
+  function refreshLists(){
+    var locs = uniqSorted(items.map(function(i){ return i.loc; }));
+    fillDatalist($("locList"), locs);
+    fillSelect($("qLoc"), locs, "All locations");
+    var subs = uniqSorted(items.map(function(i){ return i.sub; }).concat(INDEX.slice(0, 4000).map(function(e){ return e.s; })));
+    fillDatalist($("subList"), subs);
+    fillSelect($("qSub"), uniqSorted(items.map(function(i){ return i.sub; })), "All types");
+    var sizes = {}; items.forEach(function(i){ var z = sizeOf(i); if (z) sizes[z] = 1; });
+    var cur = $("qSize").value, ss = $("qSize");
+    ss.textContent = ""; ss.appendChild(h("option", { value: "", text: "All sizes" }));
+    Object.keys(sizes).map(Number).sort(function(a, b){ return a - b; }).forEach(function(z){ ss.appendChild(h("option", { value: String(z), text: "Size " + z })); });
+    if (cur && sizes[cur]) ss.value = cur;
+    $("sizeNote").hidden = HAS_SIZES || !items.some(function(i){ return i.cat === "Ship component"; });
+  }
+  function render(){
+    refreshLists(); renderInventory(); renderStatus();
+    if (!$("tab-bp").hidden) renderBlueprints();
+    if (!$("tab-new").hidden) renderNew();
+  }
+  function cmpItems(a, b, how){
+    var byName = a.name.localeCompare(b.name, undefined, { numeric: true });
+    var za = sizeOf(a), zb = sizeOf(b), r = 0;
+    if (how === "sizeDesc" || how === "sizeAsc"){
+      if (!za !== !zb) return za ? -1 : 1; // unsized items always last
+      r = how === "sizeDesc" ? zb - za : za - zb;
+      return r || (a.sub || "").localeCompare(b.sub || "") || byName;
+    }
+    if (how === "type") return a.cat.localeCompare(b.cat) || (a.sub || "").localeCompare(b.sub || "") || (zb - za) || byName;
+    if (how === "qty") return (b.qty - a.qty) || byName;
+    return byName;
+  }
+  function renderInventory(){
+    var q = $("qSearch").value.trim().toLowerCase(), cat = $("qCat").value, sub = $("qSub").value, loc = $("qLoc").value, size = $("qSize").value, sortBy = $("qSort").value;
+    var shown = items.filter(function(i){
+      return (!q || i.name.toLowerCase().indexOf(q) >= 0) && (!cat || i.cat === cat) && (!sub || i.sub === sub) && (!loc || i.loc === loc) && (!size || String(sizeOf(i)) === size);
+    });
+    var total = shown.reduce(function(s, i){ return s + i.qty; }, 0);
+    var st = $("stats"); st.textContent = "";
+    [["Stacks", shown.length], ["Total items", total], ["Locations", uniqSorted(shown.map(function(i){ return i.loc; })).length]].forEach(function(p){
+      st.appendChild(h("span", null, p[0] + ": ", h("b", { text: fmt(p[1]) })));
+    });
+    var list = $("list"); list.textContent = "";
+    if (!shown.length){
+      list.appendChild(h("div", { class: "empty", text: items.length ? "Nothing matches those filters." : "Nothing logged yet. Add your first piece of loot above." }));
+      return;
+    }
+    var groups = {};
+    shown.forEach(function(i){ (groups[i.loc] = groups[i.loc] || []).push(i); });
+    Object.keys(groups).sort(function(a, b){ return a.localeCompare(b); }).forEach(function(L){
+      var g = groups[L].sort(function(a, b){ return cmpItems(a, b, sortBy); });
+      var box = h("div", { class: "loc" }, h("h3", null, L, h("span", { text: fmt(g.reduce(function(s, i){ return s + i.qty; }, 0)) + " items" })));
+      g.forEach(function(i){ box.appendChild(rowFor(i)); });
+      list.appendChild(box);
+    });
+  }
+  function rowFor(i){
+    var qi = h("input", { type: "number", min: "0.01", step: "any", value: i.qty, "aria-label": "Quantity of " + i.name });
+    var minus = h("button", { type: "button", class: "ghost", text: "−", "aria-label": "Decrease " + i.name, onclick: function(){ snapshot(); adjust(items, i.id, -1); commit(); } });
+    var plus = h("button", { type: "button", class: "ghost", text: "+", "aria-label": "Increase " + i.name, onclick: function(){ snapshot(); adjust(items, i.id, 1); commit(); } });
+    qi.onchange = function(){ snapshot(); if (!setQty(items, i.id, qi.value)) qi.value = i.qty; commit(); };
+    var w = h("input", { class: "where", value: i.loc, maxlength: "80", "aria-label": "Location of " + i.name, role: "combobox", "aria-autocomplete": "list" });
+    var wbox = h("div", { class: "acbox", role: "listbox", hidden: true });
+    var applyMove = function(){ snapshot(); moveItem(items, i.id, w.value); commit(); };
+    w.onchange = applyMove;
+    attachAC(w, wbox, { match: matchLocations, hint: locHint, showOnFocus: true, onPick: applyMove });
+    var wrap = h("div", { class: "wherewrap ac" }, w, wbox);
+    var d = h("button", { type: "button", class: "danger" + (armedId === i.id ? " armed" : ""), text: armedId === i.id ? "Confirm" : "Delete" });
+    d.onclick = function(){
+      if (armedId === i.id){ snapshot(); removeItem(items, i.id); armedId = null; commit(); return; }
+      armedId = i.id; clearTimeout(armedTimer); armedTimer = setTimeout(function(){ armedId = null; renderInventory(); }, 3000); renderInventory();
+    };
+    return h("div", { class: "item" }, h("div", { class: "name", text: i.name }), h("span", { class: "badge", text: [i.sub ? i.cat + " · " + i.sub : i.cat, sizeOf(i) ? "S" + sizeOf(i) : "", gradeOf(i) ? "Grade " + gradeOf(i) : ""].filter(Boolean).join(" · ") }), h("div", { class: "stepper" }, minus, qi, plus), wrap, d);
+  }
+  $("addForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var name = $("fName").value, qty = $("fQty").value;
+    snapshot();
+    var cat = $("fCat").value;
+    if (!addItem(items, { name: name, cat: cat, sub: $("fSub").value, qty: qty, loc: $("fLoc").value })){
+      undoStack.pop(); $("undoBtn").disabled = !undoStack.length;
+      say($("msg"), "Enter an item name and a quantity above zero.", true); return;
+    }
+    say($("msg"), "Logged " + fmt(cleanQty(qty, cat)) + " × " + norm(name) + ".");
+    $("fName").value = ""; $("fQty").value = 1; $("fSub").value = ""; acClose(); $("fName").focus();
+    commit();
+  });
+  ["qSearch", "qCat", "qSub", "qLoc", "qSize", "qSort"].forEach(function(id){ $(id).addEventListener("input", renderInventory); });
+  $("undoBtn").onclick = function(){
+    if (!undoStack.length) return;
+    var s = JSON.parse(undoStack.pop());
+    items = sanitize(s.i); known = s.k || {};
+    $("undoBtn").disabled = !undoStack.length;
+    commit(); say($("msg"), "Undid the last change.");
+  };
+
+  // ---------- blueprints ----------
+  function renderBlueprints(){
+    var list = $("bList"); list.textContent = "";
+    var bps = (catalogue && catalogue.bps) || [];
+    if (!bps.length){
+      $("bStats").textContent = "";
+      list.appendChild(h("div", { class: "empty", text: catalogue ? "No blueprint data in the item database. Try Update again." : "Click “Update item database” (top right) to download the blueprint list." }));
+      $("bMore").hidden = true; return;
+    }
+    var q = nameKey($("bSearch").value), cat = $("bCat").value, status = $("bStatus").value, owned = ownedByName(items);
+    var rows = bps.filter(function(b){
+      if (q && nameKey(b.n).indexOf(q) < 0) return false;
+      if (cat && (BPCAT[b.u] || "Other") !== cat) return false;
+      if (status === "known") return !!known[b.u];
+      if (status === "unknown") return !known[b.u];
+      if (status === "default") return !!b.d;
+      if (status === "craftable") return craftStatus(b, owned).ok;
+      return true;
+    }).sort(function(a, b){ return a.n.localeCompare(b.n); });
+    var kn = Object.keys(known).length;
+    var st = $("bStats"); st.textContent = "";
+    [["Known", kn + " / " + fmt(bps.length)], ["Matching", fmt(rows.length)]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
+    if (!rows.length){ list.appendChild(h("div", { class: "empty", text: "No blueprints match those filters." })); $("bMore").hidden = true; return; }
+    rows.slice(0, bpShown).forEach(function(b){ list.appendChild(bpRow(b, owned)); });
+    $("bMore").hidden = rows.length <= bpShown;
+  }
+  function bpRow(b, owned){
+    var cs = craftStatus(b, owned);
+    var chk = h("input", { type: "checkbox", checked: !!known[b.u], "aria-label": "Known: " + b.n });
+    chk.onchange = function(){ snapshot(); if (chk.checked) known[b.u] = b.n; else delete known[b.u]; commit(); };
+    var ing = h("div", { class: "ing", hidden: true });
+    b.ing.forEach(function(g){
+      var need = Number(g[2]) || 0, got = owned[nameKey(g[0])] || 0, ok = got + 1e-9 >= need;
+      ing.appendChild(h("div", null, h("span", { text: g[0] }), h("span", { class: ok ? "ok" : "no", text: fmt(got) + " / " + fmt(need) + (g[1] === "r" ? " SCU" : "") })));
+    });
+    if (b.m) ing.appendChild(h("div", { text: "Unlocked by " + b.m + " mission" + (b.m > 1 ? "s" : "") }));
+    var name = h("div", { class: "name", text: b.n, role: "button", tabindex: "0", title: "Show materials" });
+    var toggle = function(){ ing.hidden = !ing.hidden; };
+    name.onclick = toggle; name.onkeydown = function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); } };
+    var badges = h("span", null);
+    if (b.d) badges.appendChild(h("span", { class: "badge good", text: "default" }));
+    badges.appendChild(h("span", { class: "badge", text: BPCAT[b.u] || "Other" }));
+    var craft = h("span", { class: "badge " + (cs.ok ? "good" : ""), text: cs.ok ? "craftable now" : cs.have + "/" + b.ing.length + " materials" });
+    return h("div", { class: "bp" }, h("div", { class: "bphead" }, chk, name, badges, craft), ing);
+  }
+  ["bSearch", "bCat", "bStatus"].forEach(function(id){ $(id).addEventListener("input", function(){ bpShown = 60; renderBlueprints(); }); });
+  $("bMore").onclick = function(){ bpShown += 120; renderBlueprints(); };
+
+  // ---------- added this patch ----------
+  function patchChoices(){
+    var set = {};
+    if (catalogue){
+      (catalogue.versions || []).forEach(function(v){ set[baseVer(v.code)] = 1; });
+      Object.keys(catalogue.diffs || {}).forEach(function(k){ set[k] = 1; });
+      catalogue.items.forEach(function(it){ if (it.a) set[it.a] = 1; });
+    }
+    return Object.keys(set).sort(function(a, b){ return verCmp(b, a); }).slice(0, 40);
+  }
+  function renderNew(){
+    var list = $("nList"); list.textContent = "";
+    if (!catalogue){ $("nNote").textContent = ""; $("nExact").hidden = true; list.appendChild(h("div", { class: "empty", text: "Click “Update item database” to see what each patch added." })); return; }
+    var choices = patchChoices(), cur = $("nPatch").value;
+    if (!cur || choices.indexOf(cur) < 0) cur = catalogue.patch;
+    fillSelect($("nPatch"), choices); $("nPatch").value = cur;
+    var d = (catalogue.diffs || {})[cur];
+    var seen = {}, rows = [];
+    catalogue.items.forEach(function(it){ if (it.a === cur){ var k = nameKey(it.n) + "|" + it.c; if (!seen[k]){ seen[k] = 1; rows.push(it); } } });
+    if (d) d.items.forEach(function(u){ var it = BYU[u]; if (!it) return; var k = nameKey(it.n) + "|" + it.c; if (!seen[k]){ seen[k] = 1; rows.push(it); } });
+    var notes = [];
+    notes.push("Items are listed when UEX records them as added in " + cur + (d ? ", or when " + (d.exact ? "the wiki's " + cur + " list differs from " + d.from : "they appeared since your previous database (" + (d.from || "first download") + ")") : "") + ".");
+    if (d && !d.exact) notes.push("For an exact wiki comparison use the button.");
+    $("nNote").textContent = notes.join(" ");
+    var versionCode = (catalogue.versions || []).filter(function(v){ return baseVer(v.code) === cur; })[0];
+    $("nExact").hidden = !(versionCode && !(d && d.exact));
+    $("nExact").dataset.code = versionCode ? versionCode.code : "";
+    var order = {}; rows.forEach(function(r){ (order[r.c] = order[r.c] || []).push(r); });
+    var any = false;
+    CATS.forEach(function(c){
+      var g = order[c]; if (!g) return; any = true;
+      g.sort(function(a, b){ return a.n.localeCompare(b.n); });
+      list.appendChild(h("div", { class: "grp", text: c + " (" + g.length + ")" }));
+      g.slice(0, 200).forEach(function(it){
+        list.appendChild(h("div", { class: "nrow" }, h("span", { class: "name", text: it.n }), h("span", { class: "badge", text: it.s || c }),
+          h("button", { type: "button", class: "ghost", text: "+ Add", onclick: function(){
+            snapshot(); addItem(items, { name: it.n, cat: it.c, sub: it.s, qty: 1, loc: $("fLoc").value }); commit();
+            say($("msg"), "Logged 1 × " + it.n + "."); } })));
+      });
+      if (g.length > 200) list.appendChild(h("div", { class: "note", text: "Showing the first 200. Use Add loot to search for the rest." }));
+    });
+    var newBps = d ? (d.bps || []).map(function(u){ return (catalogue.bps || []).filter(function(b){ return b.u === u; })[0]; }).filter(Boolean) : [];
+    if (newBps.length){
+      any = true;
+      list.appendChild(h("div", { class: "grp", text: "Blueprints (" + newBps.length + ")" }));
+      newBps.sort(function(a, b){ return a.n.localeCompare(b.n); }).forEach(function(b){
+        var chk = h("input", { type: "checkbox", checked: !!known[b.u], "aria-label": "Known: " + b.n });
+        chk.onchange = function(){ snapshot(); if (chk.checked) known[b.u] = b.n; else delete known[b.u]; commit(); };
+        list.appendChild(h("div", { class: "nrow" }, h("span", { class: "name", text: b.n }), h("span", { class: "badge", text: BPCAT[b.u] || "Other" }), h("label", { style: "flex-direction:row;align-items:center;gap:6px" }, chk, "Known")));
+      });
+    }
+    if (!any) list.appendChild(h("div", { class: "empty", text: "Nothing recorded as added in " + cur + " yet." }));
+  }
+  $("nPatch").addEventListener("input", renderNew);
+  $("nExact").onclick = async function(){
+    var code = $("nExact").dataset.code; if (!code || updating) return;
+    setBusy(true);
+    try { await computeExactItems(catalogue, code, progress); await idbSet("cat", catalogue); } catch (e){ $("nNote").textContent = "Couldn't download that comparison: " + (e.message || e); }
+    setBusy(false); renderNew();
+  };
+
+  // ---------- update ----------
+  function progress(label, f){ $("prog").hidden = false; $("progText").textContent = label; $("barFill").style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + "%"; }
+  function setBusy(b){ updating = b; $("updBtn").disabled = b; $("patchBtn").disabled = b; $("nExact").disabled = b; if (!b) setTimeout(function(){ $("prog").hidden = true; }, 600); else progress("Starting…", 0); }
+  async function doUpdate(){
+    if (updating) return;
+    setBusy(true); $("patchBanner").hidden = true;
+    try {
+      var cat = await runUpdate(catalogue, progress);
+      catalogue = cat; await idbSet("cat", cat); buildIndex(); render();
+      var d = (cat.diffs || {})[cat.patch], n = d ? d.items.length : 0;
+      $("dbStatus").textContent = statusText();
+      var w = (cat.warnings || []).length ? " " + cat.warnings.join(" ") : "";
+      showNotice("Updated to " + cat.patch + ": " + fmt(cat.items.length) + " items, " + fmt((cat.bps || []).length) + " blueprints." + (n ? " " + fmt(n) + " new since your last update." : "") + w, !!(cat.warnings || []).length);
+    } catch (e){ showNotice("Update failed: " + (e && e.message ? e.message : e) + ". Check your connection and try again.", true); }
+    setBusy(false);
+  }
+  function showNotice(t, warn){
+    var b = $("patchBanner"); $("patchText").textContent = t; b.className = "banner" + (warn ? "" : " info"); $("patchBtn").hidden = true; b.hidden = false;
+  }
+  function statusText(){
+    if (!catalogue) return "Item database: not downloaded yet";
+    return "Item database: " + catalogue.patch + " · " + fmt(catalogue.items.length) + " items · " + fmt((catalogue.bps || []).length) + " blueprints · " + String(catalogue.fetchedAt).slice(0, 10);
+  }
+  function renderStatus(){
+    $("dbStatus").textContent = statusText();
+    var s = $("srcInfo"); s.textContent = "";
+    var rows = [["Version", catalogue ? catalogue.version : "—"]];
+    if (catalogue && catalogue.srcs){
+      var x = catalogue.srcs;
+      rows.push(["Star Citizen Wiki – items", x.wiki && x.wiki.ok ? "OK · " + fmt(x.wiki.n) + " items" : "—"]);
+      rows.push(["Star Citizen Wiki – blueprints", x.bp && x.bp.ok ? "OK · " + fmt(x.bp.n) + " blueprints (materials taken from these)" : "Failed"]);
+      rows.push(["UEX", x.uex && x.uex.ok ? "OK · " + fmt(x.uex.n) + " items checked · " + fmt(x.uex.extra || 0) + " extra added" : "Unavailable"]);
+    } else rows.push(["Status", "Nothing downloaded yet. Autocomplete only knows a few weapons until you click Update."]);
+    rows.forEach(function(r){ s.appendChild(h("b", { text: r[0] })); s.appendChild(h("span", { text: r[1] })); });
+  }
+  async function checkNewPatch(){
+    try {
+      var vs = await fetchVersions(); var latest = vs.filter(function(v){ return v.def; })[0] || vs[0];
+      if (!latest) return;
+      if (!catalogue){ return; }
+      if (latest.code !== catalogue.version){
+        $("patchText").textContent = "A newer game build is available (" + baseVer(latest.code) + "). Update to pick up new items and blueprints.";
+        $("patchBanner").className = "banner info"; $("patchBtn").hidden = false; $("patchBanner").hidden = false;
+      }
+    } catch (e){}
+  }
+  $("updBtn").onclick = doUpdate; $("patchBtn").onclick = doUpdate;
+
+  // ---------- tabs ----------
+  function showTab(t){
+    ["inv", "bp", "new", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
+    Array.prototype.forEach.call($("tabs").children, function(b){ b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"); });
+    if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
+  }
+  $("tabs").addEventListener("click", function(e){ var b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
+
+  // ---------- backup / restore ----------
+  $("exportBtn").onclick = function(){
+    $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 2,
+      items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc }; }),
+      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }) }, null, 1);
+    say($("ioMsg"), "Backup created: " + items.length + " stacks, " + Object.keys(known).length + " known blueprints.");
+  };
+  $("copyBtn").onclick = function(){
+    var t = $("io"); if (!t.value) $("exportBtn").click();
+    var done = function(){ say($("ioMsg"), "Copied to clipboard."); };
+    var fail = function(){ t.focus(); t.select(); say($("ioMsg"), "Couldn't copy automatically. The text is selected, so press Ctrl+C (or Cmd+C).", true); };
+    try { navigator.clipboard.writeText(t.value).then(done, fail); } catch (e){ fail(); }
+  };
+  $("fileIn").onchange = function(){
+    var f = $("fileIn").files[0]; if (!f) return;
+    if (f.size > 5e6){ say($("ioMsg"), "That file is too large to be a backup.", true); return; }
+    var rd = new FileReader();
+    rd.onload = function(){ $("io").value = String(rd.result); say($("ioMsg"), "File loaded. Choose Merge or Replace."); };
+    rd.readAsText(f);
+  };
+  function importWith(mode){
+    var inc;
+    try { inc = parseBackup($("io").value); } catch (e){ say($("ioMsg"), "That doesn't look like a valid backup: " + e.message, true); return; }
+    snapshot();
+    if (mode === "replace"){ items = inc.items; known = inc.known; }
+    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); }
+    commit(); say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
+  }
+  $("mergeBtn").onclick = function(){ importWith("merge"); };
+  var armedBtns = {};
+  function twoClick(btn, label, fn){
+    btn.onclick = function(){
+      if (armedBtns[btn.id]){ clearTimeout(armedBtns[btn.id]); armedBtns[btn.id] = 0; btn.textContent = label; btn.classList.remove("armed"); fn(); return; }
+      btn.textContent = "Click again to confirm"; btn.classList.add("armed");
+      armedBtns[btn.id] = setTimeout(function(){ armedBtns[btn.id] = 0; btn.textContent = label; btn.classList.remove("armed"); }, 3000);
+    };
+  }
+  twoClick($("replaceBtn"), "Replace my list", function(){ importWith("replace"); });
+  twoClick($("clearBtn"), "Clear everything", function(){ snapshot(); items = []; known = {}; commit(); say($("ioMsg"), "List cleared. Use Undo to bring it back."); });
+
+  // ---------- init ----------
+  if (NATIVE){
+    $("nativeInfo").hidden = false; $("browserNote").hidden = true;
+    NATIVE.dataPath().then(function(p){ $("dataPath").textContent = p; }).catch(function(){});
+    $("openFolderBtn").addEventListener("click", function(){ NATIVE.openFolder(); });
+  }
+  fillSelect($("fCat"), CATS); fillSelect($("qCat"), CATS, "All categories"); fillSelect($("bCat"), CATS, "All categories");
+  load(); buildIndex(); render();
+  idbGet("cat").then(function(c){
+    if (c && c.v === 2 && c.items){ catalogue = c; buildIndex(); render(); checkNewPatch(); }
+  });
+  window.__sc = { runUpdate: runUpdate, get catalogue(){ return catalogue; }, get items(){ return items; } };
+})();
+</script>
+</body>
+</html>

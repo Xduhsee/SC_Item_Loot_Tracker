@@ -1,0 +1,26 @@
+{
+  "name": "sc-loot-tracker",
+  "productName": "SC Loot Tracker",
+  "version": "1.0.0",
+  "description": "Fan-made Star Citizen loot, blueprint and materials tracker. Not affiliated with CIG.",
+  "main": "main.js",
+  "author": "SC Loot Tracker",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest"
+  },
+  "build": {
+    "appId": "com.local.scloottracker",
+    "productName": "SC Loot Tracker",
+    "files": ["main.js", "preload.js", "store.js", "app/**/*", "build/icon.png", "build/icon.ico"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": { "target": ["nsis", "portable"], "icon": "build/icon.ico" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "perMachine": false }
+  }
+}
