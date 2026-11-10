@@ -41,7 +41,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "SC-Loot-Tracker-Setup-${version}.${ext}"
     },
     "publish": [
       {
@@ -51,7 +51,7 @@
       }
     ],
     "portable": {
-      "artifactName": "${productName}-Portable-${version}.${ext}"
+      "artifactName": "SC-Loot-Tracker-Portable-${version}.${ext}"
     }
   },
   "dependencies": {

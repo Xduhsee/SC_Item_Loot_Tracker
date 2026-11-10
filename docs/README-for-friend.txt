@@ -13,11 +13,11 @@ PC. Nothing you track is sent anywhere.
 
 You were sent one of these two files. Double-click it.
 
-  "SC Loot Tracker Setup ... .exe"   (installer)
+  "SC-Loot-Tracker-Setup-... .exe"   (installer)
      Follow the prompts, choose a folder if you like, and finish.
      A Start menu / desktop shortcut is created. Open the app from there.
 
-  "SC Loot Tracker ... .exe"   (portable, no install)
+  "SC-Loot-Tracker-Portable-... .exe"   (portable, no install)
      Put it anywhere you like (Desktop, a Games folder) and double-click
      it to run. Make a shortcut yourself if you want one.
 
