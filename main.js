@@ -153,7 +153,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('quick:add', (e, p) => {
       if (!fromApp(e) || !win || win.isDestroyed() || !p || typeof p !== 'object') return false;
       const s = (v, n) => String(v == null ? '' : v).slice(0, n);
-      win.webContents.send('quick:apply', { name: s(p.name, 120), cat: s(p.cat, 40), sub: s(p.sub, 40), qty: Number(p.qty) || 0, loc: s(p.loc, 80), src: s(p.src, 80) });
+      win.webContents.send('quick:apply', { name: s(p.name, 120), cat: s(p.cat, 40), sub: s(p.sub, 40), qty: Number(p.qty) || 0, loc: s(p.loc, 80), src: s(p.src, 80), sys: s(p.sys, 24) });
       return true;
     });
     ipcMain.on('quick:hide', (e) => { if (fromApp(e) && quick && !quick.isDestroyed()) quick.hide(); });

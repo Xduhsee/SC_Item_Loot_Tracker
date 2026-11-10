@@ -24,7 +24,7 @@ Desktop app: same tab -> paste into the box -> Replace my list.
 ## First launch
 Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
-## Features (v1.2 to v1.4)
+## Features (v1.2 to v1.5)
 - Tags (Keep / Sell / Scrap / Trade) and notes on each stack, with a tag filter
 - Bulk select: move, tag or delete several stacks at once
 - Craft list: pick blueprints, see total materials against what you own
@@ -33,7 +33,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - CSV export of the inventory
 - UEX price estimates behind a manual "Refresh UEX prices" button
 - Finder tab (v1.3): UEX shops and prices, wiki blueprint missions with drop chances, links to Cstone and SC Craft Tools
-- Loot log (v1.4): optional "Looted at" when adding an item (also in quick-add), shown per item in the Finder and exportable as CSV
+- Loot log (v1.4, v1.5): optional system and place when adding an item (also in quick-add), a "Loot by location" panel and per-item history in the Finder, CSV export
 - Quick-add window on `Ctrl+Shift+L` (always on top, works over borderless windowed games)
 
 ## Repo layout

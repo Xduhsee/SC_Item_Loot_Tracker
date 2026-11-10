@@ -22,6 +22,8 @@
   .opt.on,.opt:hover{background:#12301c}
   #msg{min-height:20px;margin-top:6px;font-size:13px;color:var(--good)}
   #msg.err{color:var(--bad)}
+  .row2{display:grid;grid-template-columns:110px 1fr;gap:10px}
+  select{width:100%;min-height:36px;margin-top:3px;padding:6px 8px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;font:inherit}
   .hint{font-size:11px;color:var(--mute);margin-top:6px}
 </style>
 </head>
@@ -36,15 +38,20 @@
     <div class="ac"><input id="qLoc" autocomplete="off" maxlength="80" placeholder="Carrying" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="lBox" role="listbox" hidden></div></div>
   </label>
 </div>
-<label>Looted at (optional)
-  <div class="ac"><input id="qSrc" autocomplete="off" maxlength="80" placeholder="Bunker, Wreck, Mission reward…" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="sBox" role="listbox" hidden></div></div>
+<div class="row2">
+<label>System
+  <select id="qSys" aria-label="Star system looted in"><option value="">None</option><option>Stanton</option><option>Pyro</option><option>Nyx</option></select>
 </label>
+<label>Place or site (optional)
+  <div class="ac"><input id="qSrc" autocomplete="off" maxlength="80" placeholder="Breaker stations, Wreck…" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="sBox" role="listbox" hidden></div></div>
+</label>
+</div>
 <div id="msg" role="status"></div>
 <div class="hint">Enter adds the item &middot; Esc closes this window &middot; Items go straight into your list.</div>
 <script>
 (function(){
   var S = window.scStore, $ = function(id){ return document.getElementById(id); };
-  var ITEMS = [], LOCS = [], SRCS = [], lastLoc = "", lastSrc = "";
+  var ITEMS = [], LOCS = [], SRCS = [], LOOT = [], lastLoc = "", lastSrc = "", lastSys = "";
   var COMMON = ["Mission reward", "Bunker / outpost", "Derelict ship", "Wreck", "Contested zone", "NPC kill", "Crate / locker", "Crafted", "Wikelo trade", "Bought from shop"];
   function nk(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " ").toLowerCase().replace(/["'“”‘’]/g, ""); }
   function say(t, bad){ $("msg").textContent = t; $("msg").className = bad ? "err" : ""; }
@@ -64,14 +71,22 @@
     var cnt = {}, names = {}, sc = {}, sn = {};
     try {
       var d = S.loadSync();
-      ((d.extra && d.extra.loot) || []).forEach(function(e){ var k = nk(e && e.w); if (!k) return; sc[k] = (sc[k] || 0) + 1; sn[k] = e.w; });
+      LOOT = ((d.extra && d.extra.loot) || []).filter(function(e){ return e && (e.p || e.w); });
       (d.items || []).forEach(function(i){ var k = nk(i.loc); if (!k) return; cnt[k] = (cnt[k] || 0) + 1; names[k] = i.loc; });
     } catch (e){}
     LOCS = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).map(function(k){ return names[k]; });
     if (!LOCS.length) LOCS = ["Carrying", "Ship inventory", "Hangar"];
-    var mine = Object.keys(sc).sort(function(a, b){ return sc[b] - sc[a]; }).map(function(k){ return sn[k]; });
+    rebuildSrcs();
+  }
+
+  function rebuildSrcs(){
+    var sys = $("qSys").value, cnt = {}, nm = {}, any = {}, anyN = {};
+    LOOT.forEach(function(e){ var lab = e.p || e.w, k = nk(lab); if (!k) return; any[k] = (any[k] || 0) + 1; anyN[k] = lab; if (!sys || e.y === sys){ cnt[k] = (cnt[k] || 0) + 1; nm[k] = lab; } });
+    var useC = Object.keys(cnt).length ? cnt : any, useN = Object.keys(cnt).length ? nm : anyN;
+    var mine = Object.keys(useC).sort(function(a, b){ return useC[b] - useC[a]; }).map(function(k){ return useN[k]; });
     SRCS = mine.concat(COMMON.filter(function(c){ return mine.map(nk).indexOf(nk(c)) < 0; }));
   }
+  $("qSys").addEventListener("change", rebuildSrcs);
 
   // small autocomplete: opts.match(q) -> [{label, hint, value, data}]
   function ac(input, box, match, onPick){
@@ -131,10 +146,10 @@
     if (!name || !(qty > 0)){ say("Enter an item name and a quantity above zero.", true); return; }
     var e = picked && nk(picked.n) === nk(name) ? picked : null;
     if (!e) for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].l === nk(name)){ e = ITEMS[i]; break; }
-    var item = { name: name, cat: e ? e.c : "Other", sub: e ? e.s : "", qty: qty, loc: loc || lastLoc || "Carrying", src: $("qSrc").value.trim() };
+    var item = { name: name, cat: e ? e.c : "Other", sub: e ? e.s : "", qty: qty, loc: loc || lastLoc || "Carrying", src: $("qSrc").value.trim(), sys: $("qSys").value };
     S.quickAdd(item).then(function(ok){
       if (!ok){ say("Could not reach the main window.", true); return; }
-      lastLoc = item.loc; $("qLoc").value = item.loc; lastSrc = item.src;
+      lastLoc = item.loc; $("qLoc").value = item.loc; lastSrc = item.src; lastSys = item.sys;
       say("Logged " + qty + " × " + name + " to " + item.loc + ".");
       $("qName").value = ""; $("qQty").value = 1; picked = null; nameAC.close(); $("qName").focus();
     }).catch(function(){ say("Could not reach the main window.", true); });
@@ -145,7 +160,7 @@
     else if (e.key === "Enter" && !e.defaultPrevented){ e.preventDefault(); submit(); }
   });
 
-  function shown(){ loadLocs(); say(""); $("qName").value = ""; $("qQty").value = 1; picked = null; $("qSrc").value = lastSrc; if (lastLoc) $("qLoc").value = lastLoc; else if (!$("qLoc").value) $("qLoc").value = LOCS[0] || "Carrying"; $("qName").focus(); }
+  function shown(){ loadLocs(); say(""); $("qName").value = ""; $("qQty").value = 1; picked = null; $("qSys").value = lastSys; rebuildSrcs(); $("qSrc").value = lastSrc; if (lastLoc) $("qLoc").value = lastLoc; else if (!$("qLoc").value) $("qLoc").value = LOCS[0] || "Carrying"; $("qName").focus(); }
   if (S){
     loadCatalogue(); shown();
     if (S.onQuickShown) S.onQuickShown(shown);

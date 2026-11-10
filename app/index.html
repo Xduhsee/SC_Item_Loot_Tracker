@@ -194,8 +194,11 @@
           <input id="fLoc" placeholder="e.g. Lorville hab, Cutlass hold, Carrying" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="locBox">
           <div id="locBox" class="acbox" role="listbox" hidden></div>
         </label>
-        <label class="grow ac">Looted at (optional)
-          <input id="fSrc" placeholder="e.g. Bunker, Wreck, Mission reward, Wikelo" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="srcBox">
+        <label>Looted in (optional)
+          <select id="fSys" aria-label="Star system looted in"></select>
+        </label>
+        <label class="grow ac">Place or site
+          <input id="fSrc" placeholder="e.g. Breaker stations, Onyx ASD facilities, Wreck" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="srcBox">
           <div id="srcBox" class="acbox" role="listbox" hidden></div>
         </label>
         <button type="submit">Add</button>
@@ -285,6 +288,21 @@
 
   <!-- FINDER -->
   <section id="tab-find" hidden>
+    <div class="panel">
+      <h2>Loot by location</h2>
+      <p class="note" style="margin-top:0">Built from the places you log with “Looted in” and “Place or site” when adding items. Pick a system, or type a place, to see what you found there.</p>
+      <div class="row">
+        <label>System
+          <select id="lfSys"></select>
+        </label>
+        <label class="grow ac">Place or site
+          <input id="lfPlace" type="search" placeholder="Leave empty to see the whole system" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">
+          <div id="lfBox" class="acbox" role="listbox" hidden></div>
+        </label>
+      </div>
+      <div class="stats" id="lfStats" style="margin-top:10px"></div>
+      <div id="lfOut"></div>
+    </div>
     <div class="panel">
       <h2>Finder</h2>
       <label>Item or blueprint
@@ -667,14 +685,26 @@ function priceFor(prices, u, name){
 }
 
 // ---------- loot log (where you found things) ----------
-var LOOT_MAX = 5000;
+var LOOT_MAX = 5000, SYSTEMS = ["Stanton", "Pyro", "Nyx"];
+function locLabel(y, p){ return y && p ? y + " - " + p : (p || y || ""); }
+function sysName(v){
+  var k = nameKey(v);
+  for (var i = 0; i < SYSTEMS.length; i++) if (SYSTEMS[i].toLowerCase() === k) return SYSTEMS[i];
+  return "";
+}
 function sanitizeLoot(list){
   var out = [];
   (Array.isArray(list) ? list : []).forEach(function(e){
     if (!e || typeof e !== "object") return;
-    var n = norm(e.n), w = norm(e.w), q = Number(e.q), t = String(e.t || "");
+    var n = norm(e.n), q = Number(e.q), t = String(e.t || ""), y = sysName(e.y), p = norm(e.p), w = norm(e.w);
+    if (!w) w = locLabel(y, p);
+    if (!y && !p && w){
+      var m = w.split(/\s+[-\u2013\u2014]\s+/);
+      if (m.length > 1 && sysName(m[0])){ y = sysName(m[0]); p = norm(m.slice(1).join(" - ")); }
+      else { var only = sysName(w); if (only) y = only; else p = w; }
+    }
     if (!n || !w || !(q > 0) || isNaN(Date.parse(t))) return;
-    out.push({ t: t, n: n.slice(0, 120), c: String(e.c || "").slice(0, 40), s: String(e.s || "").slice(0, 40), q: Math.round(q * 100) / 100, w: w.slice(0, 80) });
+    out.push({ t: t, n: n.slice(0, 120), c: String(e.c || "").slice(0, 40), s: String(e.s || "").slice(0, 40), q: Math.round(q * 100) / 100, w: w.slice(0, 100), y: y, p: p.slice(0, 80) });
   });
   return out.slice(-LOOT_MAX);
 }
@@ -688,10 +718,29 @@ function lootSummary(log, name){
   });
   return order.map(function(x){ return m[x]; }).sort(function(a, b){ return b.n - a.n || (a.last < b.last ? 1 : -1); });
 }
-function lootSources(log){
+// places you have logged, optionally within one system (most used first)
+function lootPlaces(log, sys){
   var m = {}, order = [];
-  (log || []).forEach(function(e){ var k = nameKey(e.w); if (!m[k]){ m[k] = { w: e.w, c: 0 }; order.push(k); } m[k].c++; m[k].w = e.w; });
-  return order.map(function(k){ return m[k]; }).sort(function(a, b){ return b.c - a.c || a.w.localeCompare(b.w); });
+  (log || []).forEach(function(e){
+    if (sys && e.y !== sys) return;
+    var label = e.p || e.w, k = nameKey(label); if (!k) return;
+    if (!m[k]){ m[k] = { p: label, c: 0 }; order.push(k); }
+    m[k].c++; m[k].p = label;
+  });
+  return order.map(function(k){ return m[k]; }).sort(function(a, b){ return b.c - a.c || a.p.localeCompare(b.p); });
+}
+function lootSources(log){ return lootPlaces(log, "").map(function(x){ return { w: x.p, c: x.c }; }); }
+// what you found at a place: sys "" = any system, place "" = anywhere in that system
+function lootAt(log, sys, place){
+  var pk = nameKey(place), m = {}, order = [];
+  (log || []).forEach(function(e){
+    if (sys && e.y !== sys) return;
+    if (pk && nameKey(e.p || e.w).indexOf(pk) < 0) return;
+    var k = nameKey(e.n), g = m[k];
+    if (!g){ g = m[k] = { n: e.n, c: e.c, s: e.s, cnt: 0, q: 0, last: "" }; order.push(k); }
+    g.cnt++; g.q += e.q; if (e.t > g.last) g.last = e.t;
+  });
+  return order.map(function(k){ return m[k]; }).sort(function(a, b){ return b.cnt - a.cnt || a.n.localeCompare(b.n); });
 }
 function mergeLoot(a, b){
   var seen = {}, out = [];
@@ -700,9 +749,9 @@ function mergeLoot(a, b){
   return out.slice(-LOOT_MAX);
 }
 function toLootCSV(log){
-  var head = ["Time", "Item", "Category", "Type", "Quantity", "Looted at"], NL = String.fromCharCode(13, 10);
+  var head = ["Time", "Item", "Category", "Type", "Quantity", "System", "Place", "Looted at"], NL = String.fromCharCode(13, 10);
   var lines = [head.join(",")];
-  (log || []).forEach(function(e){ lines.push([csvCell(e.t, true), csvCell(e.n, true), csvCell(e.c, true), csvCell(e.s, true), csvCell(e.q, false), csvCell(e.w, true)].join(",")); });
+  (log || []).forEach(function(e){ lines.push([csvCell(e.t, true), csvCell(e.n, true), csvCell(e.c, true), csvCell(e.s, true), csvCell(e.q, false), csvCell(e.y, true), csvCell(e.p, true), csvCell(e.w, true)].join(",")); });
   return lines.join(NL) + NL;
 }
 
@@ -1453,13 +1502,19 @@ async function computeExactItems(cat, patchCode, progress){
   };
   $("bulkClear").onclick = function(){ sel = {}; renderInventory(); };
   function logLoot(e){
-    var w = norm(e.w); if (!w) return;
-    lootlog.push({ t: new Date().toISOString(), n: norm(e.name).slice(0, 120), c: String(e.cat || "").slice(0, 40), s: String(e.sub || "").slice(0, 40), q: Math.round(Number(e.qty) * 100) / 100, w: w.slice(0, 80) });
+    var y = sysName(e.y), p = norm(e.w).slice(0, 80), w = locLabel(y, p); if (!w) return;
+    lootlog.push({ t: new Date().toISOString(), n: norm(e.name).slice(0, 120), c: String(e.cat || "").slice(0, 40), s: String(e.sub || "").slice(0, 40), q: Math.round(Number(e.qty) * 100) / 100, w: w.slice(0, 100), y: y, p: p });
     if (lootlog.length > LOOT_MAX) lootlog = lootlog.slice(-LOOT_MAX);
   }
+  function fillSystems(){
+    var a = $("fSys"), b = $("lfSys");
+    [[a, "No system"], [b, "All systems"]].forEach(function(x){ x[0].textContent = ""; x[0].appendChild(h("option", { value: "", text: x[1] })); SYSTEMS.forEach(function(n){ x[0].appendChild(h("option", { value: n, text: n })); }); });
+  }
+  fillSystems();
   var COMMON_SRC = ["Mission reward", "Bunker / outpost", "Derelict ship", "Wreck", "Contested zone", "NPC kill", "Crate / locker", "Crafted", "Wikelo trade", "Bought from shop"];
   function matchSources(q, focusing){
-    var mine = lootSources(lootlog).map(function(e){ return { n: e.w, src: "yours", c: e.c }; }), have = {};
+    var inSys = lootPlaces(lootlog, $("fSys").value);
+    var mine = (inSys.length ? inSys : lootPlaces(lootlog, "")).map(function(e){ return { n: e.p, src: "yours", c: e.c }; }), have = {};
     mine.forEach(function(e){ have[nameKey(e.n)] = 1; });
     var all = mine.concat(COMMON_SRC.filter(function(n){ return !have[nameKey(n)]; }).map(function(n){ return { n: n, src: "common" }; }));
     var toks = nameKey(q).split(" ").filter(Boolean);
@@ -1477,8 +1532,9 @@ async function computeExactItems(cat, patchCode, progress){
       undoStack.pop(); $("undoBtn").disabled = !undoStack.length;
       say($("msg"), "Enter an item name and a quantity above zero.", true); return;
     }
-    logLoot({ name: name, cat: cat, sub: $("fSub").value, qty: cleanQty(qty, cat), w: $("fSrc").value });
-    say($("msg"), "Logged " + fmt(cleanQty(qty, cat)) + " × " + norm(name) + (norm($("fSrc").value) ? " from " + norm($("fSrc").value) : "") + ".");
+    logLoot({ name: name, cat: cat, sub: $("fSub").value, qty: cleanQty(qty, cat), y: $("fSys").value, w: $("fSrc").value });
+    var where = locLabel(sysName($("fSys").value), norm($("fSrc").value));
+    say($("msg"), "Logged " + fmt(cleanQty(qty, cat)) + " × " + norm(name) + (where ? " from " + where : "") + ".");
     $("fName").value = ""; $("fQty").value = 1; $("fSub").value = ""; acClose(); $("fName").focus();
     commit();
   });
@@ -1650,6 +1706,33 @@ async function computeExactItems(cat, patchCode, progress){
   }
   $("hSearch").addEventListener("input", renderHist);
   twoClick($("hClear"), "Clear history", function(){ hist = []; save(); renderHist(); });
+
+  // ---------- loot by location ----------
+  function renderLootAt(){
+    var sys = $("lfSys").value, place = $("lfPlace").value.trim(), out = $("lfOut"), st = $("lfStats"); out.textContent = ""; st.textContent = "";
+    if (!lootlog.length){ out.appendChild(h("div", { class: "empty", text: "Nothing logged yet. Choose a system and place when you add items, and your loot pools build up here." })); return; }
+    var rows = lootAt(lootlog, sys, place), total = 0;
+    rows.forEach(function(r){ total += r.cnt; });
+    [["Items", rows.length], ["Finds logged", total]].forEach(function(x){ st.appendChild(h("span", null, x[0] + ": ", h("b", { text: fmt(x[1]) }))); });
+    if (!rows.length){ out.appendChild(h("div", { class: "empty", text: "Nothing logged for that system and place." })); return; }
+    rows.slice(0, 150).forEach(function(r){
+      out.appendChild(h("div", { class: "hrow", style: "grid-template-columns:1fr auto auto;border-radius:0" },
+        h("span", null, r.n + "  ", h("span", { class: "dim", text: [r.c, r.s].filter(Boolean).join(" · ") + "  " }),
+          h("button", { type: "button", class: "findbtn", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFinder(r.n, r.s, ""); } })),
+        h("span", { text: "found " + r.cnt + (r.cnt === 1 ? " time" : " times") + " (" + fmt(r.q) + ")" }),
+        h("span", { class: "dim", text: "last " + r.last.slice(0, 10) })));
+    });
+    if (rows.length > 150) out.appendChild(h("div", { class: "dim", style: "margin-top:6px", text: "Showing the top 150 items. Narrow it with a place." }));
+  }
+  attachAC($("lfPlace"), $("lfBox"), {
+    match: function(q, focusing){
+      var toks = nameKey(q).split(" ").filter(Boolean);
+      return lootPlaces(lootlog, $("lfSys").value).filter(function(e){ var l = e.p.toLowerCase(); return focusing || !toks.length || toks.every(function(t){ return l.indexOf(t) >= 0; }); }).slice(0, 12).map(function(e){ return { n: e.p, c: e.c }; });
+    },
+    hint: function(e){ return "logged " + e.c + "×"; }, showOnFocus: true, onPick: renderLootAt
+  });
+  $("lfPlace").addEventListener("input", renderLootAt);
+  $("lfSys").addEventListener("change", renderLootAt);
 
   // ---------- finder ----------
   var shopIdx = null, shopPromise = null, shopErr = "", bpCache = {}, bpErr = {}, fqName = "", fqEntry = null;
@@ -1892,7 +1975,7 @@ async function computeExactItems(cat, patchCode, progress){
     ["inv", "bp", "find", "craft", "sets", "new", "hist", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
     Array.prototype.forEach.call($("tabs").children, function(b){ b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"); });
     if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
-    if (t === "find") renderFinder(); if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
+    if (t === "find"){ renderFinder(); renderLootAt(); } if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
   }
   $("tabs").addEventListener("click", function(e){ var b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
 
@@ -1976,7 +2059,7 @@ async function computeExactItems(cat, patchCode, progress){
   if (NATIVE && NATIVE.onQuickAdd) NATIVE.onQuickAdd(function(p){
     snapshot();
     if (!p || !addItem(items, { name: p.name, cat: p.cat, sub: p.sub, qty: p.qty, loc: p.loc })){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return; }
-    if (p.src) logLoot({ name: p.name, cat: p.cat, sub: p.sub, qty: cleanQty(p.qty, p.cat), w: p.src });
+    if (p.src || p.sys) logLoot({ name: p.name, cat: p.cat, sub: p.sub, qty: cleanQty(p.qty, p.cat), y: p.sys, w: p.src });
     commit(); say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
   });
   load(); buildIndex(); render();
