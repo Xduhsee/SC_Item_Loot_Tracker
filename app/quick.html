@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quick add</title>
+<style>
+  :root{color-scheme:dark;--bg:#060a07;--panel:#0d1410;--line:#1e3a28;--text:#e0f5e6;--mute:#7da58a;--accent:#39ff14;--bad:#ff6b6b;--good:#7dffa6}
+  *{box-sizing:border-box}
+  body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  h1{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  label{display:block;font-size:12px;color:var(--mute);margin-bottom:8px}
+  input{width:100%;min-height:36px;margin-top:3px;padding:6px 10px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;font:inherit}
+  input:focus{outline:2px solid var(--accent);outline-offset:0}
+  .row{display:grid;grid-template-columns:90px 1fr;gap:10px}
+  .ac{position:relative}
+  .box{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:6px;max-height:210px;overflow:auto}
+  .box[hidden]{display:none}
+  .opt{padding:6px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+  .opt small{color:var(--mute)}
+  .opt.on,.opt:hover{background:#12301c}
+  #msg{min-height:20px;margin-top:6px;font-size:13px;color:var(--good)}
+  #msg.err{color:var(--bad)}
+  .hint{font-size:11px;color:var(--mute);margin-top:6px}
+</style>
+</head>
+<body>
+<h1>Quick add</h1>
+<label>Item
+  <div class="ac"><input id="qName" autocomplete="off" maxlength="120" placeholder="Start typing an item name" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="qBox" role="listbox" hidden></div></div>
+</label>
+<div class="row">
+  <label>Qty<input id="qQty" type="number" min="0.01" step="any" value="1"></label>
+  <label>Location
+    <div class="ac"><input id="qLoc" autocomplete="off" maxlength="80" placeholder="Carrying" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="box" id="lBox" role="listbox" hidden></div></div>
+  </label>
+</div>
+<div id="msg" role="status"></div>
+<div class="hint">Enter adds the item &middot; Esc closes this window &middot; Items go straight into your list.</div>
+<script>
+(function(){
+  var S = window.scStore, $ = function(id){ return document.getElementById(id); };
+  var ITEMS = [], LOCS = [], lastLoc = "";
+  function nk(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " ").toLowerCase().replace(/["'“”‘’]/g, ""); }
+  function say(t, bad){ $("msg").textContent = t; $("msg").className = bad ? "err" : ""; }
+
+  function loadCatalogue(){
+    if (!S || !S.loadCatalogue) return;
+    S.loadCatalogue().then(function(c){
+      var seen = {}; ITEMS = [];
+      ((c && c.items) || []).forEach(function(it){
+        if (!it || !it.n) return;
+        var k = nk(it.n) + "|" + it.c + "|" + (it.s || ""); if (seen[k]) return; seen[k] = 1;
+        ITEMS.push({ n: String(it.n), l: nk(it.n), c: String(it.c || "Other"), s: String(it.s || "") });
+      });
+    }).catch(function(){});
+  }
+  function loadLocs(){
+    var cnt = {}, names = {};
+    try {
+      var d = S.loadSync();
+      (d.items || []).forEach(function(i){ var k = nk(i.loc); if (!k) return; cnt[k] = (cnt[k] || 0) + 1; names[k] = i.loc; });
+    } catch (e){}
+    LOCS = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).map(function(k){ return names[k]; });
+    if (!LOCS.length) LOCS = ["Carrying", "Ship inventory", "Hangar"];
+  }
+
+  // small autocomplete: opts.match(q) -> [{label, hint, value, data}]
+  function ac(input, box, match, onPick){
+    var sel = -1, cur = [];
+    function close(){ box.hidden = true; box.textContent = ""; input.setAttribute("aria-expanded", "false"); sel = -1; cur = []; }
+    function draw(){
+      box.textContent = "";
+      cur.forEach(function(o, i){
+        var d = document.createElement("div"); d.className = "opt" + (i === sel ? " on" : ""); d.setAttribute("role", "option");
+        var a = document.createElement("span"); a.textContent = o.label; d.appendChild(a);
+        if (o.hint){ var b = document.createElement("small"); b.textContent = o.hint; d.appendChild(b); }
+        d.onmousedown = function(e){ e.preventDefault(); pick(o); };
+        box.appendChild(d);
+      });
+      box.hidden = !cur.length; input.setAttribute("aria-expanded", cur.length ? "true" : "false");
+    }
+    function pick(o){ input.value = o.value; close(); onPick(o); }
+    function open(){ cur = match(input.value); sel = cur.length ? 0 : -1; draw(); }
+    input.addEventListener("input", open);
+    input.addEventListener("focus", function(){ if (input === $("qLoc")) open(); });
+    input.addEventListener("blur", function(){ setTimeout(close, 100); });
+    input.addEventListener("keydown", function(e){
+      if (e.key === "ArrowDown" && cur.length){ e.preventDefault(); sel = (sel + 1) % cur.length; draw(); }
+      else if (e.key === "ArrowUp" && cur.length){ e.preventDefault(); sel = (sel - 1 + cur.length) % cur.length; draw(); }
+      else if (e.key === "Enter" && !box.hidden && sel >= 0){ e.preventDefault(); e.stopPropagation(); pick(cur[sel]); }
+      else if (e.key === "Escape" && !box.hidden){ e.preventDefault(); e.stopPropagation(); close(); }
+    });
+    return { close: close };
+  }
+
+  var picked = null;
+  var nameAC = ac($("qName"), $("qBox"), function(q){
+    picked = null;
+    var toks = nk(q).split(" ").filter(Boolean); if (!toks.length) return [];
+    var res = [];
+    for (var i = 0; i < ITEMS.length && res.length < 400; i++){
+      var e = ITEMS[i], ok = true;
+      for (var t = 0; t < toks.length; t++) if (e.l.indexOf(toks[t]) < 0){ ok = false; break; }
+      if (ok) res.push(e);
+    }
+    res.sort(function(a, b){ return (a.l.indexOf(toks[0]) === 0 ? 0 : 1) - (b.l.indexOf(toks[0]) === 0 ? 0 : 1) || a.n.length - b.n.length; });
+    return res.slice(0, 8).map(function(e){ return { label: e.n, hint: e.s || e.c, value: e.n, data: e }; });
+  }, function(o){ picked = o.data; $("qQty").focus(); $("qQty").select(); });
+
+  ac($("qLoc"), $("lBox"), function(q){
+    var t = nk(q);
+    return LOCS.filter(function(l){ return !t || nk(l).indexOf(t) >= 0; }).slice(0, 8).map(function(l){ return { label: l, value: l }; });
+  }, function(){ submit(); });
+
+  function submit(){
+    var name = $("qName").value.trim().replace(/\s+/g, " "), qty = Number($("qQty").value), loc = $("qLoc").value.trim();
+    if (!name || !(qty > 0)){ say("Enter an item name and a quantity above zero.", true); return; }
+    var e = picked && nk(picked.n) === nk(name) ? picked : null;
+    if (!e) for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].l === nk(name)){ e = ITEMS[i]; break; }
+    var item = { name: name, cat: e ? e.c : "Other", sub: e ? e.s : "", qty: qty, loc: loc || lastLoc || "Carrying" };
+    S.quickAdd(item).then(function(ok){
+      if (!ok){ say("Could not reach the main window.", true); return; }
+      lastLoc = item.loc; $("qLoc").value = item.loc;
+      say("Logged " + qty + " × " + name + " to " + item.loc + ".");
+      $("qName").value = ""; $("qQty").value = 1; picked = null; nameAC.close(); $("qName").focus();
+    }).catch(function(){ say("Could not reach the main window.", true); });
+  }
+
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){ if (S && S.quickHide) S.quickHide(); }
+    else if (e.key === "Enter" && !e.defaultPrevented){ e.preventDefault(); submit(); }
+  });
+
+  function shown(){ loadLocs(); say(""); $("qName").value = ""; $("qQty").value = 1; picked = null; if (lastLoc) $("qLoc").value = lastLoc; else if (!$("qLoc").value) $("qLoc").value = LOCS[0] || "Carrying"; $("qName").focus(); }
+  if (S){
+    loadCatalogue(); shown();
+    if (S.onQuickShown) S.onQuickShown(shown);
+    if (S.onCatalogueChanged) S.onCatalogueChanged(loadCatalogue);
+  } else say("This window only works inside the desktop app.", true);
+})();
+</script>
+</body>
+</html>

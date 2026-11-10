@@ -4,6 +4,7 @@ const path = require('path');
 
 const KEEP_BACKUPS = 14;
 const MAX_BYTES = 25e6;
+const BLOBS = ['prices']; // small extra files the page may keep next to the data file
 
 function createStore(dir) {
   const dataFile = path.join(dir, 'tracker-data.json');
@@ -59,11 +60,13 @@ function createStore(dir) {
       }
       if (d) { try { writeAtomic(dataFile, JSON.stringify(d)); } catch (e) {} }
     }
-    return Object.assign({ items: [], known: [] }, validData(d) ? d : {}, { restoredFrom });
+    return Object.assign({ items: [], known: [], extra: {} }, validData(d) ? d : {}, { restoredFrom });
   }
   function save(d) {
     if (!validData(d)) throw new Error('Invalid data');
-    const text = JSON.stringify({ items: d.items, known: d.known });
+    const out = { items: d.items, known: d.known };
+    if (d.extra && typeof d.extra === 'object' && !Array.isArray(d.extra)) out.extra = d.extra;
+    const text = JSON.stringify(out);
     if (text.length > MAX_BYTES) throw new Error('Data too large');
     backupDaily();
     writeAtomic(dataFile, text);
@@ -80,7 +83,19 @@ function createStore(dir) {
     writeAtomic(catFile, text);
     return true;
   }
-  return { load, save, loadCatalogue, saveCatalogue, paths: { dir, dataFile, catFile, backupDir } };
+  function loadBlob(name) {
+    if (!BLOBS.includes(name)) return null;
+    return readJSON(path.join(dir, name + '.json'));
+  }
+  function saveBlob(name, obj) {
+    if (!BLOBS.includes(name)) throw new Error('Unknown file');
+    if (!obj || typeof obj !== 'object') throw new Error('Invalid data');
+    const text = JSON.stringify(obj);
+    if (text.length > 10e6) throw new Error('Data too large');
+    writeAtomic(path.join(dir, name + '.json'), text);
+    return true;
+  }
+  return { load, save, loadCatalogue, saveCatalogue, loadBlob, saveBlob, paths: { dir, dataFile, catFile, backupDir } };
 }
 
 module.exports = { createStore };

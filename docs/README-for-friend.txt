@@ -64,6 +64,28 @@ BLUEPRINTS tab
   - Materials from your inventory are compared against each blueprint,
     so you can see what you can craft right now.
 
+  - Tag any row Keep / Sell / Scrap / Trade, and click "+ note" to add a
+    short note. Filter by tag, or search for words in your notes.
+  - Tick the boxes on several rows to move, tag or delete them together.
+  - "Refresh UEX prices" downloads community-reported prices so each row
+    shows an estimated value. Sell = what shops pay you, Buy = what they
+    charge. Only some items have sell prices, and all numbers are
+    estimates.
+
+CRAFT LIST tab
+  - On the Blueprints tab press "+ Craft list". This tab adds up the
+    materials for everything on the list, compares them with what you own
+    and shows what you are short of. "Copy shopping list" copies it.
+
+ARMOR SETS tab
+  - Shows how many pieces of each armor set you own (for example 3 of 4)
+    and which piece is missing. Press + on a missing piece to log it.
+  - Press Update once after installing this version so set data downloads.
+
+HISTORY tab
+  - A log of what you added, used, removed or moved, with a summary of
+    the current session.
+
 ADDED THIS PATCH tab
   - Lists items and blueprints new in the latest patch.
 
@@ -71,8 +93,18 @@ DATA & BACKUP tab
   - "Create backup text" gives you your whole list as text you can save
     or send to another PC. "Replace my list" or "Merge into my list"
     loads one back.
+  - "Export inventory as CSV" saves your list for Excel or Google Sheets.
   - "Open data folder" shows where the app keeps your saved data.
   - Undo is available for list changes made in the current session.
+
+
+QUICK ADD WINDOW (desktop app only)
+  Press Ctrl+Shift+L anywhere to open a small always-on-top window. Type an
+  item, a quantity and a location, press Enter, and it is added to your
+  list. Press Esc to close it. Star Citizen must run in BORDERLESS
+  WINDOWED mode for the window to appear over the game; it will not show
+  over true fullscreen. If another program already uses Ctrl+Shift+L, the
+  hotkey will not work, but Tools > Quick add window in the menu still does.
 
 
 -----------------------------------------------

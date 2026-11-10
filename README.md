@@ -24,9 +24,20 @@ Desktop app: same tab -> paste into the box -> Replace my list.
 ## First launch
 Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
+## Features (v1.2)
+- Tags (Keep / Sell / Scrap / Trade) and notes on each stack, with a tag filter
+- Bulk select: move, tag or delete several stacks at once
+- Craft list: pick blueprints, see total materials against what you own
+- Armor sets: pieces owned per set and what is missing (needs one Update press)
+- History: log of adds, removals and moves with a session summary
+- CSV export of the inventory
+- UEX price estimates behind a manual "Refresh UEX prices" button
+- Quick-add window on `Ctrl+Shift+L` (always on top, works over borderless windowed games)
+
 ## Repo layout
 - `main.js`, `preload.js`, `store.js`: Electron shell and disk storage
 - `app/index.html`: the tracker UI used by the desktop app
+- `app/quick.html`: the small quick-add window
 - `web/loot-tracker.html`: the same tracker as a single file for a browser
 - `docs/README-for-friend.txt`: end-user install guide to send with the installer
 - `.github/workflows/release.yml`: pushing a tag like `v1.0.1` builds the Windows installer and attaches it to a GitHub Release

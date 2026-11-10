@@ -48,7 +48,38 @@
   .loc{margin-bottom:14px}
   .loc h3{margin:0;padding:8px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px 8px 0 0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;color:var(--accent)}
   .loc h3 span{color:var(--mute);text-transform:none;letter-spacing:0}
-  .item{display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
+  .item{display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
+  .namecell .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
+  .noteline{font-size:12px;color:var(--mute);font-style:italic;cursor:pointer;margin-top:2px;overflow-wrap:anywhere}
+  .notebtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;margin-top:2px;font-weight:400;text-decoration:underline dotted}
+  .notebtn:hover:not(:disabled){background:none;box-shadow:none;color:var(--accent)}
+  .noteinput{width:100%;min-height:30px;padding:3px 8px;font-size:12px;margin-top:3px}
+  .tagsel{min-height:34px;padding:4px 6px;font-size:12px;width:84px}
+  .tagsel.t-keep{color:var(--good);border-color:#1f6a3a}.tagsel.t-sell{color:var(--warn);border-color:#5a4416}
+  .tagsel.t-scrap{color:var(--bad);border-color:#6a2a2a}.tagsel.t-trade{color:#7fd4ff;border-color:#1f4f66}
+  .selbox,.selall input{width:18px;height:18px;min-height:0;accent-color:var(--accent2)}
+  .val{font-size:11px;color:var(--mute);white-space:nowrap}.val b{color:var(--good);font-weight:600}
+  .bulk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;margin:10px 0;border:1px solid #1f6a3a;background:#0c2214;border-radius:8px}
+  .bulk>b{color:var(--accent);margin-right:4px}
+  .bulk .ac{width:200px}
+  .bulk .acbox{width:270px}
+  .pricebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}
+  .pricebar .note{margin:0;flex:1 1 260px}
+  .selall{flex-direction:row;align-items:center;gap:8px;margin:0 0 8px;font-size:12px}
+  .crow{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 12px}
+  .mat{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:6px 12px;border:1px solid var(--line);border-top:0;background:var(--panel);font-size:13px}
+  .mat:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}.mat:last-child{border-radius:0 0 8px 8px}
+  .mat .ok{color:var(--good)}.mat .no{color:var(--bad)}
+  .sub3{margin:16px 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 10px 42px;align-items:center}
+  .chip{font-size:12px;padding:3px 9px;border-radius:99px;border:1px dashed var(--line);color:var(--mute)}
+  .chip.have{border-style:solid;border-color:#1f6a3a;color:var(--good)}
+  .chip b{font-weight:600;color:inherit}
+  .chipadd{min-height:24px;width:24px;padding:0;font-size:14px;line-height:1}
+  .hrow{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:6px 12px;border:1px solid var(--line);border-top:0;background:var(--panel);font-size:13px}
+  .hrow:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}.hrow:last-child{border-radius:0 0 8px 8px}
+  .hrow time{color:var(--mute);font-size:12px}
+  .smallbtn{min-height:28px;padding:2px 10px;font-size:12px}
   .item:last-child{border-radius:0 0 8px 8px}
   .name{overflow-wrap:anywhere}
   .badge{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
@@ -80,7 +111,7 @@
   .bp{border:1px solid var(--line);border-top:0;background:var(--panel)}
   .bp:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}
   .bp:last-child{border-radius:0 0 8px 8px}
-  .bphead{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 12px}
+  .bphead{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:10px;align-items:center;padding:8px 12px}
   .bphead input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--accent2)}
   .bphead .name{cursor:pointer}
   .ing{padding:4px 12px 10px 42px;font-size:13px;color:var(--mute)}
@@ -90,11 +121,15 @@
   .nrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:7px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
   .nrow:first-of-type{border-top:1px solid var(--line)}
   @media (max-width:700px){
-    .item{grid-template-columns:1fr auto;grid-template-areas:"n b" "s w" "d d"}
-    .item .name{grid-area:n}.item .badge{grid-area:b;justify-self:end}
+    .item{grid-template-columns:auto 1fr auto;grid-template-areas:"c n n" "c s w" "c t d"}
+    .item .selbox{grid-area:c;align-self:start}.item .namecell{grid-area:n}
     .item .stepper{grid-area:s}.item .wherewrap{grid-area:w;width:100%}
+    .item .tagsel{grid-area:t;width:100%}
     .wherewrap .acbox{left:0;right:0;width:auto}
     .item .danger{grid-area:d}
+    .bphead{grid-template-columns:auto 1fr}
+    .crow{grid-template-columns:1fr auto}
+    .hrow{grid-template-columns:1fr}
     .upd{text-align:left}
   }
 </style>
@@ -119,7 +154,10 @@
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="inv" aria-selected="true">Inventory</button>
     <button role="tab" data-tab="bp" aria-selected="false">Blueprints</button>
+    <button role="tab" data-tab="craft" aria-selected="false">Craft list</button>
+    <button role="tab" data-tab="sets" aria-selected="false">Armor sets</button>
     <button role="tab" data-tab="new" aria-selected="false">Added this patch</button>
+    <button role="tab" data-tab="hist" aria-selected="false">History</button>
     <button role="tab" data-tab="data" aria-selected="false">Data &amp; backup</button>
   </nav>
 
@@ -171,6 +209,9 @@
         <label>Size
           <select id="qSize"></select>
         </label>
+        <label>Tag
+          <select id="qTag"></select>
+        </label>
         <label>Sort by
           <select id="qSort">
             <option value="name">Name</option>
@@ -179,12 +220,23 @@
             <option value="type">Type / slot</option>
             <option value="armor">Armor slot (head to toe)</option>
             <option value="qty">Quantity</option>
+            <option value="value">Value (highest first)</option>
           </select>
         </label>
         <button class="ghost" id="undoBtn" type="button" disabled>Undo last change</button>
       </div>
       <div class="note" id="sizeNote" hidden>Ship component sizes and grades come from the item database. Press Update to load them.</div>
+      <div class="pricebar"><button class="ghost smallbtn" id="priceBtn" type="button">Refresh UEX prices</button><span class="note" id="priceNote"></span></div>
+      <div class="bulk" id="bulkBar" hidden>
+        <b id="bulkCount"></b>
+        <span class="ac"><input id="bulkLoc" placeholder="Move to location" maxlength="80" role="combobox" aria-autocomplete="list" aria-label="Move selected to location" style="width:100%"><div class="acbox" id="bulkBox" role="listbox" hidden></div></span>
+        <button type="button" class="ghost" id="bulkMove">Move</button>
+        <select id="bulkTag" aria-label="Set tag on selected"></select>
+        <button type="button" class="danger" id="bulkDel">Delete selected</button>
+        <button type="button" class="ghost" id="bulkClear">Clear selection</button>
+      </div>
       <div class="stats" id="stats"></div>
+      <label class="selall"><input type="checkbox" id="selAll"> Select all shown</label>
       <div id="list"></div>
     </div>
   </section>
@@ -216,6 +268,46 @@
     </div>
   </section>
 
+  <!-- CRAFT LIST -->
+  <section id="tab-craft" hidden>
+    <div class="panel">
+      <h2>Craft list</h2>
+      <p class="note" style="margin-top:0">Press &ldquo;+ Craft list&rdquo; on any blueprint in the Blueprints tab. This adds up the materials for everything on the list and compares them with what you own.</p>
+      <div class="stats" id="cStats"></div>
+      <div id="cList"></div>
+      <h3 class="sub3">Materials needed</h3>
+      <div id="cMats"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="ghost" id="cCopy" type="button">Copy shopping list</button>
+        <button class="danger" id="cClear" type="button">Clear craft list</button>
+      </div>
+      <div id="cMsg" class="msg" role="status"></div>
+    </div>
+  </section>
+
+  <!-- ARMOR SETS -->
+  <section id="tab-sets" hidden>
+    <div class="panel">
+      <h2>Armor sets</h2>
+      <div class="row">
+        <label class="grow">Search
+          <input id="sSearch" type="search" placeholder="Search sets by name">
+        </label>
+        <label>Show
+          <select id="sShow">
+            <option value="building">Sets I&rsquo;m building</option>
+            <option value="complete">Complete sets</option>
+            <option value="all">All sets</option>
+          </select>
+        </label>
+      </div>
+      <p class="note" id="sNote"></p>
+      <div class="stats" id="sStats"></div>
+      <div id="sList"></div>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="sMore" type="button" hidden>Show more</button></div>
+    </div>
+  </section>
+
   <!-- NEW -->
   <section id="tab-new" hidden>
     <div class="panel">
@@ -228,6 +320,21 @@
       </div>
       <p class="note" id="nNote"></p>
       <div id="nList"></div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="tab-hist" hidden>
+    <div class="panel">
+      <h2>History</h2>
+      <div class="row">
+        <label class="grow">Search
+          <input id="hSearch" type="search" placeholder="Filter by item or location">
+        </label>
+        <button class="danger" id="hClear" type="button">Clear history</button>
+      </div>
+      <div class="stats" id="hStats" style="margin-top:10px"></div>
+      <div id="hList"></div>
     </div>
   </section>
 
@@ -245,6 +352,7 @@
       <div class="row" style="margin:10px 0">
         <button type="button" id="exportBtn">Create backup text</button>
         <button type="button" class="ghost" id="copyBtn">Copy</button>
+        <button type="button" class="ghost" id="csvBtn">Export inventory as CSV</button>
         <label style="flex-direction:row;align-items:center;gap:8px">
           <span>Or load a file</span>
           <input type="file" id="fileIn" accept=".json,.txt,application/json,text/plain">
@@ -266,11 +374,15 @@
 var CATS = ["Armor","Weapon","Attachment","Consumable / Medical","Tool / Gadget","Material","Clothing","Ship component","Other"];
 var CATRANK = {}; CATS.forEach(function(c, i){ CATRANK[c] = i; });
 var FALLBACK_WEAPONS = ["Zenith Laser Sniper Rifle","Arclight Pistol","Coda Pistol","LH86 Pistol","Pulse Laser Pistol","S-38 Pistol","Salvo Frag Pistol","Tripledown Pistol","Yubarev Pistol","Cambio SRT","Demeco LMG","F55 LMG","FS-9 LMG","Fresnel Energy LMG","Gallant Rifle","Karna Rifle","Killshot Rifle","Lumin V SMG","P4-AR Rifle","P8-AR Rifle","Parallax Energy Assault Rifle","Pulverizer LMG","S71 Rifle","C54 SMG","Custodian SMG","P8-SC SMG","Quartz Energy SMG","Ripper SMG","BR-2 Shotgun","Deadrig Shotgun","Devastator Shotgun","Prism Laser Shotgun","R97 Shotgun","Ravager-212 Twin Shotgun","Animus Missile Launcher","Boomtube Rocket Launcher","Scourge Railgun","A03 Sniper Rifle","Arrowhead Sniper Rifle","Atzkav Sniper Rifle","P6-LR Sniper Rifle","Scalpel Sniper Rifle","GP-33 MOD Grenade Launcher"];
-var STORE_KEY = "sc-loot-tracker-v1", KNOWN_KEY = "sc-loot-known-v1";
+var STORE_KEY = "sc-loot-tracker-v1", KNOWN_KEY = "sc-loot-known-v1", EXTRA_KEY = "sc-loot-extra-v1";
+var TAGS = ["Keep","Sell","Scrap","Trade"];
+var HIST_MAX = 500;
 var MAXQ = 999999;
 
 function norm(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " "); }
 function nameKey(s){ return norm(s).toLowerCase().replace(/["'“”‘’]/g, ""); }
+function cleanTag(t){ t = norm(t).toLowerCase(); for (var i = 0; i < TAGS.length; i++) if (TAGS[i].toLowerCase() === t) return TAGS[i]; return ""; }
+function cleanNote(n){ return norm(n).slice(0, 200); }
 function uid(){ return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
 function sameStack(a, b){
   if (a.name.toLowerCase() !== b.name.toLowerCase() || a.cat !== b.cat || a.loc.toLowerCase() !== b.loc.toLowerCase()) return false;
@@ -288,12 +400,12 @@ function addItem(items, o){
   var loc = norm(o.loc).slice(0, 80) || "Unsorted";
   var cat = CATS.indexOf(o.cat) >= 0 ? o.cat : "Other";
   var qty = cleanQty(o.qty, cat);
-  var sub = norm(o.sub).slice(0, 40);
+  var sub = norm(o.sub).slice(0, 40), tag = cleanTag(o.tag), note = cleanNote(o.note);
   if (!name || !(qty > 0)) return false;
   var probe = { name: name, cat: cat, loc: loc, sub: sub };
   var ex = items.find(function(i){ return sameStack(i, probe); });
-  if (ex){ ex.qty = Math.min(MAXQ, Math.round((ex.qty + qty) * 100) / 100); if (!ex.sub && sub) ex.sub = sub; }
-  else items.push({ id: uid(), name: name, cat: cat, sub: sub, qty: qty, loc: loc });
+  if (ex){ ex.qty = Math.min(MAXQ, Math.round((ex.qty + qty) * 100) / 100); if (!ex.sub && sub) ex.sub = sub; if (!ex.tag && tag) ex.tag = tag; if (!ex.note && note) ex.note = note; }
+  else items.push({ id: uid(), name: name, cat: cat, sub: sub, qty: qty, loc: loc, tag: tag, note: note });
   return true;
 }
 function adjust(items, id, d){
@@ -329,7 +441,7 @@ function sanitize(list){
   if (!Array.isArray(list)) return out;
   list.forEach(function(r){
     if (!r || typeof r !== "object") return;
-    addItem(out, { name: r.name, cat: r.cat, sub: r.sub, qty: r.qty, loc: r.loc });
+    addItem(out, { name: r.name, cat: r.cat, sub: r.sub, qty: r.qty, loc: r.loc, tag: r.tag, note: r.note });
   });
   return out;
 }
@@ -350,7 +462,7 @@ function parseBackup(text){
   var hasList = Array.isArray(list) && list.length > 0;
   if (!items.length && !Object.keys(known).length && hasList) throw new Error("No valid items found");
   if (!items.length && !Object.keys(known).length && !Array.isArray(list)) throw new Error("No valid items found");
-  return { items: items, known: known };
+  return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish) };
 }
 function mergeInto(items, incoming){ incoming.forEach(function(r){ addItem(items, r); }); }
 function ownedByName(items){
@@ -373,6 +485,177 @@ function verCmp(a, b){
   return 0;
 }
 function baseVer(code){ return String(code || "").split("-")[0]; }
+
+// ---------- extra data: craft list + history ----------
+function sanitizeWish(w){
+  var out = {};
+  if (!w || typeof w !== "object" || Array.isArray(w)) return out;
+  Object.keys(w).slice(0, 500).forEach(function(u){
+    var n = Math.floor(Number(w[u]));
+    if (u && u.length <= 80 && n >= 1) out[u] = Math.min(99, n);
+  });
+  return out;
+}
+var HIST_ACTS = ["add", "inc", "dec", "rem", "move", "note"];
+function sanitizeHist(a){
+  var out = [];
+  if (!Array.isArray(a)) return out;
+  a.slice(-HIST_MAX).forEach(function(e){
+    if (!e || typeof e !== "object" || HIST_ACTS.indexOf(e.a) < 0) return;
+    var t = String(e.t || "").slice(0, 30);
+    if (isNaN(Date.parse(t))) return;
+    out.push({ t: t, a: e.a, n: norm(e.n).slice(0, 160), d: Number(e.d) || 0, f: norm(e.f).slice(0, 80), l: norm(e.l).slice(0, 80) });
+  });
+  return out;
+}
+function snapItems(items){
+  var m = {};
+  items.forEach(function(i){ m[i.id] = { name: i.name, cat: i.cat, qty: i.qty, loc: i.loc }; });
+  return m;
+}
+// What changed between a stored snapshot and the current list, as history entries.
+function diffItems(base, items, now){
+  var out = [], seen = {}, gains = [];
+  items.forEach(function(i){
+    seen[i.id] = 1;
+    var b = base[i.id];
+    if (!b){ out.push({ t: now, a: "add", n: i.name, d: i.qty, f: "", l: i.loc }); return; }
+    if (i.qty !== b.qty){
+      var dq = Math.round((i.qty - b.qty) * 100) / 100, e = { t: now, a: dq > 0 ? "inc" : "dec", n: i.name, d: Math.abs(dq), f: "", l: i.loc };
+      out.push(e); if (dq > 0) gains.push({ e: e, i: i, d: dq });
+    }
+    if (i.loc !== b.loc) out.push({ t: now, a: "move", n: i.name, d: i.qty, f: b.loc, l: i.loc });
+  });
+  Object.keys(base).forEach(function(id){
+    if (seen[id]) return;
+    var r = base[id], hit = null;
+    // a stack that vanished while the same item grew by the same amount elsewhere was merged, not deleted
+    gains.forEach(function(g){ if (!hit && !g.used && g.i.name.toLowerCase() === r.name.toLowerCase() && g.i.cat === r.cat && Math.abs(g.d - r.qty) < 0.005) hit = g; });
+    if (hit){ hit.used = true; hit.e.a = "move"; hit.e.d = r.qty; hit.e.f = r.loc; }
+    else out.push({ t: now, a: "rem", n: r.name, d: r.qty, f: "", l: r.loc });
+  });
+  return out;
+}
+
+// ---------- craft list ----------
+function craftPlan(bps, wish, owned){
+  var rows = {}, list = [];
+  bps.forEach(function(b){
+    var n = wish[b.u]; if (!n) return;
+    list.push({ bp: b, n: n });
+    b.ing.forEach(function(g){
+      var k = nameKey(g[0]), r = rows[k] || (rows[k] = { name: g[0], unit: g[1] === "r" ? "SCU" : "units", need: 0 });
+      r.need = Math.round((r.need + (Number(g[2]) || 0) * n) * 100) / 100;
+    });
+  });
+  var out = Object.keys(rows).map(function(k){
+    var r = rows[k]; r.have = owned[k] || 0; r.short = Math.max(0, Math.round((r.need - r.have) * 100) / 100); return r;
+  }).sort(function(a, b){ return b.short - a.short || a.name.localeCompare(b.name); });
+  list.sort(function(a, b){ return a.bp.n.localeCompare(b.bp.n); });
+  return { list: list, rows: out, ready: out.length > 0 && out.every(function(r){ return r.short === 0; }) };
+}
+
+// ---------- armor sets ----------
+var SLOT_ORDER = ["helmet", "core", "arms", "legs"], SLOT_LABEL = { helmet: "Helmet", core: "Torso", arms: "Arms", legs: "Legs" };
+function slotOf(s){
+  s = String(s || "").toLowerCase();
+  if (/helm|head/.test(s)) return "helmet";
+  if (/torso|core|chest/.test(s)) return "core";
+  if (/arm/.test(s)) return "arms";
+  if (/leg/.test(s)) return "legs";
+  return "";
+}
+function setName(g){
+  var p = g.pieces.core || g.pieces.arms || g.pieces.legs || g.pieces.helmet;
+  var n = p.n.replace(/\b(core|torso|arms|legs|helmet)\b/ig, " ").replace(/\s+/g, " ").trim();
+  return n || g.key;
+}
+// Groups armor into sets using the game's internal item names (same prefix and colour code, different slot).
+function buildSets(items){
+  var re = /^(.+?)_(helmet|core|arms|legs)_(.+)$/, by = {}, order = [];
+  items.forEach(function(it){
+    if (it.c !== "Armor" || !it.k) return;
+    var m = re.exec(it.k); if (!m) return;
+    var key = m[1] + "|" + m[3], g = by[key];
+    if (!g){ g = by[key] = { key: key, pieces: {}, g: "" }; order.push(g); }
+    if (!g.pieces[m[2]]) g.pieces[m[2]] = { slot: m[2], n: it.n, u: it.u, s: it.s };
+    if (!g.g && it.g) g.g = it.g;
+  });
+  return order.filter(function(g){ return Object.keys(g.pieces).length >= 2; }).map(function(g){
+    g.name = setName(g); g.count = Object.keys(g.pieces).length; return g;
+  }).sort(function(a, b){ return a.name.localeCompare(b.name, undefined, { numeric: true }); });
+}
+function ownedPieces(set, items){
+  var out = {}, have = 0;
+  SLOT_ORDER.forEach(function(sl){
+    var p = set.pieces[sl]; if (!p) return;
+    var k = nameKey(p.n), q = 0;
+    items.forEach(function(i){
+      if (i.cat !== "Armor" || nameKey(i.name) !== k) return;
+      var is = slotOf(i.sub); if (is && is !== sl) return;
+      q += i.qty;
+    });
+    out[sl] = q; if (q > 0) have++;
+  });
+  return { qty: out, have: have };
+}
+
+// ---------- bulk actions ----------
+function bulkMove(items, ids, loc){ var n = 0; ids.forEach(function(id){ if (moveItem(items, id, loc)) n++; }); return n; }
+function bulkTag(items, ids, tag){
+  var set = {}; ids.forEach(function(id){ set[id] = 1; }); tag = cleanTag(tag); var n = 0;
+  items.forEach(function(i){ if (set[i.id]){ i.tag = tag; n++; } });
+  return n;
+}
+function bulkRemove(items, ids){ var n = 0; ids.forEach(function(id){ if (removeItem(items, id)) n++; }); return n; }
+
+// ---------- prices (UEX) ----------
+function median(a){ a = a.slice().sort(function(x, y){ return x - y; }); var m = a.length >> 1; return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2); }
+// UEX rows -> { byU: {uuid: [sellMed, sellMin, sellMax, buyMed, buyMin, buyMax, date]}, byN: {name: [...]} }
+function buildPrices(rows){
+  var tmp = { u: {}, n: {} };
+  rows.forEach(function(r){
+    var u = String(r.item_uuid || "").toLowerCase(), id = u || nameKey(r.item_name || ""); if (!id) return;
+    var m = u ? tmp.u : tmp.n, e = m[id] || (m[id] = { s: [], b: [], d: 0 });
+    if (Number(r.price_sell) > 0) e.s.push(Number(r.price_sell));
+    if (Number(r.price_buy) > 0) e.b.push(Number(r.price_buy));
+    e.d = Math.max(e.d, Number(r.date_modified) || 0);
+  });
+  function fin(m){
+    var o = {};
+    Object.keys(m).forEach(function(k){
+      var e = m[k]; if (!e.s.length && !e.b.length) return;
+      o[k] = [e.s.length ? median(e.s) : 0, e.s.length ? Math.min.apply(null, e.s) : 0, e.s.length ? Math.max.apply(null, e.s) : 0,
+              e.b.length ? median(e.b) : 0, e.b.length ? Math.min.apply(null, e.b) : 0, e.b.length ? Math.max.apply(null, e.b) : 0, e.d];
+    });
+    return o;
+  }
+  return { v: 1, byU: fin(tmp.u), byN: fin(tmp.n) };
+}
+function priceFor(prices, u, name){
+  if (!prices) return null;
+  var a = (u && prices.byU && prices.byU[u]) || (prices.byN && prices.byN[nameKey(name)]);
+  return a ? { sell: a[0], sellMin: a[1], sellMax: a[2], buy: a[3], buyMin: a[4], buyMax: a[5], date: a[6] } : null;
+}
+
+// ---------- CSV ----------
+function csvCell(v, textual){
+  var s = v == null ? "" : String(v);
+  if (textual && /^[=+\-@\t\r]/.test(s)) s = "'" + s; // stop spreadsheets treating text as a formula
+  if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function toCSV(items, info){
+  var head = ["Name", "Category", "Type", "Quantity", "Location", "Tag", "Note", "Size", "Grade", "Weight class", "Sell price each", "Buy price each", "Sell value", "Buy value"];
+  var lines = [head.join(",")];
+  items.forEach(function(i){
+    var x = (info && info(i)) || {};
+    lines.push([csvCell(i.name, 1), csvCell(i.cat, 1), csvCell(i.sub, 1), csvCell(i.qty), csvCell(i.loc, 1), csvCell(i.tag || "", 1), csvCell(i.note || "", 1),
+      csvCell(x.size || ""), csvCell(x.grade || "", 1), csvCell(x.weight || "", 1),
+      csvCell(x.sell || ""), csvCell(x.buy || ""), csvCell(x.sell ? Math.round(x.sell * i.qty) : ""), csvCell(x.buy ? Math.round(x.buy * i.qty) : "")].join(","));
+  });
+  return lines.join("\r\n") + "\r\n";
+}
 /*END LOGIC*/
 
 /*DATA*/
@@ -449,6 +732,7 @@ function normWikiItem(d){
   var k = classify(d.type, d.sub_type, d.classification, d.name);
   if (!k) return null;
   var o = { u: String(d.uuid).toLowerCase(), n: String(d.name), c: k.c, s: k.s || "", g: k.g || "", a: "" };
+  if (k.c === "Armor" && d.class_name) o.k = String(d.class_name).toLowerCase().slice(0, 120);
   if (k.c === "Ship component"){
     var z = Math.floor(Number(d.size));
     if (z >= 1 && z <= 20) o.z = z;
@@ -626,6 +910,8 @@ async function computeExactItems(cat, patchCode, progress){
   var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
   var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, WEIGHTBY = {}, HAS_SIZES = false;
   var armedId = null, armedTimer = null, bpShown = 60;
+  var wish = {}, hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
+  var sessionStart = new Date().toISOString();
   var $ = function(id){ return document.getElementById(id); };
 
   function h(tag, a){
@@ -667,21 +953,25 @@ async function computeExactItems(cat, patchCode, progress){
       try {
         var d = NATIVE.loadSync();
         items = sanitize(d.items || []); known = sanitizeKnown(d.known || []);
+        if (d.extra){ wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); }
         if (d.restoredFrom){ $("storageWarn").textContent = "Your data file was damaged, so it was restored from the backup " + d.restoredFrom + ". The damaged file was kept next to it in the data folder."; $("storageWarn").hidden = false; }
       } catch (e){ storageOK = false; $("storageWarn").textContent = "Could not read the saved data file."; $("storageWarn").hidden = false; }
+      histBase = snapItems(items);
       return;
     }
     try {
       var raw = localStorage.getItem(STORE_KEY); if (raw) items = sanitize(JSON.parse(raw));
       var kr = localStorage.getItem(KNOWN_KEY); if (kr) known = sanitizeKnown(JSON.parse(kr));
+      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); }
     } catch (e){}
+    histBase = snapItems(items);
     try { localStorage.setItem(STORE_KEY + "-t", "1"); localStorage.removeItem(STORE_KEY + "-t"); } catch (e){ storageOK = false; }
     $("storageWarn").hidden = storageOK;
   }
   function save(){
     if (NATIVE){
       var ok = false;
-      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }) }); } catch (e){}
+      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { wish: wish, hist: hist } }); } catch (e){}
       if (!ok){ $("storageWarn").textContent = "Could not write to the data file. Your latest change is NOT saved. Check disk space and folder permissions."; }
       $("storageWarn").hidden = !!ok && storageOK;
       return;
@@ -689,9 +979,10 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
       localStorage.setItem(KNOWN_KEY, JSON.stringify(Object.keys(known).map(function(u){ return { u: u, n: known[u] }; })));
+      localStorage.setItem(EXTRA_KEY, JSON.stringify({ wish: wish, hist: hist }));
     } catch (e){ storageOK = false; $("storageWarn").hidden = false; }
   }
-  var idbMem = null;
+  var idbMem = {};
   function idb(){
     return new Promise(function(res, rej){
       try {
@@ -703,20 +994,30 @@ async function computeExactItems(cat, patchCode, progress){
     });
   }
   function idbGet(k){
-    if (NATIVE) return NATIVE.loadCatalogue().catch(function(){ return null; });
-    return idb().then(function(db){ return new Promise(function(res, rej){ var q = db.transaction("kv").objectStore("kv").get(k); q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ rej(q.error); }; }); }).catch(function(){ return idbMem; });
+    if (NATIVE) return (k === "cat" ? NATIVE.loadCatalogue() : NATIVE.loadBlob(k)).catch(function(){ return null; });
+    return idb().then(function(db){ return new Promise(function(res, rej){ var q = db.transaction("kv").objectStore("kv").get(k); q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ rej(q.error); }; }); }).catch(function(){ return idbMem[k] || null; });
   }
   function idbSet(k, v){
-    if (NATIVE) return NATIVE.saveCatalogue(v).catch(function(){ return false; });
-    idbMem = v;
+    if (NATIVE) return (k === "cat" ? NATIVE.saveCatalogue(v) : NATIVE.saveBlob(k, v)).catch(function(){ return false; });
+    idbMem[k] = v;
     return idb().then(function(db){ return new Promise(function(res, rej){ var tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = function(){ rej(tx.error); }; }); }).catch(function(){ return false; });
   }
   function snapshot(){ undoStack.push(JSON.stringify({ i: items, k: known })); if (undoStack.length > 30) undoStack.shift(); $("undoBtn").disabled = false; }
-  function commit(){ save(); render(); }
+  function pruneSel(){ var ids = {}; items.forEach(function(i){ ids[i.id] = 1; }); Object.keys(sel).forEach(function(id){ if (!ids[id]) delete sel[id]; }); }
+  function commit(note){
+    var now = new Date().toISOString(), add;
+    if (typeof note === "string") add = [{ t: now, a: "note", n: note, d: 0, f: "", l: "" }];
+    else {
+      add = diffItems(histBase, items, now);
+      if (add.length > 40) add = [{ t: now, a: "note", n: "Bulk change: " + add.length + " stack changes", d: 0, f: "", l: "" }];
+    }
+    if (add.length) hist = hist.concat(add).slice(-HIST_MAX);
+    histBase = snapItems(items); pruneSel(); save(); render();
+  }
 
   // ---------- catalogue index ----------
   function buildIndex(){
-    INDEX = []; BYU = {}; BPCAT = {}; SIZEBY = {}; WEIGHTBY = {}; HAS_SIZES = false;
+    INDEX = []; BYU = {}; BPCAT = {}; SIZEBY = {}; WEIGHTBY = {}; HAS_SIZES = false; ENT = {}; SETS = null;
     var seen = {}, mk = {};
     var mats = (catalogue && catalogue.mats) || [];
     mats.forEach(function(m){ mk[nameKey(m.n)] = m; });
@@ -739,7 +1040,42 @@ async function computeExactItems(cat, patchCode, progress){
     } else {
       FALLBACK_WEAPONS.forEach(function(n){ INDEX.push({ n: n, l: nameKey(n), c: "Weapon", s: "", g: "", u: "" }); });
     }
+    INDEX.forEach(function(e){ (ENT[e.l] = ENT[e.l] || []).push(e); });
   }
+  // ---------- prices ----------
+  function uuidFor(i){
+    var l = ENT[nameKey(i.name)]; if (!l) return "";
+    if (l.length > 1 && i.sub){ for (var k = 0; k < l.length; k++) if (l[k].s === i.sub && l[k].u) return l[k].u; }
+    for (var j = 0; j < l.length; j++) if (l[j].u) return l[j].u;
+    return "";
+  }
+  function priceInfo(i){ return prices ? priceFor(prices, uuidFor(i), i.name) : null; }
+  function valueOf(i){
+    var p = priceInfo(i); if (!p) return null;
+    if (p.sell > 0) return { v: p.sell * i.qty, kind: "sell", lo: p.sellMin, hi: p.sellMax };
+    if (p.buy > 0) return { v: p.buy * i.qty, kind: "buy", lo: p.buyMin, hi: p.buyMax };
+    return null;
+  }
+  function priceNoteText(){
+    if (!prices) return "Prices not loaded. Press Refresh to download community-reported prices from UEX (needs an internet connection).";
+    var n = Object.keys(prices.byU || {}).length + Object.keys(prices.byN || {}).length;
+    var age = Date.now() - Date.parse(prices.fetchedAt || 0), txt = "Prices from " + String(prices.fetchedAt || "").slice(0, 10) + " \u00b7 " + fmt(n) + " items priced. Sell = what shops pay you, Buy = what shops charge. Community-reported, so treat as estimates.";
+    if (age > 7 * 864e5) txt += " These prices are over a week old. Refresh for current numbers.";
+    return txt;
+  }
+  async function refreshPrices(){
+    if (pricing) return;
+    pricing = true; $("priceBtn").disabled = true; $("priceBtn").textContent = "Refreshing\u2026";
+    try {
+      var r = await getJSON(UEX + "items_prices_all"), rows = Array.isArray(r) ? r : (r && r.data);
+      if (!Array.isArray(rows) || !rows.length) throw new Error("UEX returned no prices");
+      var p = buildPrices(rows); p.fetchedAt = new Date().toISOString(); p.rows = rows.length;
+      prices = p; await idbSet("prices", p);
+      $("priceNote").className = "note"; render();
+    } catch (e){ $("priceNote").className = "note err"; $("priceNote").textContent = "Price refresh failed: " + (e && e.message ? e.message : e) + ". Check your connection and try again."; }
+    pricing = false; $("priceBtn").disabled = false; $("priceBtn").textContent = "Refresh UEX prices";
+  }
+  $("priceBtn").onclick = refreshPrices;
   function searchIndex(q, limit){
     q = nameKey(q);
     if (!q) return [];
@@ -868,6 +1204,9 @@ async function computeExactItems(cat, patchCode, progress){
     refreshLists(); renderInventory(); renderStatus();
     if (!$("tab-bp").hidden) renderBlueprints();
     if (!$("tab-new").hidden) renderNew();
+    if (!$("tab-craft").hidden) renderCraft();
+    if (!$("tab-sets").hidden) renderSets();
+    if (!$("tab-hist").hidden) renderHist();
   }
   function cmpItems(a, b, how){
     var byName = a.name.localeCompare(b.name, undefined, { numeric: true });
@@ -886,18 +1225,30 @@ async function computeExactItems(cat, patchCode, progress){
       return (wa - wb) || byName;
     }
     if (how === "qty") return (b.qty - a.qty) || byName;
+    if (how === "value"){ var va = valueOf(a), vb = valueOf(b); return ((vb ? vb.v : -1) - (va ? va.v : -1)) || byName; }
     return byName;
   }
   function renderInventory(){
-    var q = $("qSearch").value.trim().toLowerCase(), cat = $("qCat").value, sub = $("qSub").value, loc = $("qLoc").value, size = $("qSize").value, sortBy = $("qSort").value;
+    var q = $("qSearch").value.trim().toLowerCase(), cat = $("qCat").value, sub = $("qSub").value, loc = $("qLoc").value, size = $("qSize").value, sortBy = $("qSort").value, tag = $("qTag").value;
     var shown = items.filter(function(i){
-      return (!q || i.name.toLowerCase().indexOf(q) >= 0) && (!cat || i.cat === cat) && (!sub || i.sub === sub) && (!loc || i.loc === loc) && (!size || String(sizeOf(i)) === size);
+      return (!q || i.name.toLowerCase().indexOf(q) >= 0 || (i.note || "").toLowerCase().indexOf(q) >= 0) && (!cat || i.cat === cat) && (!sub || i.sub === sub) && (!loc || i.loc === loc) && (!size || String(sizeOf(i)) === size)
+        && (!tag || (tag === "_none" ? !i.tag : i.tag === tag));
     });
+    lastShown = shown.map(function(i){ return i.id; });
     var total = shown.reduce(function(s, i){ return s + i.qty; }, 0);
     var st = $("stats"); st.textContent = "";
     [["Stacks", shown.length], ["Total items", total], ["Locations", uniqSorted(shown.map(function(i){ return i.loc; })).length]].forEach(function(p){
       st.appendChild(h("span", null, p[0] + ": ", h("b", { text: fmt(p[1]) })));
     });
+    if (prices){
+      var sv = 0, bv = 0, pc = 0;
+      shown.forEach(function(i){ var pi = priceInfo(i); if (!pi) return; var u = 0; if (pi.sell > 0){ sv += pi.sell * i.qty; u = 1; } if (pi.buy > 0){ bv += pi.buy * i.qty; u = 1; } pc += u; });
+      [["Sell value", fmt(Math.round(sv)) + " aUEC"], ["Replacement cost", fmt(Math.round(bv)) + " aUEC"], ["Priced", pc + " / " + shown.length]].forEach(function(p2){
+        st.appendChild(h("span", null, p2[0] + ": ", h("b", { text: p2[1] })));
+      });
+    }
+    $("priceNote").textContent = priceNoteText();
+    updateBulk();
     var list = $("list"); list.textContent = "";
     if (!shown.length){
       list.appendChild(h("div", { class: "empty", text: items.length ? "Nothing matches those filters." : "Nothing logged yet. Add your first piece of loot above." }));
@@ -911,6 +1262,14 @@ async function computeExactItems(cat, patchCode, progress){
       g.forEach(function(i){ box.appendChild(rowFor(i)); });
       list.appendChild(box);
     });
+    var focusNote = list.querySelector(".noteinput"); if (focusNote) focusNote.focus();
+  }
+  function updateBulk(){
+    var ids = Object.keys(sel), bar = $("bulkBar");
+    bar.hidden = !ids.length;
+    $("bulkCount").textContent = ids.length + " selected";
+    var allOn = lastShown.length > 0 && lastShown.every(function(id){ return sel[id]; });
+    $("selAll").checked = allOn; $("selAll").disabled = !lastShown.length;
   }
   function rowFor(i){
     var qi = h("input", { type: "number", min: "0.01", step: "any", value: i.qty, "aria-label": "Quantity of " + i.name });
@@ -928,8 +1287,65 @@ async function computeExactItems(cat, patchCode, progress){
       if (armedId === i.id){ snapshot(); removeItem(items, i.id); armedId = null; commit(); return; }
       armedId = i.id; clearTimeout(armedTimer); armedTimer = setTimeout(function(){ armedId = null; renderInventory(); }, 3000); renderInventory();
     };
-    return h("div", { class: "item" }, h("div", { class: "name", text: i.name }), h("span", { class: "badge", text: [i.sub ? i.cat + " · " + i.sub : i.cat, sizeOf(i) ? "S" + sizeOf(i) : "", gradeOf(i) ? "Grade " + gradeOf(i) : "", weightOf(i)].filter(Boolean).join(" · ") }), h("div", { class: "stepper" }, minus, qi, plus), wrap, d);
+    var cb = h("input", { type: "checkbox", class: "selbox", checked: !!sel[i.id], "aria-label": "Select " + i.name });
+    cb.onchange = function(){ if (cb.checked) sel[i.id] = true; else delete sel[i.id]; updateBulk(); };
+    var tg = h("select", { class: "tagsel" + (i.tag ? " t-" + i.tag.toLowerCase() : ""), "aria-label": "Tag for " + i.name });
+    tg.appendChild(h("option", { value: "", text: "No tag" }));
+    TAGS.forEach(function(t){ tg.appendChild(h("option", { value: t, text: t })); });
+    tg.value = i.tag || "";
+    tg.onchange = function(){ snapshot(); bulkTag(items, [i.id], tg.value); commit(); };
+    var meta = h("div", { class: "meta" }, h("span", { class: "badge", text: [i.sub ? i.cat + " · " + i.sub : i.cat, sizeOf(i) ? "S" + sizeOf(i) : "", gradeOf(i) ? "Grade " + gradeOf(i) : "", weightOf(i)].filter(Boolean).join(" · ") }));
+    var val = valueOf(i);
+    if (val){
+      var vc = h("span", { class: "val", title: "Per item: " + fmt(val.lo) + " to " + fmt(val.hi) + " aUEC (" + (val.kind === "sell" ? "shops pay" : "shop price") + ")" });
+      if (val.kind === "sell") vc.appendChild(h("b", { text: "≈ " + fmt(Math.round(val.v)) + " aUEC" }));
+      else vc.appendChild(document.createTextNode("buy ≈ " + fmt(Math.round(val.v)) + " aUEC"));
+      meta.appendChild(vc);
+    }
+    var cell = h("div", { class: "namecell" }, h("div", { class: "name", text: i.name }), meta);
+    if (editNoteId === i.id){
+      var ni = h("input", { class: "noteinput", value: i.note || "", maxlength: "200", placeholder: "Add a note, then press Enter", "aria-label": "Note for " + i.name });
+      var done = false;
+      var finish = function(save){
+        if (done) return; done = true; editNoteId = null;
+        if (save){ var nv = cleanNote(ni.value); if (nv !== (i.note || "")){ snapshot(); i.note = nv; commit(); return; } }
+        renderInventory();
+      };
+      ni.onkeydown = function(e){ if (e.key === "Enter"){ e.preventDefault(); finish(true); } else if (e.key === "Escape"){ e.preventDefault(); finish(false); } };
+      ni.onblur = function(){ finish(true); };
+      cell.appendChild(ni);
+    } else {
+      var openNote = function(){ editNoteId = i.id; renderInventory(); };
+      if (i.note) cell.appendChild(h("div", { class: "noteline", text: i.note, title: "Click to edit the note", role: "button", tabindex: "0", onclick: openNote, onkeydown: function(e){ if (e.key === "Enter"){ openNote(); } } }));
+      else cell.appendChild(h("button", { type: "button", class: "notebtn", text: "+ note", "aria-label": "Add a note to " + i.name, onclick: openNote }));
+    }
+    return h("div", { class: "item" }, cb, cell, h("div", { class: "stepper" }, minus, qi, plus), wrap, tg, d);
   }
+  var fillTagFilter = function(){
+    var t = $("qTag"); t.textContent = "";
+    [["", "All tags"], ["_none", "Untagged"]].concat(TAGS.map(function(x){ return [x, x]; })).forEach(function(p){ t.appendChild(h("option", { value: p[0], text: p[1] })); });
+    var bt = $("bulkTag"); bt.textContent = "";
+    [["", "Set tag…"]].concat(TAGS.map(function(x){ return [x, x]; })).concat([["-", "Clear tag"]]).forEach(function(p){ bt.appendChild(h("option", { value: p[0], text: p[1] })); });
+  };
+  $("selAll").onchange = function(){
+    if ($("selAll").checked) lastShown.forEach(function(id){ sel[id] = true; }); else lastShown.forEach(function(id){ delete sel[id]; });
+    renderInventory();
+  };
+  attachAC($("bulkLoc"), $("bulkBox"), { match: matchLocations, hint: locHint, showOnFocus: true, onPick: function(){} });
+  $("bulkMove").onclick = function(){
+    var ids = Object.keys(sel), loc = norm($("bulkLoc").value);
+    if (!ids.length) return;
+    if (!loc){ say($("msg"), "Type a location to move the selected items to.", true); return; }
+    snapshot(); var n = bulkMove(items, ids, loc);
+    if (!n){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; say($("msg"), "Those items are already there."); return; }
+    $("bulkLoc").value = ""; commit(); say($("msg"), "Moved " + n + " stack" + (n > 1 ? "s" : "") + " to " + loc + ".");
+  };
+  $("bulkTag").onchange = function(){
+    var v = $("bulkTag").value, ids = Object.keys(sel); $("bulkTag").value = "";
+    if (!v || !ids.length) return;
+    snapshot(); bulkTag(items, ids, v === "-" ? "" : v); commit(); say($("msg"), (v === "-" ? "Cleared the tag on " : "Tagged " + v + ": ") + ids.length + " stack" + (ids.length > 1 ? "s" : "") + ".");
+  };
+  $("bulkClear").onclick = function(){ sel = {}; renderInventory(); };
   $("addForm").addEventListener("submit", function(ev){
     ev.preventDefault();
     var name = $("fName").value, qty = $("fQty").value;
@@ -943,13 +1359,13 @@ async function computeExactItems(cat, patchCode, progress){
     $("fName").value = ""; $("fQty").value = 1; $("fSub").value = ""; acClose(); $("fName").focus();
     commit();
   });
-  ["qSearch", "qCat", "qSub", "qLoc", "qSize", "qSort"].forEach(function(id){ $(id).addEventListener("input", renderInventory); });
+  ["qSearch", "qCat", "qSub", "qLoc", "qSize", "qSort", "qTag"].forEach(function(id){ $(id).addEventListener("input", renderInventory); });
   $("undoBtn").onclick = function(){
     if (!undoStack.length) return;
     var s = JSON.parse(undoStack.pop());
     items = sanitize(s.i); known = s.k || {};
     $("undoBtn").disabled = !undoStack.length;
-    commit(); say($("msg"), "Undid the last change.");
+    commit("Undid the last change"); say($("msg"), "Undid the last change.");
   };
 
   // ---------- blueprints ----------
@@ -995,10 +1411,120 @@ async function computeExactItems(cat, patchCode, progress){
     if (b.d) badges.appendChild(h("span", { class: "badge good", text: "default" }));
     badges.appendChild(h("span", { class: "badge", text: BPCAT[b.u] || "Other" }));
     var craft = h("span", { class: "badge " + (cs.ok ? "good" : ""), text: cs.ok ? "craftable now" : cs.have + "/" + b.ing.length + " materials" });
-    return h("div", { class: "bp" }, h("div", { class: "bphead" }, chk, name, badges, craft), ing);
+    var wb = h("button", { type: "button", class: "ghost smallbtn", text: wish[b.u] ? "+1 (in list: " + wish[b.u] + ")" : "+ Craft list", title: "Add to the Craft list" });
+    wb.onclick = function(){ wish[b.u] = Math.min(99, (wish[b.u] || 0) + 1); save(); wb.textContent = "+1 (in list: " + wish[b.u] + ")"; };
+    return h("div", { class: "bp" }, h("div", { class: "bphead" }, chk, name, badges, craft, wb), ing);
   }
   ["bSearch", "bCat", "bStatus"].forEach(function(id){ $(id).addEventListener("input", function(){ bpShown = 60; renderBlueprints(); }); });
   $("bMore").onclick = function(){ bpShown += 120; renderBlueprints(); };
+
+  // ---------- craft list ----------
+  function renderCraft(){
+    var bps = (catalogue && catalogue.bps) || [], plan = craftPlan(bps, wish, ownedByName(items));
+    var st = $("cStats"); st.textContent = "";
+    var shortN = plan.rows.filter(function(r){ return r.short > 0; }).length;
+    [["Blueprints", plan.list.length], ["Materials", plan.rows.length], ["Short on", shortN]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: fmt(p[1]) }))); });
+    if (plan.ready) st.appendChild(h("span", null, h("b", { text: "You have everything" })));
+    var L = $("cList"); L.textContent = "";
+    if (!plan.list.length){
+      L.appendChild(h("div", { class: "empty", text: !catalogue && Object.keys(wish).length ? "Download the item database (Update, top right) to see your craft list." : "Nothing on the list yet. Open the Blueprints tab and press “+ Craft list”." }));
+    }
+    plan.list.forEach(function(e){
+      var set = function(n){ if (n < 1) delete wish[e.bp.u]; else wish[e.bp.u] = Math.min(99, n); save(); render(); };
+      var cnt = h("input", { type: "number", min: "1", max: "99", step: "1", value: e.n, "aria-label": "How many " + e.bp.n });
+      cnt.onchange = function(){ set(Math.floor(Number(cnt.value)) || 0); };
+      L.appendChild(h("div", { class: "bp" }, h("div", { class: "crow" }, h("div", { class: "name", text: e.bp.n }),
+        h("div", { class: "stepper" }, h("button", { type: "button", class: "ghost", text: "−", "aria-label": "Fewer " + e.bp.n, onclick: function(){ set(e.n - 1); } }), cnt,
+          h("button", { type: "button", class: "ghost", text: "+", "aria-label": "More " + e.bp.n, onclick: function(){ set(e.n + 1); } })),
+        known[e.bp.u] ? h("span", { class: "badge good", text: "blueprint known" }) : h("span", { class: "badge", text: "not marked known" }),
+        h("button", { type: "button", class: "danger smallbtn", text: "Remove", onclick: function(){ set(0); } }))));
+    });
+    var M = $("cMats"); M.textContent = "";
+    plan.rows.forEach(function(r){
+      M.appendChild(h("div", { class: "mat" }, h("span", { text: r.name }),
+        h("span", { class: r.short ? "no" : "ok", text: fmt(r.have) + " / " + fmt(r.need) + " " + r.unit }),
+        h("span", { class: r.short ? "no" : "ok", text: r.short ? "short " + fmt(r.short) : "OK" })));
+    });
+    if (!plan.rows.length) M.appendChild(h("div", { class: "empty", text: "No materials yet." }));
+    $("cCopy").disabled = !plan.rows.length; $("cClear").disabled = !plan.list.length;
+  }
+  $("cCopy").onclick = function(){
+    var plan = craftPlan((catalogue && catalogue.bps) || [], wish, ownedByName(items));
+    var lines = ["Craft list: " + plan.list.map(function(e){ return e.n + " × " + e.bp.n; }).join(", ")];
+    var need = plan.rows.filter(function(r){ return r.short > 0; });
+    if (!need.length) lines.push("Nothing short. You have all the materials.");
+    else { lines.push("Still need:"); need.forEach(function(r){ lines.push("- " + r.name + ": " + fmt(r.short) + " " + r.unit + " (have " + fmt(r.have) + " of " + fmt(r.need) + ")"); }); }
+    var t = lines.join("\n");
+    var ok = function(){ say($("cMsg"), "Shopping list copied."); };
+    var bad = function(){ say($("cMsg"), "Couldn't copy automatically.", true); };
+    try { navigator.clipboard.writeText(t).then(ok, bad); } catch (e){ bad(); }
+  };
+  twoClick($("cClear"), "Clear craft list", function(){ wish = {}; save(); render(); say($("cMsg"), "Craft list cleared."); });
+
+  // ---------- armor sets ----------
+  function renderSets(){
+    var L = $("sList"); L.textContent = ""; var st = $("sStats"); st.textContent = "";
+    var hasK = catalogue && catalogue.items.some(function(it){ return it.c === "Armor" && it.k; });
+    $("sMore").hidden = true;
+    if (!catalogue){ $("sNote").textContent = ""; L.appendChild(h("div", { class: "empty", text: "Click “Update item database” (top right) to load the armor sets." })); return; }
+    if (!hasK){ $("sNote").textContent = ""; L.appendChild(h("div", { class: "empty", text: "Press “Update item database” once more. Armor sets need a little extra data from the game files." })); return; }
+    if (!SETS) SETS = buildSets(catalogue.items);
+    $("sNote").textContent = "Sets are grouped from the game’s internal item names. Odd cases (single pieces, re-skins) may not group perfectly. Press + on a missing piece to log one.";
+    var q = nameKey($("sSearch").value), mode = $("sShow").value;
+    var rows = SETS.map(function(set){ return { set: set, own: ownedPieces(set, items) }; }).filter(function(r){
+      if (q && nameKey(r.set.name).indexOf(q) < 0) return false;
+      if (mode === "building") return r.own.have > 0 && r.own.have < r.set.count;
+      if (mode === "complete") return r.own.have === r.set.count;
+      return true;
+    });
+    if (mode === "building") rows.sort(function(a, b){ return (a.set.count - a.own.have) - (b.set.count - b.own.have) || a.set.name.localeCompare(b.set.name); });
+    var done = SETS.filter(function(x){ return ownedPieces(x, items).have === x.count; }).length;
+    [["Sets known", SETS.length], ["Complete", done], ["Showing", rows.length]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: fmt(p[1]) }))); });
+    if (!rows.length){ L.appendChild(h("div", { class: "empty", text: mode === "building" ? "No partly-collected sets yet. Log armor pieces and they will show up here." : "No sets match." })); return; }
+    rows.slice(0, setsShown).forEach(function(r){
+      var chips = h("div", { class: "chips" });
+      SLOT_ORDER.forEach(function(sl){
+        var pc = r.set.pieces[sl]; if (!pc) return;
+        var q2 = r.own.qty[sl] || 0;
+        if (q2 > 0) chips.appendChild(h("span", { class: "chip have", title: pc.n }, SLOT_LABEL[sl] + " ", h("b", { text: "×" + fmt(q2) })));
+        else {
+          chips.appendChild(h("span", { class: "chip", title: pc.n, text: SLOT_LABEL[sl] + " missing" }));
+          chips.appendChild(h("button", { type: "button", class: "ghost chipadd", text: "+", "aria-label": "Log one " + pc.n, title: "Log one " + pc.n,
+            onclick: function(){ snapshot(); addItem(items, { name: pc.n, cat: "Armor", sub: pc.s || "", qty: 1, loc: $("fLoc").value || "Unsorted" }); commit(); } }));
+        }
+      });
+      L.appendChild(h("div", { class: "bp" }, h("div", { class: "crow" }, h("div", { class: "name", text: r.set.name }),
+        h("span", { class: "badge " + (r.own.have === r.set.count ? "good" : ""), text: r.own.have + " of " + r.set.count + " pieces" }), r.set.g ? h("span", { class: "badge", text: r.set.g }) : h("span")), chips));
+    });
+    $("sMore").hidden = rows.length <= setsShown;
+  }
+  ["sSearch", "sShow"].forEach(function(id){ $(id).addEventListener("input", function(){ setsShown = 40; renderSets(); }); });
+  $("sMore").onclick = function(){ setsShown += 60; renderSets(); };
+
+  // ---------- history ----------
+  function histText(e){
+    var q = fmt(e.d);
+    if (e.a === "add") return "Added " + q + " × " + e.n + " to " + e.l;
+    if (e.a === "inc") return "+" + q + " " + e.n + " (" + e.l + ")";
+    if (e.a === "dec") return "−" + q + " " + e.n + " (" + e.l + ")";
+    if (e.a === "rem") return "Removed " + q + " × " + e.n + " from " + e.l;
+    if (e.a === "move") return "Moved " + q + " × " + e.n + ": " + e.f + " → " + e.l;
+    return e.n;
+  }
+  function renderHist(){
+    var q = $("hSearch").value.trim().toLowerCase();
+    var rows = hist.slice().reverse().filter(function(e){ return !q || (e.n + " " + e.l + " " + e.f).toLowerCase().indexOf(q) >= 0; });
+    var gained = 0, used = 0, moves = 0;
+    hist.forEach(function(e){ if (e.t < sessionStart) return; if (e.a === "add" || e.a === "inc") gained += e.d; else if (e.a === "rem" || e.a === "dec") used += e.d; else if (e.a === "move") moves++; });
+    var st = $("hStats"); st.textContent = "";
+    [["This session: gained", fmt(gained)], ["Removed", fmt(used)], ["Moves", moves], ["Entries kept", hist.length]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: String(p[1]) }))); });
+    var L = $("hList"); L.textContent = "";
+    if (!rows.length){ L.appendChild(h("div", { class: "empty", text: hist.length ? "Nothing matches that filter." : "No history yet. Changes to your list are logged here." })); $("hClear").disabled = !hist.length; return; }
+    rows.slice(0, 300).forEach(function(e){ L.appendChild(h("div", { class: "hrow" }, h("time", { datetime: e.t, text: new Date(e.t).toLocaleString() }), h("span", { text: histText(e) }))); });
+    $("hClear").disabled = false;
+  }
+  $("hSearch").addEventListener("input", renderHist);
+  twoClick($("hClear"), "Clear history", function(){ hist = []; save(); renderHist(); });
 
   // ---------- added this patch ----------
   function patchChoices(){
@@ -1070,6 +1596,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       var cat = await runUpdate(catalogue, progress);
       catalogue = cat; await idbSet("cat", cat); buildIndex(); render();
+      if (NATIVE && NATIVE.notifyCatalogue) try { NATIVE.notifyCatalogue(); } catch (e){}
       var d = (cat.diffs || {})[cat.patch], n = d ? d.items.length : 0;
       $("dbStatus").textContent = statusText();
       var w = (cat.warnings || []).length ? " " + cat.warnings.join(" ") : "";
@@ -1111,17 +1638,18 @@ async function computeExactItems(cat, patchCode, progress){
 
   // ---------- tabs ----------
   function showTab(t){
-    ["inv", "bp", "new", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
+    ["inv", "bp", "craft", "sets", "new", "hist", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
     Array.prototype.forEach.call($("tabs").children, function(b){ b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"); });
     if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
+    if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
   }
   $("tabs").addEventListener("click", function(e){ var b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
 
   // ---------- backup / restore ----------
   $("exportBtn").onclick = function(){
-    $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 2,
-      items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc }; }),
-      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }) }, null, 1);
+    $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 3,
+      items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc, tag: i.tag || "", note: i.note || "" }; }),
+      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish }, null, 1);
     say($("ioMsg"), "Backup created: " + items.length + " stacks, " + Object.keys(known).length + " known blueprints.");
   };
   $("copyBtn").onclick = function(){
@@ -1141,9 +1669,10 @@ async function computeExactItems(cat, patchCode, progress){
     var inc;
     try { inc = parseBackup($("io").value); } catch (e){ say($("ioMsg"), "That doesn't look like a valid backup: " + e.message, true); return; }
     snapshot();
-    if (mode === "replace"){ items = inc.items; known = inc.known; }
-    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); }
-    commit(); say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
+    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; }
+    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); }
+    if (mode === "replace") commit("Replaced the list from a backup (" + inc.items.length + " stacks)"); else commit();
+    say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
   }
   $("mergeBtn").onclick = function(){ importWith("merge"); };
   var armedBtns = {};
@@ -1155,7 +1684,28 @@ async function computeExactItems(cat, patchCode, progress){
     };
   }
   twoClick($("replaceBtn"), "Replace my list", function(){ importWith("replace"); });
-  twoClick($("clearBtn"), "Clear everything", function(){ snapshot(); items = []; known = {}; commit(); say($("ioMsg"), "List cleared. Use Undo to bring it back."); });
+  twoClick($("clearBtn"), "Clear everything", function(){ snapshot(); items = []; known = {}; wish = {}; sel = {}; commit("Cleared the list"); say($("ioMsg"), "List cleared. Use Undo to bring it back."); });
+
+  // ---------- CSV export ----------
+  $("csvBtn").onclick = function(){
+    var sorted = items.slice().sort(function(a, b){ return a.loc.localeCompare(b.loc) || a.name.localeCompare(b.name, undefined, { numeric: true }); });
+    var text = toCSV(sorted, function(i){ var pi = priceInfo(i); return { size: sizeOf(i) || "", grade: gradeOf(i), weight: weightOf(i), sell: pi && pi.sell, buy: pi && pi.buy }; });
+    var name = "sc-inventory-" + new Date().toISOString().slice(0, 10) + ".csv";
+    if (NATIVE && NATIVE.saveFile){
+      NATIVE.saveFile(name, text).then(function(r){
+        if (r && r.ok) say($("ioMsg"), "Saved " + sorted.length + " stacks to " + r.path);
+        else if (r && r.canceled) say($("ioMsg"), "Export cancelled.");
+        else say($("ioMsg"), "Could not save the file.", true);
+      }).catch(function(){ say($("ioMsg"), "Could not save the file.", true); });
+      return;
+    }
+    try {
+      var url = URL.createObjectURL(new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" }));
+      var a = h("a", { href: url, download: name }); document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      say($("ioMsg"), "Exported " + sorted.length + " stacks. Check your Downloads folder.");
+    } catch (e){ say($("ioMsg"), "Could not create the file.", true); }
+  };
 
   // ---------- init ----------
   if (NATIVE){
@@ -1165,9 +1715,18 @@ async function computeExactItems(cat, patchCode, progress){
     $("openFolderBtn").addEventListener("click", function(){ NATIVE.openFolder(); });
   }
   fillSelect($("fCat"), CATS); fillSelect($("qCat"), CATS, "All categories"); fillSelect($("bCat"), CATS, "All categories");
+  fillTagFilter();
+  if (NATIVE && NATIVE.onQuickAdd) NATIVE.onQuickAdd(function(p){
+    snapshot();
+    if (!p || !addItem(items, { name: p.name, cat: p.cat, sub: p.sub, qty: p.qty, loc: p.loc })){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return; }
+    commit(); say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
+  });
   load(); buildIndex(); render();
   idbGet("cat").then(function(c){
     if (c && c.v === 2 && c.items){ catalogue = c; buildIndex(); render(); checkNewPatch(); }
+  });
+  idbGet("prices").then(function(pr){
+    if (pr && pr.v === 1 && pr.byU && pr.byN){ prices = pr; render(); }
   });
   window.__sc = { runUpdate: runUpdate, get catalogue(){ return catalogue; }, get items(){ return items; } };
 })();
