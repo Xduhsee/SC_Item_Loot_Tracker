@@ -63,6 +63,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('cat:load', () => { try { return store.loadCatalogue(); } catch (err) { return null; } });
     ipcMain.handle('cat:save', (e, cat) => { try { return store.saveCatalogue(cat); } catch (err) { return false; } });
     ipcMain.handle('store:path', () => store.paths.dir);
+    ipcMain.handle('app:version', () => app.getVersion());
     ipcMain.handle('store:open', () => shell.openPath(store.paths.dir));
 
     Menu.setApplicationMenu(Menu.buildFromTemplate([

@@ -17,6 +17,7 @@
   body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .wrap{max-width:1040px;margin:0 auto;padding:18px 16px 60px}
   header.top{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+  #appVer{font-size:11px;letter-spacing:.04em;text-transform:none;font-weight:400;color:var(--mute);text-shadow:none;vertical-align:middle;margin-left:6px;padding:1px 7px;border:1px solid var(--line);border-radius:99px}
   h1{font-size:20px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px;color:var(--accent);text-shadow:0 0 14px rgba(57,255,20,.45)}
   .sub{color:var(--mute);margin:0;font-size:13px}
   header.top>div:first-child{flex:1 1 380px;min-width:0}
@@ -102,7 +103,7 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Loot Tracker</h1>
+      <h1>Loot Tracker <span id="appVer" hidden></span></h1>
       <p class="sub">Armor, weapons, attachments, items, materials and blueprints &mdash; by quantity and location. Fan-made, not affiliated with CIG.</p>
     </div>
     <div class="upd">
@@ -1159,6 +1160,7 @@ async function computeExactItems(cat, patchCode, progress){
   // ---------- init ----------
   if (NATIVE){
     $("nativeInfo").hidden = false; $("browserNote").hidden = true;
+    if (NATIVE.version) NATIVE.version().then(function(v){ if (v){ $("appVer").textContent = "v" + v; $("appVer").hidden = false; } }).catch(function(){});
     NATIVE.dataPath().then(function(p){ $("dataPath").textContent = p; }).catch(function(){});
     $("openFolderBtn").addEventListener("click", function(){ NATIVE.openFolder(); });
   }

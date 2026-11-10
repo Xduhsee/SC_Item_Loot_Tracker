@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('scStore', {
   loadCatalogue: () => ipcRenderer.invoke('cat:load'),
   saveCatalogue: (cat) => ipcRenderer.invoke('cat:save', cat),
   dataPath: () => ipcRenderer.invoke('store:path'),
+  version: () => ipcRenderer.invoke('app:version'),
   openFolder: () => ipcRenderer.invoke('store:open')
 });
