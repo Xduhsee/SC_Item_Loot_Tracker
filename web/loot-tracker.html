@@ -67,10 +67,10 @@
   textarea{width:100%;min-height:110px;font:12px/1.4 ui-monospace,Consolas,monospace}
   .note{color:var(--mute);font-size:12px;margin:8px 0 0}
   .ac{position:relative}
-  .acbox{position:absolute;z-index:20;left:0;right:0;top:100%;margin-top:2px;background:var(--panel2);border:1px solid var(--accent2);border-radius:8px;max-height:320px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 14px rgba(57,255,20,.18)}
+  .acbox{position:absolute;z-index:20;left:0;right:0;top:100%;margin-top:2px;background:var(--panel2);border:1px solid var(--accent2);border-radius:8px;max-height:320px;overflow-y:auto;overflow-x:hidden;box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 14px rgba(57,255,20,.18)}
   .acbox div{padding:7px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--text)}
   .acbox div[aria-selected=true],.acbox div:hover{background:#17402a}
-  .acbox small{color:var(--mute);white-space:nowrap;font-size:11px}
+  .acbox small{color:var(--mute);font-size:11px;text-align:right;max-width:55%}
   .prog{margin:0 0 14px}
   .bar{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;background:var(--accent);box-shadow:0 0 10px var(--accent);transition:width .2s}
@@ -271,6 +271,10 @@ var MAXQ = 999999;
 function norm(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " "); }
 function nameKey(s){ return norm(s).toLowerCase().replace(/["'“”‘’]/g, ""); }
 function uid(){ return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+function sameStack(a, b){
+  if (a.name.toLowerCase() !== b.name.toLowerCase() || a.cat !== b.cat || a.loc.toLowerCase() !== b.loc.toLowerCase()) return false;
+  return !a.sub || !b.sub || a.sub.toLowerCase() === b.sub.toLowerCase(); // same name in a different slot is a different item
+}
 function keyOf(i){ return i.name.toLowerCase() + "|" + i.cat + "|" + i.loc.toLowerCase(); }
 function cleanQty(q, cat){
   q = Number(q);
@@ -285,8 +289,8 @@ function addItem(items, o){
   var qty = cleanQty(o.qty, cat);
   var sub = norm(o.sub).slice(0, 40);
   if (!name || !(qty > 0)) return false;
-  var probe = { name: name, cat: cat, loc: loc };
-  var ex = items.find(function(i){ return keyOf(i) === keyOf(probe); });
+  var probe = { name: name, cat: cat, loc: loc, sub: sub };
+  var ex = items.find(function(i){ return sameStack(i, probe); });
   if (ex){ ex.qty = Math.min(MAXQ, Math.round((ex.qty + qty) * 100) / 100); if (!ex.sub && sub) ex.sub = sub; }
   else items.push({ id: uid(), name: name, cat: cat, sub: sub, qty: qty, loc: loc });
   return true;
@@ -315,7 +319,7 @@ function moveItem(items, id, newLoc){
   newLoc = norm(newLoc).slice(0, 80) || "Unsorted";
   if (!i || newLoc === i.loc) return false;
   i.loc = newLoc;
-  var dup = items.find(function(x){ return x !== i && keyOf(x) === keyOf(i); });
+  var dup = items.find(function(x){ return x !== i && sameStack(x, i); });
   if (dup){ dup.qty = Math.min(MAXQ, Math.round((dup.qty + i.qty) * 100) / 100); removeItem(items, i.id); }
   return true;
 }
@@ -724,6 +728,9 @@ async function computeExactItems(cat, patchCode, progress){
       });
       catalogue.items.forEach(function(it){ if (it.c === "Armor" && it.g){ var wl = nameKey(it.n); if (!WEIGHTBY[wl]) WEIGHTBY[wl] = it.g; } });
       catalogue.items.forEach(function(it){ if (it.z){ HAS_SIZES = true; var l = nameKey(it.n); if (!SIZEBY[l]) SIZEBY[l] = { z: it.z, g: it.g || "" }; } });
+      var nameCount = {};
+      INDEX.forEach(function(e){ nameCount[e.l] = (nameCount[e.l] || 0) + 1; });
+      INDEX.forEach(function(e){ if (nameCount[e.l] > 1) e.dup = true; });
       var have = {};
       INDEX.forEach(function(e){ var m = mk[e.l]; if (m && (e.c === "Other" || e.c === "Material")){ e.c = "Material"; e.s = m.unit; } have[e.l] = 1; });
       mats.forEach(function(m){ var l = nameKey(m.n); if (!have[l]){ have[l] = 1; INDEX.push({ n: m.n, l: l, c: "Material", s: m.unit, g: "", u: "" }); } });
@@ -778,7 +785,7 @@ async function computeExactItems(cat, patchCode, progress){
       list = o.match(input.value, !!focusing);
       if (!list.length){ close(); return; }
       list.forEach(function(e, i){
-        var row = h("div", { role: "option", "aria-selected": i === sel ? "true" : "false" }, h("span", { text: e.n }), h("small", { text: o.hint(e) }));
+        var row = h("div", { role: "option", "aria-selected": i === sel ? "true" : "false" }, h("span", { text: o.label ? o.label(e) : e.n }), h("small", { text: o.hint(e) }));
         row.addEventListener("mousedown", function(ev){ ev.preventDefault(); pick(e); });
         box.appendChild(row);
       });
@@ -828,6 +835,7 @@ async function computeExactItems(cat, patchCode, progress){
   var itemAC = attachAC($("fName"), $("acBox"), {
     match: function(q){ return searchIndex(q, 14); },
     hint: describe,
+    label: function(e){ return e.dup ? e.n + " (" + (e.s || e.c) + ")" : e.n; },
     onPick: function(e){
       $("fCat").value = e.c; $("fSub").value = e.s || "";
       $("fQty").focus(); $("fQty").select();
