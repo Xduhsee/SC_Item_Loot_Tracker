@@ -93,6 +93,8 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Refinery: enter your ore and SCU and pick Most output, Most profit, Fastest or Balanced. Shows the best station and method per ore, with a one-stop option and a method chart. Base yields per method are community estimates you can edit. Check the in-game quote before you commit.
 - Scan decoder window (desktop app): `Ctrl+Shift+S` shows or hides a small always-on-top decoder. It works over the game in borderless windowed mode, not exclusive fullscreen.
 - Alt+1 to Alt+7 now switch sections (Mining / Salvaging is Alt+5).
+
+## v1.16.1
 - How to use: new button in the header and footer. A short guide for each section, plus a Credits page.
 - Home shows a Start here note until the item database is downloaded.
 - Clear history is now a red outline button, like the other destructive buttons. Fixed "1 missions" wording, clearer Quick add location text, and "Export sessions CSV".
