@@ -50,6 +50,12 @@
   .loc h3 span{color:var(--mute);text-transform:none;letter-spacing:0}
   .item{display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
   .namecell .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
+  .scrappanel{border-color:var(--violet)}
+  .scrappanel .srow{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .scrappanel .srow:last-child{border-bottom:0}
+  .scrappanel .smute{color:var(--mute);font-size:12px;margin-top:8px}
+  .scrapact{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .scrapact input{width:180px}
   .scrapline{font-size:12px;color:var(--mute);margin-top:2px;overflow-wrap:anywhere}
   .noteline{font-size:12px;color:var(--mute);font-style:italic;cursor:pointer;margin-top:2px;overflow-wrap:anywhere}
   .notebtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;margin-top:2px;font-weight:400;text-decoration:underline dotted}
@@ -487,10 +493,19 @@
         <span class="ac"><input id="bulkLoc" placeholder="Move to location" maxlength="80" role="combobox" aria-autocomplete="list" aria-label="Move selected to location" style="width:100%"><div class="acbox" id="bulkBox" role="listbox" hidden></div></span>
         <button type="button" class="ghost" id="bulkMove">Move</button>
         <select id="bulkTag" aria-label="Set tag on selected"></select>
+        <button type="button" class="ghost" id="bulkScrap" aria-expanded="false">Scrap total</button>
         <button type="button" class="danger" id="bulkDel">Delete</button>
         <button type="button" id="bulkClear">Clear selection</button>
       </div>
       <div class="stats" id="stats"></div>
+      <div class="panel scrappanel" id="scrapPanel" hidden>
+        <h2>Scrap total</h2>
+        <div id="scrapBody"></div>
+        <div class="scrapact" id="scrapAct">
+          <input id="scrapLoc" maxlength="80" value="Scrapped" aria-label="Materials location for the scrapped output">
+          <button type="button" id="scrapDo">Add to Materials and remove these items</button>
+        </div>
+      </div>
       <label class="selall"><input type="checkbox" id="selAll"> Select all shown</label>
       <div id="list"></div>
     </div>
@@ -921,6 +936,21 @@ function scrapOf(bp, ratio){
     else { q = Math.floor(q * r + 1e-9); if (q > 0) out.push({ n: g[0], amt: q, unit: "x" }); }
   });
   return out;
+}
+function scrapTotals(list, findBp, ratio){
+  var mat = {}, unit = {}, counted = 0, skipped = 0;
+  list.forEach(function(i){
+    var bp = i.cat === "Material" ? null : findBp(i), parts = bp ? scrapOf(bp, ratio) : [], q = Number(i.qty) > 0 ? Number(i.qty) : 0;
+    if (!parts.length || !q){ skipped++; return; }
+    counted++;
+    parts.forEach(function(e){
+      var bag = e.unit === "x" ? unit : mat, k = nameKey(e.n);
+      if (!bag[k]) bag[k] = { n: e.n, amt: 0 };
+      bag[k].amt += e.amt * q;
+    });
+  });
+  function out(bag, d){ return Object.keys(bag).map(function(k){ return { n: bag[k].n, amt: Math.round(bag[k].amt * d) / d }; }).sort(function(x, y){ return x.n.localeCompare(y.n); }); }
+  return { mats: out(mat, 10000), units: out(unit, 1), counted: counted, skipped: skipped };
 }
 function scrapText(list){
   return list.map(function(e){ return (e.unit === "x" ? e.amt + "× " : e.amt + " SCU ") + e.n; }).join(", ");
@@ -1972,6 +2002,7 @@ async function computeExactItems(cat, patchCode, progress){
     $("bulkCount").textContent = ids.length + " selected";
     var allOn = lastShown.length > 0 && lastShown.every(function(id){ return sel[id]; });
     $("selAll").checked = allOn; $("selAll").disabled = !lastShown.length;
+    if (typeof renderScrap === "function") renderScrap();
   }
   function rowFor(i){
     var qi = h("input", { type: "number", min: "0.01", step: "any", value: i.qty, "aria-label": "Quantity of " + i.name });
@@ -2055,6 +2086,48 @@ async function computeExactItems(cat, patchCode, progress){
     var v = $("bulkTag").value, ids = Object.keys(sel); $("bulkTag").value = "";
     if (!v || !ids.length) return;
     snapshot(); bulkTag(items, ids, v === "-" ? "" : v); commit(); say($("msg"), (v === "-" ? "Cleared the tag on " : "Tagged " + v + ": ") + ids.length + " stack" + (ids.length > 1 ? "s" : "") + ".");
+  };
+  var delArmed = false, delTimer = null;
+  $("bulkDel").onclick = function(){
+    var ids = Object.keys(sel); if (!ids.length) return;
+    if (!delArmed){
+      delArmed = true; $("bulkDel").textContent = "Confirm delete " + ids.length; $("bulkDel").classList.add("armed");
+      clearTimeout(delTimer); delTimer = setTimeout(function(){ delArmed = false; $("bulkDel").textContent = "Delete"; $("bulkDel").classList.remove("armed"); }, 3000); return;
+    }
+    delArmed = false; clearTimeout(delTimer); $("bulkDel").textContent = "Delete"; $("bulkDel").classList.remove("armed");
+    snapshot(); var n = bulkRemove(items, ids); sel = {};
+    commit(); say($("msg"), "Deleted " + n + " stack" + (n === 1 ? "" : "s") + ". Undo brings them back.");
+  };
+  var scrapArmed = false, scrapTimer = null;
+  function scrapSel(){ return items.filter(function(i){ return sel[i.id]; }); }
+  function scrapCalc(){ return scrapTotals(scrapSel(), function(i){ return bpFor(i); }); }
+  function renderScrap(){
+    var pn = $("scrapPanel"), open = $("bulkScrap").getAttribute("aria-expanded") === "true";
+    if (!open || !Object.keys(sel).length){ pn.hidden = true; $("bulkScrap").setAttribute("aria-expanded", "false"); return; }
+    pn.hidden = false;
+    var t = scrapCalc(), body = $("scrapBody"); body.textContent = "";
+    if (!t.counted){ body.appendChild(h("div", { class: "smute", text: "None of the selected items has a blueprint, so there is nothing to show." })); $("scrapAct").hidden = true; return; }
+    $("scrapAct").hidden = false;
+    t.mats.forEach(function(m){ body.appendChild(h("div", { class: "srow" }, h("span", { text: m.n }), h("b", { text: fmt(m.amt) + " SCU" }))); });
+    t.units.forEach(function(m){ body.appendChild(h("div", { class: "srow" }, h("span", { text: m.n + " (part)" }), h("b", { text: "× " + fmt(m.amt) }))); });
+    body.appendChild(h("div", { class: "smute", text: "Estimate: half of each crafting recipe, quality unknown. " + t.counted + " stack" + (t.counted === 1 ? "" : "s") + " counted" + (t.skipped ? ", " + t.skipped + " without a blueprint left out" : "") + "." + (t.units.length ? " Parts are not added to Materials." : "") }));
+    $("scrapDo").textContent = scrapArmed ? "Confirm: remove " + t.counted + " stack" + (t.counted === 1 ? "" : "s") + " and add " + t.mats.length + " material" + (t.mats.length === 1 ? "" : "s") : "Add to Materials and remove these items";
+    $("scrapDo").className = scrapArmed ? "danger armed" : "";
+    $("scrapDo").disabled = !t.mats.length;
+  }
+  $("bulkScrap").onclick = function(){ var o = $("bulkScrap").getAttribute("aria-expanded") === "true"; $("bulkScrap").setAttribute("aria-expanded", o ? "false" : "true"); scrapArmed = false; renderScrap(); };
+  $("scrapDo").onclick = function(){
+    var t = scrapCalc(); if (!t.mats.length) return;
+    if (!scrapArmed){ scrapArmed = true; clearTimeout(scrapTimer); scrapTimer = setTimeout(function(){ scrapArmed = false; renderScrap(); }, 4000); renderScrap(); return; }
+    scrapArmed = false; clearTimeout(scrapTimer);
+    var loc = norm($("scrapLoc").value).slice(0, 80) || "Scrapped", counted = {};
+    scrapSel().forEach(function(i){ var b = bpFor(i); if (b && scrapOf(b).length && Number(i.qty) > 0) counted[i.id] = 1; });
+    snapshot();
+    t.mats.forEach(function(m){ addMat(mats, { n: m.n, q: 0, s: m.amt, l: loc }); });
+    Object.keys(counted).forEach(function(id){ removeItem(items, id); });
+    sel = {}; $("bulkScrap").setAttribute("aria-expanded", "false");
+    commit("Scrapped " + t.counted + " stack" + (t.counted === 1 ? "" : "s") + " into Materials");
+    say($("msg"), "Added " + t.mats.length + " material" + (t.mats.length === 1 ? "" : "s") + " to Materials at " + loc + ". Undo brings the items back.");
   };
   $("bulkClear").onclick = function(){ sel = {}; renderInventory(); };
   function logLoot(e){
@@ -2421,17 +2494,17 @@ async function computeExactItems(cat, patchCode, progress){
     return l[0];
   }
   var bpMapFor = null, bpMap = null;
-  function scrapFor(i){
+  function bpFor(i){
     var bps = (catalogue && catalogue.bps) || [];
-    if (!bps.length) return "";
+    if (!bps.length) return null;
     if (bpMapFor !== bps){
       bpMapFor = bps; bpMap = { u: {}, n: {} };
       bps.forEach(function(b){ if (b.o) bpMap.u[b.o] = b; var k = nameKey(b.n); if (!bpMap.n[k]) bpMap.n[k] = b; });
     }
     var u = String(uuidFor(i) || "").toLowerCase();
-    var bp = (u && bpMap.u[u]) || bpMap.n[nameKey(i.name)];
-    return bp ? scrapText(scrapOf(bp)) : "";
+    return (u && bpMap.u[u]) || bpMap.n[nameKey(i.name)] || null;
   }
+  function scrapFor(i){ var bp = bpFor(i); return bp ? scrapText(scrapOf(bp)) : ""; }
   function findBp(name, e){
     var bps = (catalogue && catalogue.bps) || [], o = e && e.u ? String(e.u).toLowerCase() : "";
     for (var k = 0; k < bps.length; k++) if (o && bps[k].o === o) return bps[k];

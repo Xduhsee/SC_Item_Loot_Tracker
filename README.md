@@ -62,3 +62,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 ## v1.12.0
 - Inventory rows with a known blueprint show "Scraps into about ..." with the materials you get back. It's an estimate: half of the crafting recipe. Verify in game.
+
+## v1.13.0
+- Inventory: select items and press "Scrap total" to see the materials you'd get back. "Add to Materials and remove these items" moves them into the Materials tab (quality unknown) and Undo reverses it.
+- Fixed: the Delete button in the selection bar did nothing. It now deletes the selected stacks after a second click, and Undo restores them.
