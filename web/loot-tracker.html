@@ -21,7 +21,7 @@
   h1{font-size:20px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px;color:var(--accent);text-shadow:0 0 14px rgba(57,255,20,.45)}
   .sub{color:var(--mute);margin:0;font-size:13px}
   header.top>div:first-child{flex:1 1 380px;min-width:0}
-  .upd{text-align:right;flex:0 0 auto}
+  .upd{text-align:right;flex:0 1 auto;min-width:0;max-width:100%}
   .mini{color:var(--mute);font-size:12px;margin-top:4px}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
   .panel h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;font-weight:600}
@@ -87,9 +87,9 @@
   .hrow:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}.hrow:last-child{border-radius:0 0 8px 8px}
   .hrow time{color:var(--mute);font-size:12px}
   .smallbtn{min-height:28px;padding:2px 10px;font-size:12px}
-  .fcard{border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-top:12px;overflow:hidden}
-  .fcard>h3{margin:0;padding:8px 12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line)}
-  .fcard .body{padding:8px 12px;font-size:13px}
+  .fcard{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-top:12px;overflow:hidden}
+  .fcard>h3{margin:0;padding:10px 14px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line)}
+  .fcard .body{padding:10px 14px;font-size:13px}.fcard .body .linkbtn,.fcard .body .smallbtn{margin:2px 6px 2px 0}.fcard .scrapln{margin:8px 0 4px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--mute)}
   .frow{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:5px 0;border-top:1px solid var(--line)}
   .frow:first-child{border-top:0}
   .frow .dim{color:var(--mute);font-size:12px}
@@ -109,6 +109,7 @@
   .wherewrap .acbox{left:auto;right:0;width:270px}
   .where{width:100%;min-height:34px;padding:4px 8px;font-size:13px}
   .empty{color:var(--mute);text-align:center;padding:28px 10px;border:1px dashed var(--line);border-radius:10px}
+  .chip{display:inline-block;max-width:100%;white-space:normal;margin-top:6px;padding:3px 10px;border:1px solid var(--line);border-radius:99px;background:var(--panel)}.prog{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0}.empty.rich{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px}.empty.rich .etitle{color:var(--text);font-weight:700;font-size:15px}.empty.rich .note{max-width:340px;margin:0}
   .msg{min-height:20px;font-size:13px;color:var(--good);margin-top:8px}
   .msg.err{color:var(--bad)}
   .banner{background:#2a2112;border:1px solid #5a4416;color:var(--warn);padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -341,6 +342,58 @@
     #cMats .mat{grid-template-columns:minmax(0,1fr) auto auto}
   }
   @media (prefers-reduced-motion:reduce){.toast{animation:none}}
+
+    .hglance{margin:0 0 14px}.tiles.hbig{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.tiles.hbig .tile{min-width:0;background:var(--panel2);padding:10px 12px}.tiles.hbig .tile b{font-size:22px}
+  @media (max-width:760px){.tiles.hbig{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}.dgrid .panel{margin-bottom:0}
+  .bktbl{border:1px solid var(--line);border-radius:10px;overflow:hidden}.bktbl .empty{border:0}
+  .bkrow{display:grid;grid-template-columns:120px minmax(0,1fr) minmax(0,1fr) 90px;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid #16281d;font-size:14px}.bkrow:first-child{border-top:0}
+  .bkrow .badge{justify-self:start}
+  .filebtn{flex-direction:row;align-items:center;cursor:pointer}.filebtn span{padding:8px 14px;border:1px solid var(--line);border-radius:6px;font-weight:600}
+  .filebtn input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;padding:0}
+  .filebtn:focus-within span{outline:2px solid var(--accent)}
+  .dangerzone{border-color:#6a2a2a}.dangerzone h2{color:#ff9b9b}
+  @media (max-width:760px){.dgrid{grid-template-columns:1fr}.bkrow{grid-template-columns:1fr 1fr}}
+    .hcol,.hrow2{grid-template-columns:150px 84px minmax(0,1fr) 170px 64px}
+  .lcol,.lrow2{grid-template-columns:minmax(0,1fr) 110px 90px 190px}
+  .hrow2{display:grid;gap:12px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-top:0;background:var(--panel);font-size:14px}
+  .hrow2:nth-of-type(2){border-top:1px solid var(--line);border-radius:8px 8px 0 0}.hrow2:last-child{border-radius:0 0 8px 8px}
+  .hrow2 time{color:var(--mute);font-size:12px}.hrow2 .badge{justify-self:start}.hrow2 .r,.hcol .r,.lcol .r{text-align:right}
+  .ptiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:6px 0}
+  .ptiles .tile{background:var(--panel2)}.ptiles .tile b{font-size:22px}
+  @media (max-width:760px){.hcol,.lcol{display:none}.hrow2,.lrow2{grid-template-columns:1fr}.hrow2 .r{text-align:left}}
+  /* missions */
+  .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .mgh{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-top:16px}
+  .mgh b{font-size:15px;letter-spacing:.04em}.mgh .sp{flex:1}
+  .mrk{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:700;margin:12px 2px 8px}
+  .mrk:after{content:"";flex:1;height:1px;background:var(--line)}
+  .mrk.lock{color:#d9a8ff}
+  .mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .mcard.lock{border-style:dashed;opacity:.88}
+  .mtop{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .act{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:.04em;border:1px solid}
+  .a-Hauling{color:#f2b84b;background:#2a2108;border-color:#6b5217}.a-Combat{color:#ff9b9b;background:#2a1010;border-color:#6a2a2a}
+  .a-Mining{color:#5fd3c4;background:#0b2622;border-color:#1f6a5f}.a-Salvage{color:#7db7ff;background:#0e1b2e;border-color:#2a4f80}
+  .a-Investigation{color:#d9a8ff;background:#1b1330;border-color:#6d3aa0}.a-Recovery{color:#b9d96a;background:#1c2408;border-color:#5a7020}
+  .a-Other{color:#b9d9c4;background:#14201a;border-color:#2f5a42}
+  .mtag{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;border:1px solid var(--line);color:#b9d9c4}.mtag.warn{color:#ff9b9b;border-color:#6a2a2a}
+  .mtitle{font-size:16px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+  .msub{font-size:13px;color:var(--mute);margin-top:-6px}
+  .mreq{background:#080e0a;border:1px solid #16281d;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+  .mreq .rl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:700}
+  .mreq .rq{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;font-size:14px}
+  .mreq .rq span:first-child{color:var(--mute);font-size:13px}.mreq .rq b{font-weight:600;overflow-wrap:anywhere}
+  .mstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .mstats div{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .mstats small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);font-weight:700}
+  .mstats b{font-size:14px;overflow-wrap:anywhere}
+  .mstats .ok,.mfoot .ok{color:#5be07a}.mstats .no,.mfoot .no{color:#ff9b9b}
+  .mfoot{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid #16281d;padding-top:8px;font-size:13px;color:#b9d9c4;flex-wrap:wrap}
+  .fcardx{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .ladder{display:flex;gap:4px}.ladder div{flex:1;min-width:0;font-size:11px;color:var(--mute)}
+  .ladder i{display:block;height:6px;border-radius:99px;background:#16281d;margin-bottom:4px}.ladder .on i{background:var(--accent2)}.ladder .cur{color:var(--text);font-weight:700}
+  @media (max-width:760px){.mgrid{grid-template-columns:1fr}.mstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -355,7 +408,7 @@
     </div>
     <div class="upd">
       <button id="updBtn" type="button">Update item database</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
-      <div class="mini" id="dbStatus">Item database: not downloaded yet</div>
+      <div class="mini chip" id="dbStatus">Item database: not downloaded yet</div>
     </div>
   </header>
 
@@ -367,6 +420,7 @@
   <nav class="tabs groups" role="tablist" id="groups" aria-label="Sections">
     <button role="tab" data-group="home" data-tab="home" aria-selected="true">Home</button>
     <button role="tab" data-group="stuff" aria-selected="false">Stuff</button>
+    <button role="tab" data-group="missions" aria-selected="false">Missions</button>
     <button role="tab" data-group="find" aria-selected="false">Find</button>
     <button role="tab" data-group="track" aria-selected="false">Track</button>
     <button role="tab" data-group="data" data-tab="data" aria-selected="false" title="Data and backup">Data</button>
@@ -378,7 +432,10 @@
     <button role="tab" data-tab="craft" aria-selected="false">Craft list</button>
     <button role="tab" data-tab="sets" aria-selected="false">Armor sets</button>
     <button role="tab" data-tab="find" aria-selected="false">Finder</button>
-    <button role="tab" data-tab="plan" aria-selected="false">Planner</button>
+    <button role="tab" data-tab="loot" aria-selected="false">Loot by location</button>
+    <button role="tab" data-tab="mis" aria-selected="false">Board</button>
+    <button role="tab" data-tab="stand" aria-selected="false">My standing</button>
+    <button role="tab" data-tab="plan" aria-selected="false">Blueprint planner</button>
     <button role="tab" data-tab="sess" aria-selected="false">Sessions</button>
     <button role="tab" data-tab="new" aria-selected="false">Added this patch</button>
     <button role="tab" data-tab="hist" aria-selected="false">History</button>
@@ -405,11 +462,10 @@
       <div class="note" id="hWhere"></div>
       <div id="hMsg" class="msg" role="status"></div>
     </div>
+    <div id="hGlance" class="hglance"></div>
     <div class="homegrid">
-      <div class="panel"><h2>Session</h2><div id="hSess"></div></div>
       <div class="panel"><h2>Worth farming next</h2><div id="hFarm"></div></div>
-      <div class="panel"><h2>Recent loot</h2><div id="hRecent"></div></div>
-      <div class="panel"><h2>At a glance</h2><div id="hGlance"></div></div>
+      <div class="panel"><h2>Session</h2><div id="hSess"></div><h2 style="margin-top:16px">Recent loot</h2><div id="hRecent"></div></div>
     </div>
   </section>
 
@@ -583,6 +639,16 @@
   <!-- FINDER -->
   <section id="tab-find" hidden>
     <div class="panel">
+      <h2>Finder</h2>
+      <label>Item or blueprint
+        <span class="ac"><input id="fqIn" type="search" placeholder="Start typing an item name" maxlength="120" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" style="width:100%"><div class="acbox" id="fqBox" role="listbox" hidden></div></span>
+      </label>
+      <p class="note">Shops and prices: UEX. Blueprint missions: Star Citizen Wiki.</p>
+      <div id="fqOut"></div>
+    </div>
+  </section>
+  <section id="tab-loot" hidden>
+    <div class="panel">
       <h2>Loot by location</h2>
       <div class="row">
         <label>System
@@ -596,20 +662,56 @@
       <div class="stats" id="lfStats" style="margin-top:10px"></div>
       <div id="lfOut"></div>
     </div>
+  </section>
+
+  <!-- MISSIONS BOARD -->
+  <section id="tab-mis" hidden>
     <div class="panel">
-      <h2>Finder</h2>
-      <label>Item or blueprint
-        <span class="ac"><input id="fqIn" type="search" placeholder="Start typing an item name" maxlength="120" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" style="width:100%"><div class="acbox" id="fqBox" role="listbox" hidden></div></span>
-      </label>
-      <p class="note">Shops and prices: UEX. Blueprint missions: Star Citizen Wiki.</p>
-      <div id="fqOut"></div>
+      <h2>Missions</h2>
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
+          <input id="mbSearch" type="search" placeholder="Search a mission, giver or faction" maxlength="80">
+        </label>
+        <label><span class="sr">System</span>
+          <select id="mbSys"><option value="">Any system</option><option>Stanton</option><option>Pyro</option><option>Nyx</option></select>
+        </label>
+        <label><span class="sr">Sort</span>
+          <select id="mbSort"><option value="new">Sort: Most new blueprints</option><option value="reward">Sort: Highest reward</option><option value="rep">Sort: Most rep</option><option value="time">Sort: Shortest</option></select>
+        </label>
+        <button type="button" class="ghost" id="mbLoad">Load mission data</button>
+      </div>
+      <div class="pills" id="mbActs" role="group" aria-label="Activity"></div>
+      <div class="row tbar">
+        <label class="chk"><input id="mbIll" type="checkbox"> Hide illegal</label>
+        <label class="chk"><input id="mbBp" type="checkbox"> Only with blueprints</label>
+        <label class="chk"><input id="mbAcc" type="checkbox"> Only what I can accept</label>
+        <span class="note" id="mbInfo" style="margin:0 0 0 auto"></span>
+      </div>
+    </div>
+    <div id="mbOut"></div>
+    <div class="row" style="margin-top:10px"><button class="ghost" id="mbMore" type="button" hidden>Show more</button></div>
+  </section>
+
+  <!-- MY STANDING -->
+  <section id="tab-stand" hidden>
+    <div class="panel">
+      <h2>My standing</h2>
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
+          <input id="stSearch" type="search" placeholder="Search a faction" maxlength="60">
+        </label>
+        <label class="chk"><input id="stSet" type="checkbox"> Only factions I have set</label>
+        <label class="chk"><input id="stBp" type="checkbox"> Only with blueprints</label>
+      </div>
+      <div class="note" id="stInfo">Set your rank with each faction once. The board uses it to show what you can accept.</div>
+      <div id="stUps"></div>
+      <div class="mgrid" id="stOut"></div>
     </div>
   </section>
 
-  <!-- PLANNER -->
   <section id="tab-plan" hidden>
     <div class="panel">
-      <h2>Missing-blueprint planner</h2>
+      <h2>Blueprint planner</h2>
       <div class="row tbar">
         <label class="grow"><span class="sr">Search</span>
           <input id="plSearch" type="search" placeholder="Mission, giver or faction" maxlength="80">
@@ -621,10 +723,6 @@
         <label class="chk"><input id="plCmb" type="checkbox"> Hide combat</label>
         <label class="chk"><input id="plMine" type="checkbox"> Only what I can accept</label>
       </div>
-      <details id="plRepBox" style="margin-top:12px"><summary id="plRepSum">My standing</summary>
-        <div id="plRep"></div>
-      </details>
-      <div id="plUps" style="margin-top:10px"></div>
       <div class="row" style="margin-top:8px">
         <button type="button" id="plLoad">Load mission data</button>
         <span class="note" id="plInfo" style="margin:0"></span>
@@ -750,35 +848,51 @@
 
   <!-- DATA -->
   <section id="tab-data" hidden>
-    <div class="panel">
-      <h2>Item database</h2>
-      <div class="src" id="srcInfo"></div>
-      <p class="note">Update downloads the item and blueprint lists from the Star Citizen Wiki and UEX (about 60 MB the first time). Nothing you track is sent anywhere.</p>
+    <div class="dgrid">
+      <div class="panel">
+        <h2>Item database</h2>
+        <div class="src" id="srcInfo"></div>
+        <p class="note">Update downloads the item and blueprint lists from the Star Citizen Wiki and UEX (about 60 MB the first time). Nothing you track is sent anywhere.</p>
+      </div>
+      <div class="panel">
+        <h2>Storage</h2>
+        <div id="nativeInfo" hidden>
+          <div class="row" style="justify-content:space-between;align-items:center"><div><b>Saved automatically</b><div class="note" style="margin:0">Daily backups, last 14 kept</div><div class="note" id="dataPath" style="margin:2px 0 0"></div></div><button type="button" class="ghost" id="openFolderBtn">Open data folder</button></div>
+          <div class="row" style="margin-top:10px"><button type="button" class="ghost" id="bkNow">Back up now</button></div>
+        </div>
+        <p class="note" id="browserNote" style="margin-top:0">Saved in this browser only. Clearing browser data erases it, so keep a backup.</p>
+        <div class="row">
+          <button type="button" class="ghost" id="csvBtn">Export inventory as CSV</button>
+          <button type="button" class="ghost" id="lootCsvBtn">Export loot log as CSV</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="bkPanel" hidden>
+      <div class="row"><h2 class="grow" style="margin:0">Backups</h2><span class="note" style="margin:0">Restoring saves a copy of your current data first.</span></div>
+      <div id="bkList" class="bktbl"></div>
     </div>
     <div class="panel">
-      <h2>Backup &amp; share</h2>
-      <div id="nativeInfo" hidden style="margin-bottom:10px"><p class="note" style="margin-top:0">Saved automatically. Daily backups, last 14 kept.</p><div class="row"><button type="button" class="ghost" id="bkNow">Back up now</button><button type="button" class="ghost" id="openFolderBtn">Open data folder</button><span class="note" id="dataPath"></span></div><div id="bkList" style="margin-top:10px"></div></div>
-      <p class="note" id="browserNote" style="margin-top:0">Saved in this browser only. Clearing browser data erases it, so keep a backup.</p>
-      <div class="row" style="margin:10px 0">
+      <h2>Move data to another computer</h2>
+      <div class="row">
         <button type="button" id="exportBtn">Create backup text</button>
         <button type="button" class="ghost" id="copyBtn">Copy</button>
-        <button type="button" class="ghost" id="csvBtn">Export inventory as CSV</button>
-        <button type="button" class="ghost" id="lootCsvBtn">Export loot log as CSV</button>
-        <label style="flex-direction:row;align-items:center;gap:8px">
-          <span>Or load a file</span>
+        <label class="filebtn"><span>Load a file</span>
           <input type="file" id="fileIn" accept=".json,.txt,application/json,text/plain">
         </label>
       </div>
       <textarea id="io" spellcheck="false" placeholder="Backup text goes here. Paste a backup to restore."></textarea>
-      <div class="row" style="margin-top:10px">
-        <button type="button" class="ghost" id="mergeBtn">Merge into my list</button>
-        <button type="button" class="danger" id="replaceBtn">Replace my list</button>
-        <button type="button" class="danger" id="clearBtn">Clear everything</button>
-      </div>
+      <div class="row"><button type="button" class="ghost" id="mergeBtn">Merge into my list</button></div>
       <div id="ioMsg" class="msg" role="status"></div>
     </div>
+    <div class="panel dangerzone">
+      <h2>Danger zone</h2>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div><b>Replace my list or clear everything</b><div class="note" style="margin:0">A backup is saved first, so you can restore it above.</div></div>
+        <div class="row"><button type="button" class="danger" id="replaceBtn">Replace my list</button><button type="button" class="danger" id="clearBtn">Clear everything</button></div>
+      </div>
+    </div>
   </section>
-  <div class="foot">Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>5</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
+  <div class="foot">Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>6</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
 </div>
 <div id="toasts" aria-live="polite" role="status"></div>
 
@@ -1241,6 +1355,43 @@ function toCSV(items, info){
   return lines.join("\r\n") + "\r\n";
 }
 // ---------- blueprint planner ----------
+var ACTS = ["Hauling", "Combat", "Mining", "Salvage", "Investigation", "Recovery", "Other"];
+function actOf(scope){
+  var x = String(scope || "");
+  if (x === "Hauling" || x === "Mining" || x === "Salvage" || x === "Investigation" || x === "Recovery") return x;
+  if (x === "Assassination" || x === "Bounty Hunter" || x === "Security") return "Combat";
+  return "Other";
+}
+function repOf(list){
+  var by = {}, order = [];
+  (Array.isArray(list) ? list : []).forEach(function(r){
+    if (!r) return; var f = String(r.faction || ""), a = Number(r.amount); if (!f || !(a > 0)) return;
+    if (by[f] == null){ by[f] = a; order.push(f); } else if (a > by[f]) by[f] = a;
+  });
+  return order.slice(0, 3).map(function(f){ return [f, by[f]]; });
+}
+function haulOf(orders, summary){
+  var out = [], src = Array.isArray(orders) && orders.length ? orders : null;
+  if (src){
+    var real = src.filter(function(o){ return o && o.kind !== "TagMatch"; }); if (!real.length) real = src;
+    real.forEach(function(o){
+      if (!o || !o.name) return;
+      out.push([String(o.name).slice(0, 60), Number(o.max_amount) || Number(o.min_amount) || 0, Number(o.max_scu) || Number(o.min_scu) || 0]);
+    });
+  } else (Array.isArray(summary) ? summary : []).forEach(function(o){
+    if (!o || !o.name) return;
+    out.push([String(o.name).slice(0, 60), Number(o.max_amount) || Number(o.min_amount) || 0, 0]);
+  });
+  return out.slice(0, 6);
+}
+function offeredAt(detail){
+  var seen = {}, out = [];
+  (detail && Array.isArray(detail.starmap_locations) ? detail.starmap_locations : []).forEach(function(g){
+    if (!g || g.purpose !== "availability") return;
+    (Array.isArray(g.locations) ? g.locations : []).forEach(function(l){ var n = l && l.name ? String(l.name) : ""; if (n && !seen[n]){ seen[n] = 1; out.push(n); } });
+  });
+  return out;
+}
 function parsePlanMission(list, detail){
   var d = detail || {}, pools = [];
   (Array.isArray(d.blueprints) ? d.blueprints : []).forEach(function(p){
@@ -1253,10 +1404,14 @@ function parsePlanMission(list, detail){
     });
     if (its.length) pools.push({ c: c, i: its });
   });
-  var l = list || {}, f = l.faction && l.faction.name ? l.faction.name : "";
+  var l = list || {}, f = l.faction && l.faction.name ? l.faction.name : "", of = offeredAt(d);
   return { id: String(l.uuid || ""), t: missionTitle(l.title), g: String(l.mission_giver || ""), f: String(f), r: Number(l.rank_index) || 0,
     il: l.illegal ? 1 : 0, cb: l.has_combat ? 1 : 0, sy: Array.isArray(l.star_systems) ? l.star_systems.map(String) : [],
-    sc: String(l.reward_scope || ""), st: String(l.min_standing_name || ""), p: pools };
+    sc: String(l.reward_scope || ""), st: String(l.min_standing_name || ""), p: pools,
+    a: actOf(l.reward_scope), rl: l.released === false || l.not_for_release ? 0 : 1,
+    rw: [Number(l.reward_min) || 0, Number(l.reward_max) || 0], tm: Math.round(Number(l.time_to_complete_minutes) || 0),
+    en: [Number(l.enemy_count_min) || 0, Number(l.enemy_count_max) || 0], rp: repOf(l.reputation_gained),
+    hl: haulOf(d.hauling_orders, l.hauling_summary), of: of.slice(0, 4), on: of.length, ty: String(d.mission_type || "").slice(0, 40) };
 }
 function scoreMission(m, known){
   var exp = 0, total = 0, newPools = 0, seen = {}, names = [];
@@ -1344,6 +1499,40 @@ function sanitizeRun(r){
 }
 function factionOf(m){ return m.f || m.g || ""; }
 function canAccept(m, rep){ var r = rep[factionOf(m)]; return r == null ? null : m.r <= r; }
+function boardRows(ms, known, rep, f){
+  f = f || {}; var q = String(f.q || "").toLowerCase(), rows = [], counts = { All: 0 };
+  ACTS.forEach(function(x){ counts[x] = 0; });
+  (Array.isArray(ms) ? ms : []).forEach(function(m){
+    if (!m || m.rl === 0) return;
+    if (f.noIllegal && m.il) return;
+    if (f.sys && m.sy.indexOf(f.sys) < 0) return;
+    if (q && (m.t + " " + m.g + " " + m.f).toLowerCase().indexOf(q) < 0) return;
+    var s = scoreMission(m, known || {}); if (f.onlyBp && !s.pools) return;
+    var ok = canAccept(m, rep || {}); if (f.onlyAccept && ok === false) return;
+    var a = m.a || actOf(m.sc); counts.All++; counts[a]++;
+    if (f.act && f.act !== a) return;
+    rows.push({ m: m, s: s, ok: ok });
+  });
+  var by = f.sort || "new";
+  rows.sort(function(x, y){
+    var d = 0;
+    if (by === "new") d = y.s.exp - x.s.exp;
+    else if (by === "reward") d = (y.m.rw[1] || y.m.rw[0]) - (x.m.rw[1] || x.m.rw[0]);
+    else if (by === "rep") d = ((y.m.rp[0] || [0, 0])[1]) - ((x.m.rp[0] || [0, 0])[1]);
+    else if (by === "time") d = (x.m.tm || 1e9) - (y.m.tm || 1e9);
+    return d || x.m.t.localeCompare(y.m.t);
+  });
+  return { rows: rows, counts: counts };
+}
+function groupBoard(rows){
+  var by = {}, order = [];
+  rows.forEach(function(r){
+    var k = factionOf(r.m) || "Other"; if (!by[k]){ by[k] = { f: k, open: [], locked: [] }; order.push(k); }
+    (r.ok === false ? by[k].locked : by[k].open).push(r);
+  });
+  return order.map(function(k){ return by[k]; });
+}
+
 function rankUps(ms, known, rep){
   var by = {};
   (Array.isArray(ms) ? ms : []).forEach(function(m){
@@ -1981,7 +2170,7 @@ async function computeExactItems(cat, patchCode, progress){
     updateBulk();
     var list = $("list"); list.textContent = "";
     if (!shown.length){
-      list.appendChild(h("div", { class: "empty", text: items.length ? "Nothing matches those filters." : "No items yet." }));
+      list.appendChild(emptyState(items.length ? "Nothing matches those filters." : "No items yet."));
       return;
     }
     var groups = {};
@@ -2204,7 +2393,7 @@ async function computeExactItems(cat, patchCode, progress){
     var st = $("mStats"); st.textContent = "";
     [["Materials", Object.keys(groups).length], ["Stacks", shown.length], ["Total SCU", Math.round(shown.reduce(function(a, m){ return a + m.s; }, 0) * 100) / 100]].forEach(function(p2){ st.appendChild(h("span", null, p2[0] + ": ", h("b", { text: fmt(p2[1]) }))); });
     var L = $("mList"); L.textContent = "";
-    if (!shown.length){ L.appendChild(h("div", { class: "empty", text: mats.length ? "Nothing matches those filters." : "No materials yet." })); return; }
+    if (!shown.length){ L.appendChild(emptyState(mats.length ? "Nothing matches those filters." : "No materials yet.")); return; }
     var ch = h("div", { class: "colhead mcol", "aria-hidden": "true" }); ["Band", "Quality", "SCU", "Location", ""].forEach(function(t){ ch.appendChild(h("span", { text: t })); }); L.appendChild(ch);
     Object.keys(groups).sort(function(a, b){ return groups[a][0].n.localeCompare(groups[b][0].n); }).forEach(function(k){
       var g = groups[k].sort(function(a, b){ return b.q - a.q || a.l.localeCompare(b.l); });
@@ -2268,7 +2457,7 @@ async function computeExactItems(cat, patchCode, progress){
     st.appendChild(h("span", null, "Known ", h("b", { text: kn + " / " + fmt(bps.length) })));
     st.appendChild(h("span", { class: "bar" }, h("i", { style: "width:" + Math.max(0, Math.min(100, kn / bps.length * 100)) + "%" })));
     st.appendChild(h("span", null, "Showing ", h("b", { text: fmt(rows.length) })));
-    if (!rows.length){ list.appendChild(h("div", { class: "empty", text: "No blueprints match those filters." })); $("bMore").hidden = true; return; }
+    if (!rows.length){ list.appendChild(emptyState("No blueprints match those filters.")); $("bMore").hidden = true; return; }
     if (!ui.bview){ var bh = h("div", { class: "bhead", "aria-hidden": "true" }); ["", "Blueprint", "Category", "Materials you have", ""].forEach(function(t){ bh.appendChild(h("div", { text: t })); }); list.appendChild(bh); }
     rows.slice(0, bpShown).forEach(function(b){ list.appendChild(ui.bview ? bpCard(b, owned) : bpRow(b, owned)); });
     $("bMore").hidden = rows.length <= bpShown;
@@ -2359,7 +2548,7 @@ async function computeExactItems(cat, patchCode, progress){
         h("span", { class: r.short ? "no" : "ok", text: fmt(r.have) + " / " + fmt(r.need) + " " + r.unit }),
         h("span", { class: r.short ? "no" : "ok", text: r.short ? "short " + fmt(r.short) : "OK" })));
     });
-    if (!plan.rows.length) M.appendChild(h("div", { class: "empty", text: "No materials yet." }));
+    if (!plan.rows.length) M.appendChild(emptyState("No materials yet."));
     $("cCopy").disabled = !plan.rows.length; $("cClear").disabled = !plan.list.length;
   }
   $("cCopy").onclick = function(){
@@ -2393,7 +2582,7 @@ async function computeExactItems(cat, patchCode, progress){
     if (mode === "building") rows.sort(function(a, b){ return (a.set.count - a.own.have) - (b.set.count - b.own.have) || a.set.name.localeCompare(b.set.name); });
     var done = SETS.filter(function(x){ return ownedPieces(x, items).have === x.count; }).length;
     [["Sets known", SETS.length], ["Complete", done], ["Showing", rows.length]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: fmt(p[1]) }))); });
-    if (!rows.length){ L.appendChild(h("div", { class: "empty", text: mode === "building" ? "No partly-collected sets yet." : "No sets match." })); return; }
+    if (!rows.length){ L.appendChild(emptyState(mode === "building" ? "No partly-collected sets yet." : "No sets match.")); return; }
     rows.slice(0, setsShown).forEach(function(r){
       var chips = h("div", { class: "chips" });
       SLOT_ORDER.forEach(function(sl){
@@ -2432,8 +2621,14 @@ async function computeExactItems(cat, patchCode, progress){
     var st = $("hStats"); st.textContent = "";
     [["This session: gained", fmt(gained)], ["Removed", fmt(used)], ["Moves", moves], ["Entries kept", hist.length]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: String(p[1]) }))); });
     var L = $("hList"); L.textContent = "";
-    if (!rows.length){ L.appendChild(h("div", { class: "empty", text: hist.length ? "Nothing matches that filter." : "No history yet." })); $("hClear").disabled = !hist.length; return; }
-    rows.slice(0, 300).forEach(function(e){ L.appendChild(h("div", { class: "hrow" }, h("time", { datetime: e.t, text: new Date(e.t).toLocaleString() }), h("span", { text: histText(e) }))); });
+    if (!rows.length){ L.appendChild(hist.length ? emptyState("Nothing matches that filter.") : emptyState("No history yet", "Changes you make to your stacks are listed here.")); $("hClear").disabled = !hist.length; return; }
+    var hh = h("div", { class: "colhead hcol", "aria-hidden": "true" }); ["When", "Change", "Item", "Where", "Qty"].forEach(function(t, i){ hh.appendChild(h("span", { class: i === 4 ? "r" : "", text: t })); }); L.appendChild(hh);
+    var HB = { add: ["Added", "good"], inc: ["Added", "good"], dec: ["Removed", "warn"], rem: ["Removed", "warn"], move: ["Moved", ""] };
+    rows.slice(0, 300).forEach(function(e){
+      var b = HB[e.a] || ["Note", ""], sign = e.a === "add" || e.a === "inc" ? "+" : e.a === "dec" || e.a === "rem" ? "\u2212" : "";
+      L.appendChild(h("div", { class: "hrow2" }, h("time", { datetime: e.t, text: new Date(e.t).toLocaleString() }), h("span", { class: "badge " + b[1], text: b[0] }),
+        h("span", { class: "name", text: e.n }), h("span", { class: "dim", text: e.a === "move" ? e.f + " to " + e.l : e.a === "note" ? "" : e.l }), h("span", { class: "r", text: e.a === "note" ? "" : sign + fmt(e.d) })));
+    });
     $("hClear").disabled = false;
   }
   $("hSearch").addEventListener("input", renderHist);
@@ -2442,17 +2637,17 @@ async function computeExactItems(cat, patchCode, progress){
   // ---------- loot by location ----------
   function renderLootAt(){
     var sys = $("lfSys").value, place = $("lfPlace").value.trim(), out = $("lfOut"), st = $("lfStats"); out.textContent = ""; st.textContent = "";
-    if (!lootlog.length){ out.appendChild(h("div", { class: "empty", text: "Nothing logged yet." })); return; }
+    if (!lootlog.length){ out.appendChild(emptyState("Nothing logged yet", "Pick a place when you add loot and it shows up here.", "Go to Inventory", function(){ showTab("inv"); })); return; }
     var rows = lootAt(lootlog, sys, place), total = 0;
     rows.forEach(function(r){ total += r.cnt; });
     [["Items", rows.length], ["Finds logged", total]].forEach(function(x){ st.appendChild(h("span", null, x[0] + ": ", h("b", { text: fmt(x[1]) }))); });
-    if (!rows.length){ out.appendChild(h("div", { class: "empty", text: "Nothing logged for that system and place." })); return; }
+    if (!rows.length){ out.appendChild(emptyState("Nothing logged for that system and place.")); return; }
+    var lh = h("div", { class: "colhead lcol", "aria-hidden": "true" }); ["Item", "Found", "Quantity", "Last"].forEach(function(t, i){ lh.appendChild(h("span", { class: i === 3 ? "r" : "", text: t })); }); out.appendChild(lh);
     rows.slice(0, 150).forEach(function(r){
-      out.appendChild(h("div", { class: "hrow", style: "grid-template-columns:1fr auto auto;border-radius:0" },
-        h("span", null, r.n + "  ", h("span", { class: "dim", text: [r.c, r.s].filter(Boolean).join(" · ") + "  " }),
-          h("button", { type: "button", class: "findbtn", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFinder(r.n, r.s, ""); } })),
-        h("span", { text: "found " + r.cnt + (r.cnt === 1 ? " time" : " times") + " (" + fmt(r.q) + ")" }),
-        h("span", { class: "dim", text: "last " + r.last.slice(0, 10) })));
+      out.appendChild(h("div", { class: "hrow2 lrow2" },
+        h("span", null, h("span", { class: "name", text: r.n }), h("div", { class: "dim", text: [r.c, r.s].filter(Boolean).join(" · ") })),
+        h("span", { text: r.cnt + (r.cnt === 1 ? " time" : " times") }), h("span", { text: fmt(r.q) }),
+        h("span", { class: "r" }, h("span", { class: "dim", text: r.last.slice(0, 10) + "  " }), h("button", { type: "button", class: "findbtn", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFinder(r.n, r.s, ""); } }))));
     });
     if (rows.length > 150) out.appendChild(h("div", { class: "dim", style: "margin-top:6px", text: "Showing the top 150 items. Narrow it with a place." }));
   }
@@ -2524,7 +2719,7 @@ async function computeExactItems(cat, patchCode, progress){
   }
   function renderFinder(){
     var out = $("fqOut"); out.textContent = "";
-    if (!fqName){ out.appendChild(h("div", { class: "empty", text: "Search for an item above." })); return; }
+    if (!fqName){ out.appendChild(emptyState("Search for an item", "Type a name above to see where to buy it, which missions give the blueprint, and what it scraps into.")); return; }
     var e = fqEntry, u = e && e.u ? e.u : "", bp = findBp(fqName, e);
     // title
     var t = fcard(fqName);
@@ -2537,6 +2732,8 @@ async function computeExactItems(cat, patchCode, progress){
       wb.onclick = function(){ wish[bp.u] = Math.min(99, (wish[bp.u] || 0) + 1); save(); wb.textContent = "+1 (in list: " + wish[bp.u] + ")"; };
       t.body.appendChild(wb);
     }
+    var sc = bp ? scrapText(scrapOf(bp)) : "";
+    if (sc) t.body.appendChild(h("div", { class: "scrapln", text: "Scraps into about " + sc }));
     out.appendChild(t.el);
     // shops
     var s1 = fcard("Where to buy (UEX)");
@@ -2633,10 +2830,13 @@ async function computeExactItems(cat, patchCode, progress){
     $("nExact").dataset.code = versionCode ? versionCode.code : "";
     var order = {}; rows.forEach(function(r){ (order[r.c] = order[r.c] || []).push(r); });
     var any = false;
+    var nb = d ? (d.bps || []).length : 0, tl = h("div", { class: "tiles ptiles" });
+    [[fmt(rows.length), "New items"], [fmt(nb), "New blueprints"], [fmt(Object.keys(order).length), "Categories"]].forEach(function(t){ tl.appendChild(h("div", { class: "tile" }, h("b", { text: t[0] }), h("span", { text: t[1] }))); });
+    list.appendChild(tl);
     CATS.forEach(function(c){
       var g = order[c]; if (!g) return; any = true;
       g.sort(function(a, b){ return a.n.localeCompare(b.n); });
-      list.appendChild(h("div", { class: "grp", text: c + " (" + g.length + ")" }));
+      list.appendChild(h("div", { class: "mrk", text: c + " (" + g.length + ")" }));
       g.slice(0, 200).forEach(function(it){
         list.appendChild(h("div", { class: "nrow" }, h("span", { class: "name", text: it.n }), h("span", { class: "badge", text: it.s || c }),
           h("button", { type: "button", class: "ghost", text: "+ Add", onclick: function(){
@@ -2648,14 +2848,14 @@ async function computeExactItems(cat, patchCode, progress){
     var newBps = d ? (d.bps || []).map(function(u){ return (catalogue.bps || []).filter(function(b){ return b.u === u; })[0]; }).filter(Boolean) : [];
     if (newBps.length){
       any = true;
-      list.appendChild(h("div", { class: "grp", text: "Blueprints (" + newBps.length + ")" }));
+      list.appendChild(h("div", { class: "mrk", text: "Blueprints (" + newBps.length + ")" }));
       newBps.sort(function(a, b){ return a.n.localeCompare(b.n); }).forEach(function(b){
         var chk = h("input", { type: "checkbox", checked: !!known[b.u], "aria-label": "Known: " + b.n });
         chk.onchange = function(){ snapshot(); if (chk.checked) known[b.u] = b.n; else delete known[b.u]; commit(); };
         list.appendChild(h("div", { class: "nrow" }, h("span", { class: "name", text: b.n }), h("span", { class: "badge", text: BPCAT[b.u] || "Other" }), h("label", { style: "flex-direction:row;align-items:center;gap:6px" }, chk, "Known")));
       });
     }
-    if (!any) list.appendChild(h("div", { class: "empty", text: "Nothing recorded as added in " + cur + " yet." }));
+    if (!any) list.appendChild(emptyState("Nothing recorded as added in " + cur + " yet."));
   }
   $("nPatch").addEventListener("input", renderNew);
   $("nExact").onclick = async function(){
@@ -2718,7 +2918,7 @@ async function computeExactItems(cat, patchCode, progress){
   var planData = null, planBusy = false, planShown = 40, planErr = "";
   function loadPlanCache(){
     return idbGet("plan").then(function(c){
-      if (c && c.v === 1 && Array.isArray(c.ms)) planData = c;
+      if (c && (c.v === 1 || c.v === 2) && Array.isArray(c.ms)) planData = c;
     }).catch(function(){});
   }
   async function loadPlan(){
@@ -2726,23 +2926,25 @@ async function computeExactItems(cat, patchCode, progress){
     var ms = [], failed = 0, total = 0;
     try {
       var list = [];
-      var first = await getJSON(WIKI + "missions?filter[has_blueprints]=1&page[size]=100&page[number]=1");
+      var first = await getJSON(WIKI + "missions?page[size]=100&page[number]=1");
       var last = (first.meta && first.meta.last_page) || 1; list = list.concat(first.data || []);
       for (var pg = 2; pg <= last; pg++){
         progress("Reading mission list (" + pg + "/" + last + ")", 0.1 * pg / last);
-        var r = await getJSON(WIKI + "missions?filter[has_blueprints]=1&page[size]=100&page[number]=" + pg); list = list.concat(r.data || []);
+        var r = await getJSON(WIKI + "missions?page[size]=100&page[number]=" + pg); list = list.concat(r.data || []);
       }
       var uniq = dedupePlanList(list); total = uniq.length; var done = 0;
       await pool(4, uniq, async function(l){
         try {
           if (!/^[0-9a-f-]{30,40}$/i.test(String(l.uuid))) throw new Error("bad id");
-          var d = await getJSON(WIKI + "missions/" + encodeURIComponent(l.uuid));
-          ms.push(parsePlanMission(l, d && d.data));
+          if (l.has_blueprints || (Array.isArray(l.blueprints) && l.blueprints.length)){
+            var d = await getJSON(WIKI + "missions/" + encodeURIComponent(l.uuid));
+            ms.push(parsePlanMission(l, d && d.data));
+          } else ms.push(parsePlanMission(l, null));
         } catch (e){ failed++; }
         done++; progress("Reading mission rewards (" + done + "/" + total + ")", 0.1 + 0.9 * done / total);
       });
       if (!ms.length) throw new Error("no missions came back");
-      planData = { v: 1, t: Date.now(), total: total, failed: failed, ms: ms };
+      planData = { v: 2, t: Date.now(), total: total, failed: failed, ms: ms };
       await idbSet("plan", planData);
     } catch (e){ planErr = e && e.message ? e.message : String(e); }
     planBusy = false; $("plLoad").disabled = false; setTimeout(function(){ if (!updating) $("prog").hidden = true; }, 600); renderPlanner();
@@ -2752,16 +2954,15 @@ async function computeExactItems(cat, patchCode, progress){
     $("plLoad").textContent = planData ? "Refresh mission data" : "Load mission data";
     var info = $("plInfo");
     info.textContent = planBusy ? "Loading…" : planData ? "Mission data from " + new Date(planData.t).toLocaleDateString() + (planData.failed ? " · " + planData.failed + " missions could not be read" : "") + "." : "";
-    if (planErr) out.appendChild(h("div", { class: "empty", text: "Could not load mission data: " + planErr + "." }));
+    if (planErr) out.appendChild(emptyState("Could not load mission data: " + planErr + "."));
     if (!planData){
-      if (!planErr) out.appendChild(h("div", { class: "empty", text: "Load mission data to get started." }));
+      if (!planErr) out.appendChild(emptyState("Load mission data to get started."));
       $("plMore").hidden = true; return;
     }
-    renderStanding();
     if (!Object.keys(known).length) out.appendChild(h("div", { class: "note", text: "No blueprints marked known yet, so all count as new." }));
     var rows = rankPlan(planData.ms, known, { q: $("plSearch").value, sys: $("plSys").value, noIllegal: $("plIll").checked, noCombat: $("plCmb").checked, onlyMine: $("plMine").checked, rep: rep });
-    [["Missions with blueprints", fmt(planData.ms.length)], ["With something new for you", fmt(rows.length)]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
-    if (!rows.length){ out.appendChild(h("div", { class: "empty", text: "No missions match those filters." })); $("plMore").hidden = true; return; }
+    [["Missions with blueprints", fmt(planData.ms.filter(function(m){ return m.p && m.p.length; }).length)], ["With something new for you", fmt(rows.length)]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
+    if (!rows.length){ out.appendChild(emptyState("No missions match those filters.")); $("plMore").hidden = true; return; }
     var ph = h("div", { class: "colhead tcol", "aria-hidden": "true" }); ["#", "Mission", "Details", "New blueprints"].forEach(function(t, i){ ph.appendChild(h("span", { class: i === 3 ? "r" : "", text: t })); }); out.appendChild(ph);
     rows.slice(0, planShown).forEach(function(r, ix){
       var m = r.m, s = r.s;
@@ -2796,25 +2997,122 @@ async function computeExactItems(cat, patchCode, progress){
   $("plMore").onclick = function(){ planShown += 60; renderPlanner(); };
   $("plLoad").onclick = loadPlan;
 
-  function renderStanding(){
-    var box = $("plRep"), ups = $("plUps"); box.textContent = ""; ups.textContent = "";
-    if (!planData) return;
-    var facs = {}; planData.ms.forEach(function(m){ var f = factionOf(m); if (f) facs[f] = 1; });
-    var names = Object.keys(facs).sort(), setN = Object.keys(rep).filter(function(k){ return facs[k]; }).length;
-    $("plRepSum").textContent = "My standing (" + setN + " of " + names.length + " set)";
-    names.forEach(function(f){
-      var sel = h("select", { "aria-label": "Rank with " + f }, h("option", { value: "", text: "Not set" }));
-      RANKS.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
-      sel.value = rep[f] == null ? "" : String(rep[f]);
-      sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); save(); planShown = 40; renderPlanner(); };
-      box.appendChild(h("div", { class: "bphead", style: "margin-bottom:6px" }, h("span", { class: "name", text: f }), sel));
+  // ---------- missions board ----------
+  var mbShown = 30, mbAct = "";
+  function emptyState(title, line, btn, fn){
+    var kids = [h("div", { class: "etitle", text: title })]; if (line) kids.push(h("div", { class: "note", text: line }));
+    if (btn){ var b = h("button", { type: "button", text: btn }); b.onclick = fn; kids.push(b); }
+    var e = h("div", { class: "empty rich" }); kids.forEach(function(k){ e.appendChild(k); }); return e;
+  }
+  function numTxt(n){ return fmt(Math.round(n)); }
+  function rewardTxt(m){
+    var lo = m.rw[0], hi = m.rw[1];
+    if (lo && hi && lo !== hi) return numTxt(lo) + " to " + numTxt(hi) + " aUEC";
+    if (hi || lo) return numTxt(hi || lo) + " aUEC";
+    return "Not listed";
+  }
+  function cargoTxt(it){ return it[0] + (it[2] ? " · " + fmt(it[2]) + " SCU" : it[1] ? " × " + fmt(it[1]) : ""); }
+  function reqRows(m){
+    var a = m.a || actOf(m.sc), rows = [];
+    if (m.hl && m.hl.length){
+      var lab = a === "Mining" ? "Deliver" : a === "Recovery" ? "Collect" : "Cargo";
+      var lines = m.hl.slice(0, 3).map(cargoTxt); if (m.hl.length > 3) lines.push("and " + (m.hl.length - 3) + " more");
+      rows.push([lab, lines.join(", ")]);
+      if (a === "Hauling" || a === "Salvage" || a === "Other") rows.push(["Pickup / drop", "Chosen in game"]);
+    }
+    if (a === "Combat" || a === "Investigation" || m.cb){
+      var lo = m.en[0], hi = m.en[1];
+      rows.push(["Enemies", lo && hi ? (lo === hi ? String(lo) : lo + " to " + hi) : m.cb ? "Hostiles present" : "None listed"]);
+    }
+    if (m.sy && m.sy.length) rows.push(["System", m.sy.join(", ")]);
+    if (m.of && m.of.length) rows.push(["Offered at", m.of.slice(0, 3).join(", ") + (m.on > 3 ? " and " + (m.on - 3) + " more" : "")]);
+    if (!rows.length) rows.push(["Details", "Set in game"]);
+    return rows;
+  }
+  function missionCard(r, locked){
+    var m = r.m, a = m.a || actOf(m.sc), s = r.s, rp = m.rp && m.rp[0] ? "+" + fmt(m.rp[0][1]) : "Not listed";
+    var kind = a + (m.ty && m.ty.toLowerCase() !== a.toLowerCase() ? " · " + m.ty.toLowerCase() : "");
+    var top = h("div", { class: "mtop" }, h("span", { class: "act a-" + a, text: kind }));
+    if (m.il) top.appendChild(h("span", { class: "mtag warn", text: "Illegal" }));
+    if (m.cb && a !== "Combat") top.appendChild(h("span", { class: "mtag warn", text: "Combat" }));
+    var req = h("div", { class: "mreq" }, h("div", { class: "rl", text: "What you need to do" }));
+    reqRows(m).forEach(function(q){ req.appendChild(h("div", { class: "rq" }, h("span", { text: q[0] }), h("b", { text: q[1] }))); });
+    var need = m.r > 0 ? RANKS[Math.min(m.r, RANKS.length - 1)] : "Open", cls = r.ok === false ? "no" : r.ok || m.r === 0 ? "ok" : "";
+    function stat(k, v, c){ return h("div", null, h("small", { text: k }), h("b", { class: c || "", text: v })); }
+    var stats = h("div", { class: "mstats" }, stat("Reward", rewardTxt(m)), stat("Time", m.tm ? m.tm + " min" : "Not listed"), stat("Rep", rp), stat("Needs", need, cls));
+    var left = s.pools ? s.unknown + " new of " + s.total + " blueprint" + (s.total === 1 ? "" : "s") : "No blueprint reward";
+    var right = r.ok === false ? (m.r - (rep[factionOf(m)] == null ? 0 : rep[factionOf(m)])) + " rank" + (m.r - (rep[factionOf(m)] || 0) === 1 ? "" : "s") + " to go" : r.ok ? "You can accept this" : m.r > 0 ? "Set your standing" : "Open to everyone";
+    var foot = h("div", { class: "mfoot" }, h("span", { class: s.pools ? "" : "mute", text: left }), h("span", { class: r.ok === false ? "mute" : r.ok ? "ok" : "mute", text: right }));
+    return h("div", { class: "mcard" + (locked ? " lock" : ""), title: m.rp && m.rp.length > 1 ? "Rep: " + m.rp.map(function(x){ return x[0] + " +" + fmt(x[1]); }).join(", ") : "" },
+      top, h("div", { class: "mtitle", text: m.t }), h("div", { class: "msub", text: m.g || factionOf(m) }), req, stats, foot);
+  }
+  function renderBoard(){
+    var out = $("mbOut"), acts = $("mbActs"); out.textContent = ""; acts.textContent = "";
+    $("mbLoad").textContent = planData ? "Refresh mission data" : "Load mission data"; $("mbLoad").disabled = planBusy;
+    $("mbInfo").textContent = planBusy ? "Loading…" : planData ? "Mission data from " + new Date(planData.t).toLocaleDateString() + (planData.v === 2 ? "" : " · refresh to see every mission") : "";
+    if (planErr) out.appendChild(emptyState("Could not load mission data: " + planErr + "."));
+    if (!planData){
+      if (!planErr) out.appendChild(emptyState("Mission data is not loaded", "It is a one-time download of about 1,800 missions.", "Load mission data", loadPlan));
+      $("mbMore").hidden = true; return;
+    }
+    var f = { q: $("mbSearch").value, sys: $("mbSys").value, sort: $("mbSort").value, noIllegal: $("mbIll").checked, onlyBp: $("mbBp").checked, onlyAccept: $("mbAcc").checked, act: mbAct };
+    var res = boardRows(planData.ms, known, rep, f), rows = res.rows;
+    [["All", ""]].concat(ACTS.map(function(x){ return [x, x]; })).forEach(function(p){
+      var b = h("button", { type: "button", class: "pill" + (mbAct === p[1] ? " on" : ""), text: p[0] + " " + fmt(res.counts[p[0]] || 0), "aria-pressed": mbAct === p[1] ? "true" : "false" });
+      b.onclick = function(){ mbAct = p[1]; mbShown = 30; renderBoard(); };
+      acts.appendChild(b);
     });
+    if (!rows.length){ out.appendChild(emptyState("No missions match", "Try turning off a filter above.", "Clear filters", function(){ $("mbSearch").value = ""; $("mbSys").value = ""; $("mbIll").checked = false; $("mbBp").checked = false; $("mbAcc").checked = false; mbAct = ""; renderBoard(); })); $("mbMore").hidden = true; return; }
+    var groups = groupBoard(rows), shown = 0, hidden = false;
+    groups.forEach(function(g){
+      if (shown >= mbShown){ hidden = true; return; }
+      var st = rep[g.f], total = g.open.length + g.locked.length;
+      out.appendChild(h("div", { class: "mgh" }, h("b", { text: g.f }), h("span", { class: "dim", text: "Your standing: " + (st == null ? "Not set" : RANKS[st]) }), h("span", { class: "sp" }), h("span", { class: "dim", text: total + " mission" + (total === 1 ? "" : "s") })));
+      [[g.open, false], [g.locked, true]].forEach(function(part){
+        var list = part[0]; if (!list.length) return;
+        var minR = part[1] ? Math.min.apply(null, list.map(function(x){ return x.m.r; })) : 0;
+        out.appendChild(h("div", { class: "mrk" + (part[1] ? " lock" : ""), text: part[1] ? "Locked until " + RANKS[Math.min(minR, RANKS.length - 1)] : "Open to you now" }));
+        var grid = h("div", { class: "mgrid" });
+        list.forEach(function(r){ if (shown >= mbShown){ hidden = true; return; } grid.appendChild(missionCard(r, part[1])); shown++; });
+        out.appendChild(grid);
+      });
+    });
+    $("mbMore").hidden = !hidden;
+  }
+  ["mbSearch", "mbSys", "mbSort", "mbIll", "mbBp", "mbAcc"].forEach(function(id){ $(id).addEventListener("input", function(){ mbShown = 30; renderBoard(); }); });
+  $("mbMore").onclick = function(){ mbShown += 30; renderBoard(); };
+  $("mbLoad").onclick = function(){ loadPlan(); };
+
+  // ---------- my standing ----------
+  function renderStandTab(){
+    var out = $("stOut"), ups = $("stUps"); out.textContent = ""; ups.textContent = "";
+    if (!planData){ out.appendChild(emptyState("Mission data is not loaded", "Load it once and every faction shows up here.", "Load mission data", loadPlan)); return; }
+    var facs = {};
+    planData.ms.forEach(function(m){ if (m.rl === 0) return; var f = factionOf(m); if (!f) return; var e = facs[f] || (facs[f] = { f: f, n: 0, bp: 0, open: 0 }); e.n++; if (m.p && m.p.length) e.bp++; });
+    var q = nameKey($("stSearch").value), names = Object.keys(facs).sort().filter(function(k){
+      if (q && nameKey(k).indexOf(q) < 0) return false; if ($("stSet").checked && rep[k] == null) return false; if ($("stBp").checked && !facs[k].bp) return false; return true; });
+    planData.ms.forEach(function(m){ var f = factionOf(m); if (facs[f] && m.rl !== 0 && canAccept(m, rep) !== false) facs[f].open++; });
+    var setN = Object.keys(rep).filter(function(k){ return facs[k]; }).length;
+    $("stInfo").textContent = "Set your rank with each faction once. The board uses it to show what you can accept. " + setN + " of " + Object.keys(facs).length + " set.";
     var list = rankUps(planData.ms, known, rep).slice(0, 5);
     if (list.length){
-      ups.appendChild(h("div", { class: "dim", text: "Rank-ups worth it" }));
-      list.forEach(function(u){ ups.appendChild(h("div", null, h("b", { text: u.f }), " at " + RANKS[u.to] + ": " + u.miss + " mission" + (u.miss === 1 ? "" : "s") + ", " + u.bps + " new blueprint" + (u.bps === 1 ? "" : "s"))); });
+      ups.appendChild(h("div", { class: "mrk", text: "Rank-ups worth it" }));
+      list.forEach(function(u){ ups.appendChild(h("div", { style: "padding:3px 2px" }, h("b", { text: u.f }), " at " + RANKS[u.to] + ": " + u.miss + " mission" + (u.miss === 1 ? "" : "s") + ", " + u.bps + " new blueprint" + (u.bps === 1 ? "" : "s"))); });
     } else if (setN) ups.appendChild(h("div", { class: "dim", text: "No new blueprints at the next rank." }));
+    if (!names.length){ out.appendChild(emptyState("No factions match", "Try clearing the search or a filter.")); return; }
+    names.forEach(function(f){
+      var e = facs[f], cur = rep[f] == null ? -1 : rep[f];
+      var sel = h("select", { "aria-label": "Rank with " + f }, h("option", { value: "", text: "Not set" }));
+      RANKS.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
+      sel.value = cur < 0 ? "" : String(cur);
+      sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); save(); renderStandTab(); };
+      var lad = h("div", { class: "ladder" });
+      RANKS.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: r.replace(" Contractor", "").replace("Contractor", "Contr.") }))); });
+      out.appendChild(h("div", { class: "fcardx" }, h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("div", { class: "mtitle", text: f }), h("span", { class: "badge " + (cur < 0 ? "warn" : "good"), text: cur < 0 ? "Not set" : RANKS[cur] })), lad,
+        h("div", { class: "mfoot" }, h("span", { text: e.n + " missions · " + e.open + " open to you" }), sel)));
+    });
   }
+  ["stSearch", "stSet", "stBp"].forEach(function(id){ $(id).addEventListener("input", renderStandTab); });
 
   // ---------- sessions ----------
   var ssShown = 25, ssTick = 0;
@@ -2832,7 +3130,7 @@ async function computeExactItems(cat, patchCode, progress){
     updClock(); clearInterval(ssTick); ssTick = run ? setInterval(updClock, 15000) : 0;
     var st = sessStats(sess, Number($("ssRange").value), Date.now()), S = $("ssStats"), B = $("ssBars"); S.textContent = ""; B.textContent = "";
     [["Sessions", fmt(st.count)], ["Time", fmtDur(st.minutes)], ["Earned", fmt(st.total) + " aUEC"], ["Average", fmt(st.perHour) + " aUEC/hour"]].forEach(function(p){ S.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
-    if (!st.rows.length) B.appendChild(h("div", { class: "empty", text: "No sessions in this range." }));
+    if (!st.rows.length) B.appendChild(emptyState("No sessions in this range."));
     if (st.rows.length){ var wh = h("div", { class: "colhead wcol", "aria-hidden": "true" }); ["Activity", "Per hour", "Totals"].forEach(function(t){ wh.appendChild(h("span", { text: t })); }); B.appendChild(wh); }
     var top = st.rows.reduce(function(a, r){ return Math.max(a, Math.abs(r.hr)); }, 1);
     st.rows.forEach(function(r){
@@ -2844,7 +3142,7 @@ async function computeExactItems(cat, patchCode, progress){
     });
     var L = $("ssList"); L.textContent = "";
     var rows = sess.slice().sort(function(p, q){ return Date.parse(q.t) - Date.parse(p.t); });
-    if (!rows.length) L.appendChild(h("div", { class: "empty", text: "Nothing logged yet." }));
+    if (!rows.length) L.appendChild(emptyState("Nothing logged yet."));
     if (rows.length){ var sh = h("div", { class: "colhead scol", "aria-hidden": "true" }); ["Activity", "When", "Earned", "Note", ""].forEach(function(t){ sh.appendChild(h("span", { text: t })); }); L.appendChild(sh); }
     rows.slice(0, ssShown).forEach(function(x){
       var del = h("button", { type: "button", class: "danger smallbtn", text: "Delete", "aria-label": "Delete session " + x.a + " " + x.t });
@@ -2886,11 +3184,11 @@ async function computeExactItems(cat, patchCode, progress){
   $("ssCsv").onclick = function(){ if (!sess.length){ ssSay("No sessions to export yet.", true); return; } saveCsv("sc-sessions-" + new Date().toISOString().slice(0, 10) + ".csv", toSessCSV(sess), sess.length + " sessions", $("ssMsg")); };
 
   // ---------- tabs ----------
-  var TABGROUP = { home: "home", inv: "stuff", mats: "stuff", bp: "stuff", craft: "stuff", sets: "stuff", find: "find", plan: "find", sess: "track", "new": "track", hist: "track", data: "data" };
-  var GROUPORDER = ["home", "stuff", "find", "track", "data"], FIRSTIN = { home: "home", stuff: "inv", find: "find", track: "sess", data: "data" }, lastIn = {}, curTab = "home";
+  var TABGROUP = { home: "home", inv: "stuff", mats: "stuff", bp: "stuff", craft: "stuff", sets: "stuff", find: "find", loot: "find", mis: "missions", stand: "missions", plan: "missions", sess: "track", "new": "track", hist: "track", data: "data" };
+  var GROUPORDER = ["home", "stuff", "missions", "find", "track", "data"], FIRSTIN = { home: "home", stuff: "inv", missions: "mis", find: "find", track: "sess", data: "data" }, lastIn = {}, curTab = "home";
   Array.prototype.forEach.call($("tabs").children, function(b){ b.dataset.group = TABGROUP[b.dataset.tab] || ""; });
   var TABINFO = { home: "Home: quick add and what to farm", inv: "Inventory: items and where they are", mats: "Materials: SCU by quality", bp: "Blueprints: known and craftable", craft: "Craft list: materials needed",
-    sets: "Armor sets: pieces collected", find: "Finder: where to get items", plan: "Planner: missions with blueprints", sess: "Sessions: time and income", "new": "Added this patch: new items", hist: "History: changes made", data: "Data: backup and restore" };
+    sets: "Armor sets: pieces collected", find: "Finder: where to get items", loot: "Loot by location: where your loot came from", mis: "Missions: what to run and what it needs", stand: "My standing: rank with each faction", plan: "Blueprint planner: missions with new blueprints", sess: "Sessions: time and income", "new": "Added this patch: new items", hist: "History: changes made", data: "Data: backup and restore" };
   function showTab(t){
     if (!TABGROUP[t]) t = "home";
     var g = TABGROUP[t]; lastIn[g] = t; curTab = t;
@@ -2903,7 +3201,7 @@ async function computeExactItems(cat, patchCode, progress){
     });
     $("tabs").hidden = n < 2;
     if (t === "home") renderHome(); if (t === "plan") renderPlanner(); if (t === "sess") renderSessions(); if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
-    if (t === "find"){ renderFinder(); renderLootAt(); } if (t === "mats") renderMaterials(); if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
+    if (t === "find") renderFinder(); if (t === "loot") renderLootAt(); if (t === "mis") renderBoard(); if (t === "stand") renderStandTab(); if (t === "mats") renderMaterials(); if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
     try { history.replaceState(null, "", "#" + t); } catch (e){}
     document.title = (TABINFO[t] || "Home") + " \u00b7 Loot Tracker";
     window.scrollTo(0, 0);
@@ -2912,7 +3210,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("groups").addEventListener("click", function(e){ var b = e.target.closest("button[data-group]"); if (b) showTab(lastIn[b.dataset.group] || FIRSTIN[b.dataset.group]); });
   document.addEventListener("keydown", function(e){
     var tag = e.target && e.target.tagName, typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-    if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-5]$/.test(e.key)){ e.preventDefault(); var g = GROUPORDER[Number(e.key) - 1]; showTab(lastIn[g] || FIRSTIN[g]); return; }
+    if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-6]$/.test(e.key)){ e.preventDefault(); var g = GROUPORDER[Number(e.key) - 1]; showTab(lastIn[g] || FIRSTIN[g]); return; }
     if (e.key === "/" && !typing && !e.ctrlKey && !e.metaKey && !e.altKey){
       var sec = $("tab-" + curTab), box = curTab === "home" ? $("hName") : sec.querySelector("input[type=search]") || (curTab === "inv" ? $("fName") : null);
       if (box){ e.preventDefault(); box.focus(); if (box.select) box.select(); }
@@ -2962,25 +3260,25 @@ async function computeExactItems(cat, patchCode, progress){
     }
     // farm next
     var F = $("hFarm"); F.textContent = "";
-    if (!planData) F.appendChild(h("div", null, h("div", { class: "note", text: "Load mission data in the Planner." }), h("button", { type: "button", class: "ghost", text: "Open the Planner", onclick: function(){ showTab("plan"); } })));
+    if (!planData) F.appendChild(emptyState("Mission data is not loaded", "Load it once to see the best missions for you here.", "Open Missions", function(){ showTab("mis"); }));
     else {
       var rows = rankPlan(planData.ms, known, { onlyMine: true, rep: rep }).slice(0, 3);
       if (!rows.length) F.appendChild(h("div", { class: "note", text: "Nothing new at your standing." }));
-      rows.forEach(function(r){ F.appendChild(h("div", { class: "lrow" }, h("span", null, h("b", { text: r.m.t }), " " + (r.m.g || "")), h("span", { class: "dim", text: r.s.unknown + " new · about " + (Math.round(r.s.exp * 100) / 100) + " per run" }))); });
-      F.appendChild(h("button", { type: "button", class: "ghost smallbtn", style: "margin-top:8px", text: "Open the Planner", onclick: function(){ showTab("plan"); } }));
+      rows.forEach(function(r){ F.appendChild(h("div", { class: "lrow" }, h("span", null, h("b", { text: r.m.t }), h("div", { class: "dim", text: [r.m.g, r.m.sy.join(", ")].filter(Boolean).join(" · ") })), h("span", { class: "badge good", text: r.s.unknown + " new" }))); });
+      F.appendChild(h("button", { type: "button", class: "ghost smallbtn", style: "margin-top:8px", text: "Open Missions", onclick: function(){ showTab("mis"); } }));
     }
     // recent loot
     var R = $("hRecent"); R.textContent = "";
-    if (!lootlog.length) R.appendChild(h("div", { class: "note", text: "Nothing yet." }));
+    if (!lootlog.length) R.appendChild(h("div", { class: "note", text: "Nothing yet. Add the first thing you find with Quick add above." }));
     lootlog.slice(-6).reverse().forEach(function(e){ R.appendChild(homeRow(fmt(e.q) + " × " + e.n, (e.w ? e.w + " · " : "") + new Date(e.t).toLocaleDateString())); });
     if (undoStack.length) R.appendChild(h("button", { type: "button", class: "ghost smallbtn", style: "margin-top:8px", text: "Undo last add", onclick: function(){ $("undoBtn").click(); renderHome(); } }));
     // glance
     var G = $("hGlance"); G.textContent = "";
     var units = items.reduce(function(a, i){ return a + i.qty; }, 0), bpN = ((catalogue && catalogue.bps) || []).length;
-    var tiles = h("div", { class: "tiles" });
-    [[fmt(items.length), "Stacks"], [fmt(Math.round(units * 100) / 100), "Total units"], [Object.keys(known).length + (bpN ? " / " + fmt(bpN) : ""), "Blueprints known"], [fmt(lootlog.length), "Loot entries"], [fmt(Math.round(mats.reduce(function(x, m){ return x + m.s; }, 0) * 100) / 100), "SCU of materials"]].forEach(function(t){ tiles.appendChild(h("div", { class: "tile" }, h("b", { text: t[0] }), h("span", { text: t[1] }))); });
+    var tiles = h("div", { class: "tiles hbig" });
+    [[fmt(items.length), "Stacks"], [fmt(Math.round(units * 100) / 100), "Total units"], [Object.keys(known).length + (bpN ? " / " + fmt(bpN) : ""), "Blueprints known"], [fmt(sessStats(sess, 30, Date.now()).total), "aUEC, last 30 days"], [fmt(Math.round(mats.reduce(function(x, m){ return x + m.s; }, 0) * 100) / 100), "SCU of materials"]].forEach(function(t){ tiles.appendChild(h("div", { class: "tile" }, h("b", { text: t[0] }), h("span", { text: t[1] }))); });
     G.appendChild(tiles);
-    if (!items.length && !mats.length) G.appendChild(h("div", { class: "note", style: "margin-top:8px", text: "No items yet." }));
+    
   }
 
   // ---------- backup / restore ----------
@@ -2989,13 +3287,14 @@ async function computeExactItems(cat, patchCode, progress){
     if (!NATIVE || !NATIVE.listBackups) return;
     NATIVE.listBackups().then(function(list){
       var L = $("bkList"); L.textContent = "";
+      if (!(list || []).length){ L.appendChild(emptyState("No backups yet", "The first one is saved automatically tonight, or press Back up now.")); return; }
       (list || []).forEach(function(b){
         var btn = h("button", { type: "button", class: "danger smallbtn", text: bkArmed === b.name ? "Confirm" : "Restore" });
         btn.onclick = function(){
           if (bkArmed !== b.name){ bkArmed = b.name; clearTimeout(bkTimer); bkTimer = setTimeout(function(){ bkArmed = null; renderBackups(); }, 3000); renderBackups(); return; }
           NATIVE.restoreBackup(b.name).then(function(ok){ if (ok) location.reload(); else say($("ioMsg"), "Couldn't restore that backup.", true); });
         };
-        L.appendChild(h("div", { class: "hrow", style: "grid-template-columns:130px 1fr auto;align-items:center" }, h("b", { text: BKLABEL[b.kind] || b.kind }), h("span", { class: "dim", text: new Date(b.time).toLocaleString() + " · " + fmt(b.items) + " stacks" + (b.mats ? ", " + fmt(b.mats) + " materials" : "") }), btn));
+        L.appendChild(h("div", { class: "bkrow" }, h("span", { class: "badge", text: BKLABEL[b.kind] || b.kind }), h("span", { text: new Date(b.time).toLocaleString() }), h("span", { class: "dim", text: fmt(b.items) + " stacks" + (b.mats ? ", " + fmt(b.mats) + " materials" : "") }), btn));
       });
     }).catch(function(){});
   }
@@ -3069,7 +3368,7 @@ async function computeExactItems(cat, patchCode, progress){
 
   // ---------- init ----------
   if (NATIVE){
-    $("nativeInfo").hidden = false; $("browserNote").hidden = true;
+    $("nativeInfo").hidden = false; $("browserNote").hidden = true; $("bkPanel").hidden = false;
     if (NATIVE.version) NATIVE.version().then(function(v){ if (v){ $("appVer").textContent = "v" + v; $("appVer").hidden = false; } }).catch(function(){});
     NATIVE.dataPath().then(function(p){ $("dataPath").textContent = p; }).catch(function(){});
     $("openFolderBtn").addEventListener("click", function(){ NATIVE.openFolder(); });

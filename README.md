@@ -66,3 +66,9 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 ## v1.13.0
 - Inventory: select items and press "Scrap total" to see the materials you'd get back. "Add to Materials and remove these items" moves them into the Materials tab (quality unknown) and Undo reverses it.
 - Fixed: the Delete button in the selection bar did nothing. It now deletes the selected stacks after a second click, and Undo restores them.
+
+## v1.14.0
+- New top-level Missions tab: mission cards grouped by faction, filter and sort by activity (Hauling, Combat, Mining, Salvage and so on), with requirements shown up front (cargo and SCU, enemies, system, where offered). The wiki data has no pickup or drop-off locations, so those show as chosen in game.
+- New My Standing tab: set your rank per faction once; the Missions board and Planner use it.
+- Home, Finder, Loot by location, History, Data and "Added this patch" restyled to match Inventory and Blueprints, with proper empty states and header status chip.
+- Fixed: horizontal scrolling on phone-width screens.
