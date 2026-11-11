@@ -74,3 +74,6 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Header: database status is now chips under the tabs (version, items, blueprints, missions). Compact mode drops the logo and the button reads "Normal size" while on.
 - Find buttons now open a popup with three tabs (Where to get it, Blueprint missions, Scraps into). "Open in Finder" jumps to the full tab; Esc closes it.
 - Fixed: horizontal scrolling on phone-width screens.
+
+## v1.14.1
+- Fixed: switching between List and Cards on the Blueprints tab did not redraw the list, so the layout broke the next time you ticked a blueprint as known (it only cleared after updating the item database). The view now redraws as soon as you switch.

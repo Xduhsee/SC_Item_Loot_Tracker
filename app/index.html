@@ -2527,8 +2527,8 @@ async function computeExactItems(cat, patchCode, progress){
     $("bList").classList.toggle("cards", !!ui.bview);
     $("bViewList").setAttribute("aria-pressed", ui.bview ? "false" : "true"); $("bViewCards").setAttribute("aria-pressed", ui.bview ? "true" : "false");
   }
-  $("bViewList").onclick = function(){ ui.bview = 0; applyBView(); save(); };
-  $("bViewCards").onclick = function(){ ui.bview = 1; applyBView(); save(); };
+  $("bViewList").onclick = function(){ ui.bview = 0; applyBView(); save(); renderBlueprints(); };
+  $("bViewCards").onclick = function(){ ui.bview = 1; applyBView(); save(); renderBlueprints(); };
   ["bSearch", "bCat", "bStatus", "bMinQ"].forEach(function(id){ $(id).addEventListener("input", function(){ bpShown = 60; renderBlueprints(); }); });
   $("bMinQ").addEventListener("change", function(){ save(); render(); });
   $("bMore").onclick = function(){ bpShown += 120; renderBlueprints(); };
