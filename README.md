@@ -77,3 +77,6 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 ## v1.14.1
 - Fixed: switching between List and Cards on the Blueprints tab did not redraw the list, so the layout broke the next time you ticked a blueprint as known (it only cleared after updating the item database). The view now redraws as soon as you switch.
+
+## v1.14.2
+- Blueprints: List now uses the bar layout (one blueprint per row) and Cards shows the same layout in two columns. The old table rows are gone.

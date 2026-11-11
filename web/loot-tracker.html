@@ -230,6 +230,7 @@
   .bprog .bar{flex:1 1 200px;max-width:320px;height:8px;border-radius:99px;background:var(--line);display:block}
   .bprog .bar i{display:block;height:8px;min-width:8px;border-radius:99px;background:var(--violet)}
   #bList{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  #bList:not(.cards){display:flex;flex-direction:column;gap:12px;border:0;overflow:visible}
   #bList:empty{border:0}
   #bList .bhead,#bList .bphead{grid-template-columns:28px minmax(0,1.1fr) 110px minmax(0,1.6fr) 150px;gap:12px}
   #bList .bhead{display:grid;padding:9px 12px;background:var(--panel2);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
@@ -2465,13 +2466,12 @@ async function computeExactItems(cat, patchCode, progress){
       pl.appendChild(h("button", { type: "button", class: "pill" + (status === p2[0] ? " on" : ""), "aria-pressed": status === p2[0] ? "true" : "false", text: p2[1], onclick: function(){ $("bStatus").value = p2[0]; bpShown = 60; renderBlueprints(); } }));
     });
     var bn = $("bBanner"); bn.hidden = status !== "craftable" || !nOk; bn.textContent = ""; if (!bn.hidden) bn.appendChild(h("b", { text: "You can craft " + nOk + (nOk === 1 ? " thing" : " things") + " right now." }));
-    var st = $("bStats"); st.textContent = ""; st.hidden = !!ui.bview;
+    var st = $("bStats"); st.textContent = ""; st.hidden = false;
     st.appendChild(h("span", null, "Known ", h("b", { text: kn + " / " + fmt(bps.length) })));
     st.appendChild(h("span", { class: "bar" }, h("i", { style: "width:" + Math.max(0, Math.min(100, kn / bps.length * 100)) + "%" })));
     st.appendChild(h("span", null, "Showing ", h("b", { text: fmt(rows.length) })));
     if (!rows.length){ list.appendChild(emptyState("No blueprints match those filters.")); $("bMore").hidden = true; return; }
-    if (!ui.bview){ var bh = h("div", { class: "bhead", "aria-hidden": "true" }); ["", "Blueprint", "Category", "Materials you have", ""].forEach(function(t){ bh.appendChild(h("div", { text: t })); }); list.appendChild(bh); }
-    rows.slice(0, bpShown).forEach(function(b){ list.appendChild(ui.bview ? bpCard(b, owned) : bpRow(b, owned)); });
+    rows.slice(0, bpShown).forEach(function(b){ list.appendChild(bpCard(b, owned)); });
     $("bMore").hidden = rows.length <= bpShown;
   }
   function bpCard(b, owned){
