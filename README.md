@@ -59,3 +59,6 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Data tab: labelled backups (import, restore, manual) with a Restore button. Restoring takes a snapshot of your current data first.
 - Quality field on Home quick-add for materials; Undo now covers materials.
 - Planner and Sessions restyled as tables to match the rest of the app.
+
+## v1.12.0
+- Inventory rows with a known blueprint show "Scraps into about ..." with the materials you get back. It's an estimate: half of the crafting recipe. Verify in game.

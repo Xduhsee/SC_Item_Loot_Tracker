@@ -50,6 +50,7 @@
   .loc h3 span{color:var(--mute);text-transform:none;letter-spacing:0}
   .item{display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-top:0;background:var(--panel)}
   .namecell .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
+  .scrapline{font-size:12px;color:var(--mute);margin-top:2px;overflow-wrap:anywhere}
   .noteline{font-size:12px;color:var(--mute);font-style:italic;cursor:pointer;margin-top:2px;overflow-wrap:anywhere}
   .notebtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;margin-top:2px;font-weight:400;text-decoration:underline dotted}
   .notebtn:hover:not(:disabled){background:none;box-shadow:none;color:var(--accent)}
@@ -909,6 +910,20 @@ function craftStatus(bp, owned){
     if (got + 1e-9 >= need) have++; else missing.push(g[0]);
   });
   return { ok: bp.ing.length > 0 && !missing.length, missing: missing, have: have };
+}
+var SCRAP_RATIO = 0.5;
+function scrapOf(bp, ratio){
+  var r = ratio > 0 && ratio <= 1 ? ratio : SCRAP_RATIO, out = [];
+  if (!bp || !bp.ing) return out;
+  bp.ing.forEach(function(g){
+    var q = Number(g[2]) || 0;
+    if (g[1] === "r"){ q = Math.round(q * r * 10000) / 10000; if (q > 0) out.push({ n: g[0], amt: q, unit: "SCU" }); }
+    else { q = Math.floor(q * r + 1e-9); if (q > 0) out.push({ n: g[0], amt: q, unit: "x" }); }
+  });
+  return out;
+}
+function scrapText(list){
+  return list.map(function(e){ return (e.unit === "x" ? e.amt + "× " : e.amt + " SCU ") + e.n; }).join(", ");
 }
 function verParts(v){ return String(v || "").split("-")[0].split(".").map(function(n){ return parseInt(n, 10) || 0; }); }
 function verCmp(a, b){
@@ -1992,6 +2007,8 @@ async function computeExactItems(cat, patchCode, progress){
       valc.title = "Per item: " + fmt(val.lo) + " to " + fmt(val.hi) + " aUEC (" + (val.kind === "sell" ? "shops pay" : "shop price") + ")";
     }
     var cell = h("div", { class: "namecell" }, h("div", { class: "nameline" }, h("div", { class: "name", text: i.name }), i.cat === "Ship component" ? clsChip(classOf(i)) : null), h("div", { class: "sub", text: i.sub ? i.cat + " · " + i.sub : i.cat }));
+    var scr = i.cat === "Material" ? null : scrapFor(i);
+    if (scr) cell.appendChild(h("div", { class: "scrapline", text: "Scraps into about " + scr, title: "Estimate: half of the crafting recipe. Check it in game before you rely on it." }));
     var openNote = function(){ editNoteId = i.id; renderInventory(); };
     if (editNoteId === i.id){
       var ni = h("input", { class: "noteinput", value: i.note || "", maxlength: "200", placeholder: "Add a note, then press Enter", "aria-label": "Note for " + i.name });
@@ -2402,6 +2419,18 @@ async function computeExactItems(cat, patchCode, progress){
     var l = ENT[nameKey(name)]; if (!l || !l.length) return null;
     if (sub) for (var k = 0; k < l.length; k++) if (l[k].s === sub) return l[k];
     return l[0];
+  }
+  var bpMapFor = null, bpMap = null;
+  function scrapFor(i){
+    var bps = (catalogue && catalogue.bps) || [];
+    if (!bps.length) return "";
+    if (bpMapFor !== bps){
+      bpMapFor = bps; bpMap = { u: {}, n: {} };
+      bps.forEach(function(b){ if (b.o) bpMap.u[b.o] = b; var k = nameKey(b.n); if (!bpMap.n[k]) bpMap.n[k] = b; });
+    }
+    var u = String(uuidFor(i) || "").toLowerCase();
+    var bp = (u && bpMap.u[u]) || bpMap.n[nameKey(i.name)];
+    return bp ? scrapText(scrapOf(bp)) : "";
   }
   function findBp(name, e){
     var bps = (catalogue && catalogue.bps) || [], o = e && e.u ? String(e.u).toLowerCase() : "";
