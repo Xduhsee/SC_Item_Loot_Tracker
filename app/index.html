@@ -100,6 +100,8 @@
   .fphead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.fptitle{font-size:18px;font-weight:700}
   .fptabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 2px}.fptab{padding:5px 14px;border-radius:99px;font-size:13px;font-weight:600;color:var(--mute);border:1px solid var(--line);background:none;min-height:0}.fpbox .fptab.on{color:#fff;background:#3a1a5c;border-color:#b44cff;box-shadow:none}.fpbox .fptab{background:none;color:var(--mute);box-shadow:none}.fpbox .fptab.on{color:#fff;background:#3a1a5c}
   body.modalopen{overflow:hidden}
+  .howlist{margin:12px 0 4px;padding-left:20px;display:flex;flex-direction:column;gap:9px}.howlist li{line-height:1.45}.howlist b{color:var(--text)}
+  #hClear{background:transparent;border:1px solid #6a2a2a;color:var(--bad);font-weight:500}#hClear.armed{background:var(--bad);color:#1a0b0b}
   .findbtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;font-weight:400;text-decoration:underline dotted}
   .findbtn:hover:not(:disabled){background:none;box-shadow:none;color:var(--accent)}
   .item:last-child{border-radius:0 0 8px 8px}
@@ -439,7 +441,7 @@
       </div>
     </div>
     <div class="upd">
-      <button id="updBtn" type="button">Update item database</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
+      <button id="updBtn" type="button">Update item database</button> <button id="howBtn" type="button" class="ghost" title="Short guide to each section">How to use</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
           </div>
   </header>
 
@@ -481,6 +483,7 @@
 
   <!-- HOME -->
   <section id="tab-home">
+    <div id="hStart" class="banner info" hidden><b>Start here.</b> Press <b>Update item database</b> (top right). It downloads item and blueprint names once, about 60 MB. Then add what you find with Quick add. <a href="#" id="hStartHow">How to use</a></div>
     <div class="panel hero">
       <h2>Quick add</h2>
       <form id="hForm" class="row" autocomplete="off">
@@ -843,7 +846,7 @@
     <div class="panel">
       <div class="row"><h2 style="margin:0" class="grow">What pays</h2>
         <label>Range <select id="ssRange"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="0">All time</option></select></label>
-        <button type="button" class="ghost" id="ssCsv">Export CSV</button></div>
+        <button type="button" class="ghost" id="ssCsv">Export sessions CSV</button></div>
       <div class="stats" id="ssStats" style="margin-top:10px"></div>
       <div id="ssBars"></div>
     </div>
@@ -977,6 +980,13 @@
       </div>
     </div>
   </section>
+  <div id="hpop" class="fpop" hidden>
+  <div class="fpbox" role="dialog" aria-modal="true" aria-labelledby="hpTitle">
+    <div class="fphead"><div class="fptitle" id="hpTitle">How to use</div><button type="button" class="ghost smallbtn" id="hpClose">Close</button></div>
+    <div class="fptabs" id="hpTabs" role="tablist"></div>
+    <div id="hpBody"></div>
+  </div>
+</div>
   <div id="fpop" class="fpop" hidden>
   <div class="fpbox" role="dialog" aria-modal="true" aria-labelledby="fpTitle">
     <div class="fphead"><div><div class="fptitle" id="fpTitle"></div><div class="note" id="fpSub"></div></div><div class="row"><button type="button" class="ghost smallbtn" id="fpOpenTab">Open in Finder</button><button type="button" class="ghost smallbtn" id="fpClose">Close</button></div></div>
@@ -984,7 +994,7 @@
     <div id="fpBody"></div>
   </div>
 </div>
-  <div class="foot"><a href="#" id="bugLink">Report a bug</a> · Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>7</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
+  <div class="foot"><a href="#" id="howLink">How to use</a> · <a href="#" id="bugLink">Report a bug</a> · Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>7</kbd> switch section, <kbd>/</kbd> jump to search.<br>Data: <a href="https://api.star-citizen.wiki" target="_blank" rel="noopener noreferrer">Star Citizen Wiki API</a> and <a href="https://uexcorp.space" target="_blank" rel="noopener noreferrer">UEX</a>. MGS Dynamics. Fan-made, not affiliated with or endorsed by CIG.</div>
 </div>
 <div id="toasts" aria-live="polite" role="status"></div>
 
@@ -3209,6 +3219,7 @@ async function computeExactItems(cat, patchCode, progress){
     return "Item database: " + catalogue.patch + " · " + fmt(catalogue.items.length) + " items · " + fmt((catalogue.bps || []).length) + " blueprints · " + String(catalogue.fetchedAt).slice(0, 10);
   }
   function renderChips(){
+    if ($("hStart")) $("hStart").hidden = !!catalogue;
     var box = $("dbStatus"); box.textContent = "";
     if (!catalogue){ box.appendChild(h("span", { class: "badge warn", text: "Item database not downloaded yet" })); }
     else {
@@ -3283,7 +3294,7 @@ async function computeExactItems(cat, patchCode, progress){
     var out = $("plOut"), st = $("plStats"); out.textContent = ""; st.textContent = "";
     $("plLoad").textContent = planData ? "Refresh mission data" : "Load mission data";
     var info = $("plInfo");
-    info.textContent = planBusy ? "Loading…" : planData ? "Mission data from " + new Date(planData.t).toLocaleDateString() + (planData.failed ? " · " + planData.failed + " missions could not be read" : "") + "." : "";
+    info.textContent = planBusy ? "Loading…" : planData ? "Mission data from " + new Date(planData.t).toLocaleDateString() + (planData.failed ? " \u00b7 " + planData.failed + (planData.failed === 1 ? " mission" : " missions") + " could not be read" : "") + "." : "";
     if (planErr) out.appendChild(emptyState("Could not load mission data: " + planErr + "."));
     if (!planData){
       if (!planErr) out.appendChild(emptyState("Load mission data to get started."));
@@ -3439,7 +3450,7 @@ async function computeExactItems(cat, patchCode, progress){
       var lad = h("div", { class: "ladder" });
       RANKS.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: r.replace(" Contractor", "").replace("Contractor", "Contr.") }))); });
       out.appendChild(h("div", { class: "fcardx" }, h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("div", { class: "mtitle", text: f }), h("span", { class: "badge " + (cur < 0 ? "warn" : "good"), text: cur < 0 ? "Not set" : RANKS[cur] })), lad,
-        h("div", { class: "mfoot" }, h("span", { text: e.n + " missions · " + e.open + " open to you" }), sel)));
+        h("div", { class: "mfoot" }, h("span", { text: e.n + (e.n === 1 ? " mission" : " missions") + " \u00b7 " + e.open + " open to you" }), sel)));
     });
   }
   ["stSearch", "stSet", "stBp"].forEach(function(id){ $(id).addEventListener("input", renderStandTab); });
@@ -3514,6 +3525,76 @@ async function computeExactItems(cat, patchCode, progress){
   $("ssCsv").onclick = function(){ if (!sess.length){ ssSay("No sessions to export yet.", true); return; } saveCsv("sc-sessions-" + new Date().toISOString().slice(0, 10) + ".csv", toSessCSV(sess), sess.length + " sessions", $("ssMsg")); };
 
   // ---------- tabs ----------
+  // ---------- how to use ----------
+  var HOWTO = [
+    ["Start", [
+      ["Update item database.", "Press the green button top right. One-time download, about 60 MB. It gives you item names and blueprints."],
+      ["Add what you find.", "Use Quick add on Home. Everything is saved on this computer."],
+      ["Shortcuts.", "Alt+1 to 7 switch sections. / jumps to search. Desktop app: Ctrl+Shift+L opens Quick add, Ctrl+Shift+S opens the scan decoder."]]],
+    ["Home", [
+      ["Quick add.", "Type an item, set the quantity, press Enter. It goes to the location shown under the form."],
+      ["Worth farming next.", "Missions with the most blueprints you do not know yet. Needs mission data."],
+      ["Session.", "Pick an activity and press Start. When you end it, enter what you earned."]]],
+    ["Stuff", [
+      ["Inventory.", "Items grouped by location. Tag each Keep, Sell, Scrap or Trade. Refresh UEX prices to see values."],
+      ["Materials.", "SCU by quality. Quality runs 1 to 1000 and sets how good crafted items are."],
+      ["Blueprints.", "Tick I know this one. Craftable now means your materials cover it. +1 adds it to the Craft list."],
+      ["Craft list.", "Materials needed against what you have. Copy shopping list copies what you are short on."],
+      ["Armor sets.", "Which pieces of each set you own."]]],
+    ["Missions", [
+      ["First.", "Load mission data once. It is about 1,800 missions."],
+      ["Board.", "Missions by giver with reward, time, rep and blueprints."],
+      ["My standing.", "Set your rank with each faction once. The Board then shows what you can accept."],
+      ["Blueprint planner.", "Missions ranked by new blueprints you do not have."]]],
+    ["Find", [
+      ["Finder.", "Type an item or blueprint. Shows shops and prices, missions that reward it, and what it scraps into."],
+      ["Loot by location.", "Where your finds came from. Fill in Looted in and Place or site when you add loot."]]],
+    ["Mining / Salvaging", [
+      ["First.", "Press Download mining data on any page. Needed once, then refresh when a patch lands."],
+      ["Scan decoder.", "Type the scanner number. It shows what it is and how many rocks: base number times rock count."],
+      ["Find ore.", "By what your Craft list needs, by material, or by signature. Shows the best places."],
+      ["Salvage.", "Ship salvage sites, what is there and their signatures. Wrecks from player fights are not listed."],
+      ["Refinery.", "Enter ore and SCU, pick a goal. Shows the best station and method per ore. Base yields are estimates you can edit. Check the in-game quote before you commit."]]],
+    ["Track", [
+      ["Sessions.", "Earnings per hour for each activity."],
+      ["Added this patch.", "New items from the latest patches."],
+      ["History.", "Every change to your stacks."]]],
+    ["Data", [
+      ["Backups.", "Saved daily, last 14 kept. Restore from the list."],
+      ["Move to another computer.", "Create backup text, paste it on the other copy, press Merge into my list."],
+      ["Export.", "Inventory and loot log as CSV."],
+      ["Report a bug.", "Opens a prefilled GitHub issue. Nothing is sent until you submit it there."],
+      ["Danger zone.", "Replace my list and Clear everything. A backup is saved first."]]],
+    ["Credits", [
+      ["Game data.", "Items, blueprints, missions and mining locations come from the Star Citizen Wiki API (api.star-citizen.wiki), made by the community."],
+      ["Prices and refining.", "Shop prices, refinery bonuses and methods come from UEX (uexcorp.space). Crowdsourced, so it can be wrong or behind the live game."],
+      ["Fan-made.", "Free and non-commercial. Not affiliated with or endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen and Squadron 42 are their trademarks."]]]
+  ];
+  var HOWGROUP = { home: "Home", stuff: "Stuff", missions: "Missions", find: "Find", mining: "Mining / Salvaging", track: "Track", data: "Data" }, howOpener = null, howSec = "Start";
+  function howOpen(){ return !$("hpop").hidden; }
+  function howClose(){ $("hpop").hidden = true; document.body.classList.remove("modalopen"); if (howOpener && document.contains(howOpener)) howOpener.focus(); howOpener = null; }
+  function renderHow(){
+    var tabs = $("hpTabs"), body = $("hpBody"); tabs.textContent = ""; body.textContent = "";
+    HOWTO.forEach(function(s){ tabs.appendChild(h("button", { type: "button", class: "fptab" + (s[0] === howSec ? " on" : ""), text: s[0], role: "tab", "aria-selected": s[0] === howSec ? "true" : "false", onclick: function(){ howSec = s[0]; renderHow(); } })); });
+    var cur = HOWTO.filter(function(s){ return s[0] === howSec; })[0], ul = h("ul", { class: "howlist" });
+    cur[1].forEach(function(r){ ul.appendChild(h("li", null, h("b", { text: r[0] + " " }), r[1])); });
+    body.appendChild(ul);
+    if (howSec === "Credits"){
+      body.appendChild(h("p", { class: "note" }, h("a", { href: "https://api.star-citizen.wiki", target: "_blank", rel: "noopener noreferrer", text: "api.star-citizen.wiki" }), " · ", h("a", { href: "https://uexcorp.space", target: "_blank", rel: "noopener noreferrer", text: "uexcorp.space" })));
+    }
+  }
+  function openHow(sec){
+    howOpener = document.activeElement; howSec = sec || HOWGROUP[TABGROUP[curTab]] || "Start";
+    if (!HOWTO.some(function(s){ return s[0] === howSec; })) howSec = "Start";
+    renderHow(); $("hpop").hidden = false; document.body.classList.add("modalopen"); $("hpClose").focus();
+  }
+  $("howBtn").onclick = function(){ openHow(); };
+  $("hStartHow").onclick = function(e){ e.preventDefault(); openHow("Start"); };
+  $("howLink").onclick = function(e){ e.preventDefault(); openHow(); };
+  $("hpClose").onclick = howClose;
+  $("hpop").addEventListener("mousedown", function(ev){ if (ev.target === $("hpop")) howClose(); });
+  document.addEventListener("keydown", function(ev){ if (ev.key === "Escape" && howOpen()) howClose(); });
+
   // ---------- mining ----------
   var mine = null, mineSigT = null, mineBusy = false, mineErr = "", mfMode = "craft", mfPick = "", mfSig = "", msNum = 0, msqStr = "";
   function mineSet(m){ mine = m; mineSigT = m ? sigTable(m.locs) : null; }
@@ -3904,7 +3985,7 @@ async function computeExactItems(cat, patchCode, progress){
   });
   function homeWhere(){
     var w = locLabel(ui.sys, ui.src);
-    return ui.loc || w ? "Adding to " + [ui.loc, w].filter(Boolean).join(" · ") : "No location set. Set one on Inventory.";
+    return ui.loc || w ? "Adding to " + [ui.loc, w].filter(Boolean).join(" · ") : "Location not set. Choose one on the Inventory page.";
   }
   $("hForm").addEventListener("submit", function(ev){
     ev.preventDefault();
@@ -3918,6 +3999,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("fCat").addEventListener("change", function(){ $("fQWrap").hidden = $("fCat").value !== "Material"; });
   function homeRow(a, b){ return h("div", { class: "lrow" }, h("span", { text: a }), h("span", { class: "dim", text: b })); }
   function renderHome(){
+    $("hStart").hidden = !!catalogue;
     $("hWhere").textContent = homeWhere();
     // session
     var S = $("hSess"); S.textContent = "";
