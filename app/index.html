@@ -166,6 +166,7 @@
     <button role="tab" data-tab="bp" aria-selected="false">Blueprints</button>
     <button role="tab" data-tab="find" aria-selected="false">Finder</button>
     <button role="tab" data-tab="plan" aria-selected="false">Planner</button>
+    <button role="tab" data-tab="sess" aria-selected="false">Sessions</button>
     <button role="tab" data-tab="craft" aria-selected="false">Craft list</button>
     <button role="tab" data-tab="sets" aria-selected="false">Armor sets</button>
     <button role="tab" data-tab="new" aria-selected="false">Added this patch</button>
@@ -328,7 +329,13 @@
         </label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input id="plIll" type="checkbox"> Hide illegal</label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input id="plCmb" type="checkbox"> Hide combat</label>
+        <label style="flex-direction:row;align-items:center;gap:6px"><input id="plMine" type="checkbox"> Only what I can accept</label>
       </div>
+      <details id="plRepBox" style="margin-top:12px"><summary id="plRepSum">My standing</summary>
+        <p class="note">Set your rank with each mission giver. Ranks are the same ladder for everyone, Neutral up to Elite Contractor.</p>
+        <div id="plRep"></div>
+      </details>
+      <div id="plUps" style="margin-top:10px"></div>
       <div class="row" style="margin-top:8px">
         <button type="button" id="plLoad">Load mission data</button>
         <span class="note" id="plInfo" style="margin:0"></span>
@@ -336,6 +343,52 @@
       <div class="stats" id="plStats" style="margin-top:10px"></div>
       <div id="plOut"></div>
       <div class="row" style="margin-top:10px"><button class="ghost" id="plMore" type="button" hidden>Show more</button></div>
+    </div>
+  </section>
+
+  <!-- SESSIONS -->
+  <section id="tab-sess" hidden>
+    <div class="panel">
+      <h2>Session income</h2>
+      <p class="note" style="margin-top:0">Time a session, or add one by hand, and note the aUEC you made. After a few sessions you can see what actually pays per hour.</p>
+      <div class="row">
+        <label>Activity
+          <select id="ssAct"></select>
+        </label>
+        <button type="button" id="ssStart">Start session</button>
+        <button type="button" id="ssEnd" hidden>End session</button>
+        <span id="ssClock" class="note" style="margin:0" aria-live="off"></span>
+      </div>
+      <div id="ssStop" class="row" hidden style="margin-top:10px">
+        <label>Minutes <input id="ssMin" type="number" min="1" max="1440" step="1" style="width:90px"></label>
+        <label>aUEC earned <input id="ssEarn" type="number" step="1" style="width:130px" placeholder="net, can be negative"></label>
+        <label class="grow">Note <input id="ssNote" type="text" maxlength="120" placeholder="optional"></label>
+        <button type="button" id="ssSave">Save session</button>
+        <button type="button" class="ghost" id="ssDrop">Discard</button>
+      </div>
+      <details style="margin-top:12px"><summary>Add a past session by hand</summary>
+        <div class="row" style="margin-top:8px">
+          <label>Date <input id="ssDate" type="date"></label>
+          <label>Activity <select id="ssAct2"></select></label>
+          <label>Minutes <input id="ssMin2" type="number" min="1" max="1440" step="1" style="width:90px"></label>
+          <label>aUEC earned <input id="ssEarn2" type="number" step="1" style="width:130px"></label>
+          <label class="grow">Note <input id="ssNote2" type="text" maxlength="120"></label>
+          <button type="button" id="ssAdd">Add</button>
+        </div>
+      </details>
+      <div id="ssMsg" class="msg"></div>
+    </div>
+    <div class="panel">
+      <div class="row"><h2 style="margin:0" class="grow">What pays</h2>
+        <label>Range <select id="ssRange"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="0">All time</option></select></label>
+        <button type="button" class="ghost" id="ssCsv">Export CSV</button></div>
+      <div class="stats" id="ssStats" style="margin-top:10px"></div>
+      <div id="ssBars"></div>
+    </div>
+    <div class="panel">
+      <h2>Recent sessions</h2>
+      <div id="ssList"></div>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="ssMore" type="button" hidden>Show more</button></div>
     </div>
   </section>
 
@@ -534,7 +587,8 @@ function parseBackup(text){
   var hasList = Array.isArray(list) && list.length > 0;
   if (!items.length && !Object.keys(known).length && hasList) throw new Error("No valid items found");
   if (!items.length && !Object.keys(known).length && !Array.isArray(list)) throw new Error("No valid items found");
-  return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish), loot: Array.isArray(data) ? [] : sanitizeLoot(data && data.loot) };
+  return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish), loot: Array.isArray(data) ? [] : sanitizeLoot(data && data.loot),
+    sess: Array.isArray(data) ? [] : sanitizeSess(data && data.sess), rep: Array.isArray(data) ? {} : sanitizeRep(data && data.rep) };
 }
 function mergeInto(items, incoming){ incoming.forEach(function(r){ addItem(items, r); }); }
 function ownedByName(items){
@@ -870,6 +924,7 @@ function rankPlan(ms, known, f){
     if (!m || !m.p || !m.p.length) return;
     if (f.noIllegal && m.il) return;
     if (f.noCombat && m.cb) return;
+    if (f.rep && f.onlyMine && canAccept(m, f.rep) === false) return;
     if (f.sys && m.sy.indexOf(f.sys) < 0) return;
     if (q && (m.t + " " + m.g + " " + m.f + " " + m.sc).toLowerCase().indexOf(q) < 0) return;
     var s = scoreMission(m, known || {});
@@ -885,6 +940,68 @@ function dedupePlanList(list){
     if (!seen[k]){ seen[k] = 1; out.push(x); }
   });
   return out;
+}
+
+// ---------- sessions and standing ----------
+var ACTIVITIES = ["Mining", "Salvage", "Hauling", "Trading", "Bounty hunting", "Missions", "Piracy", "Exploration", "Ground loot", "Other"];
+var SESS_MAX = 3000, RANKS = ["Neutral", "Jr. Contractor", "Contractor", "Sr. Contractor", "Veteran Contractor", "Head Contractor", "Elite Contractor"];
+function sanitizeSess(list){
+  var out = [];
+  (Array.isArray(list) ? list : []).forEach(function(x){
+    if (!x || typeof x !== "object") return;
+    var t = String(x.t || ""), a = norm(x.a).slice(0, 40), m = Math.round(Number(x.m)), e = Math.round(Number(x.e));
+    if (isNaN(Date.parse(t)) || !a || !(m >= 1 && m <= 1440) || !isFinite(e) || Math.abs(e) > 1e10) return;
+    out.push({ t: t, a: a, m: m, e: e, n: norm(x.n).slice(0, 120) });
+  });
+  return out.slice(-SESS_MAX);
+}
+function mergeSess(a, b){
+  var seen = {}, out = [];
+  a.concat(b).forEach(function(x){ var k = x.t + "|" + x.a + "|" + x.m + "|" + x.e; if (!seen[k]){ seen[k] = 1; out.push(x); } });
+  out.sort(function(p, q){ return Date.parse(p.t) - Date.parse(q.t); });
+  return out.slice(-SESS_MAX);
+}
+function sessStats(list, days, now){
+  var cut = days > 0 ? now - days * 86400000 : -Infinity, by = {}, tot = { e: 0, m: 0, n: 0 };
+  (Array.isArray(list) ? list : []).forEach(function(x){
+    if (Date.parse(x.t) < cut) return;
+    var b = by[x.a] || (by[x.a] = { a: x.a, e: 0, m: 0, n: 0 });
+    b.e += x.e; b.m += x.m; b.n++; tot.e += x.e; tot.m += x.m; tot.n++;
+  });
+  var rows = Object.keys(by).map(function(k){ var b = by[k]; b.hr = b.m > 0 ? Math.round(b.e / b.m * 60) : 0; return b; }).sort(function(p, q){ return q.hr - p.hr || p.a.localeCompare(q.a); });
+  return { total: tot.e, minutes: tot.m, count: tot.n, perHour: tot.m > 0 ? Math.round(tot.e / tot.m * 60) : 0, rows: rows };
+}
+function fmtDur(m){ m = Math.round(m); return m >= 60 ? Math.floor(m / 60) + "h" + (m % 60 ? " " + (m % 60) + "m" : "") : m + "m"; }
+function toSessCSV(list){
+  var rows = [["Started", "Activity", "Minutes", "aUEC earned", "aUEC per hour", "Note"]];
+  list.forEach(function(x){ rows.push([x.t, x.a, x.m, x.e, Math.round(x.e / x.m * 60), x.n]); });
+  return rows.map(function(r){ return r.map(function(c, i){ return csvCell(c, i === 1 || i === 5); }).join(","); }).join("\r\n") + "\r\n";
+}
+function sanitizeRep(o){
+  var out = {}, n = 0;
+  if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+  Object.keys(o).forEach(function(k){
+    var r = Number(o[k]), key = norm(k).slice(0, 60);
+    if (key && n < 120 && Math.floor(r) === r && r >= 0 && r < RANKS.length){ out[key] = r; n++; }
+  });
+  return out;
+}
+function sanitizeRun(r){
+  if (!r || typeof r !== "object" || isNaN(Date.parse(r.t))) return null;
+  var a = norm(r.a).slice(0, 40); return a ? { t: String(r.t), a: a } : null;
+}
+function factionOf(m){ return m.f || m.g || ""; }
+function canAccept(m, rep){ var r = rep[factionOf(m)]; return r == null ? null : m.r <= r; }
+function rankUps(ms, known, rep){
+  var by = {};
+  (Array.isArray(ms) ? ms : []).forEach(function(m){
+    var f = factionOf(m), r = rep[f]; if (!f || r == null || r >= RANKS.length - 1 || m.r !== r + 1) return;
+    var e = by[f] || (by[f] = { f: f, from: r, to: r + 1, miss: 0, seen: {} }), added = false;
+    (m.p || []).forEach(function(p){ p.i.forEach(function(x){ if (!known[x[0]] && !e.seen[x[0]]){ e.seen[x[0]] = 1; added = true; } }); });
+    if (added) e.miss++;
+  });
+  return Object.keys(by).map(function(k){ var e = by[k]; return { f: e.f, from: e.from, to: e.to, bps: Object.keys(e.seen).length, miss: e.miss }; })
+    .filter(function(e){ return e.bps > 0; }).sort(function(a, b){ return b.bps - a.bps || a.f.localeCompare(b.f); });
 }
 /*END LOGIC*/
 
@@ -1140,7 +1257,7 @@ async function computeExactItems(cat, patchCode, progress){
   var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
   var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, WEIGHTBY = {}, HAS_SIZES = false;
   var armedId = null, armedTimer = null, bpShown = 60;
-  var wish = {}, lootlog = [], hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
+  var wish = {}, lootlog = [], sess = [], rep = {}, run = null, hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
   var sessionStart = new Date().toISOString();
   var $ = function(id){ return document.getElementById(id); };
 
@@ -1183,7 +1300,7 @@ async function computeExactItems(cat, patchCode, progress){
       try {
         var d = NATIVE.loadSync();
         items = sanitize(d.items || []); known = sanitizeKnown(d.known || []);
-        if (d.extra){ wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); }
+        if (d.extra){ wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); sess = sanitizeSess(d.extra.sess); rep = sanitizeRep(d.extra.rep); run = sanitizeRun(d.extra.run); }
         if (d.restoredFrom){ $("storageWarn").textContent = "Your data file was damaged, so it was restored from the backup " + d.restoredFrom + ". The damaged file was kept next to it in the data folder."; $("storageWarn").hidden = false; }
       } catch (e){ storageOK = false; $("storageWarn").textContent = "Could not read the saved data file."; $("storageWarn").hidden = false; }
       histBase = snapItems(items);
@@ -1192,7 +1309,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       var raw = localStorage.getItem(STORE_KEY); if (raw) items = sanitize(JSON.parse(raw));
       var kr = localStorage.getItem(KNOWN_KEY); if (kr) known = sanitizeKnown(JSON.parse(kr));
-      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); }
+      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); sess = sanitizeSess(xd.sess); rep = sanitizeRep(xd.rep); run = sanitizeRun(xd.run); }
     } catch (e){}
     histBase = snapItems(items);
     try { localStorage.setItem(STORE_KEY + "-t", "1"); localStorage.removeItem(STORE_KEY + "-t"); } catch (e){ storageOK = false; }
@@ -1201,7 +1318,7 @@ async function computeExactItems(cat, patchCode, progress){
   function save(){
     if (NATIVE){
       var ok = false;
-      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { wish: wish, hist: hist, loot: lootlog } }); } catch (e){}
+      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run } }); } catch (e){}
       if (!ok){ $("storageWarn").textContent = "Could not write to the data file. Your latest change is NOT saved. Check disk space and folder permissions."; }
       $("storageWarn").hidden = !!ok && storageOK;
       return;
@@ -1209,7 +1326,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
       localStorage.setItem(KNOWN_KEY, JSON.stringify(Object.keys(known).map(function(u){ return { u: u, n: known[u] }; })));
-      localStorage.setItem(EXTRA_KEY, JSON.stringify({ wish: wish, hist: hist, loot: lootlog }));
+      localStorage.setItem(EXTRA_KEY, JSON.stringify({ wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run }));
     } catch (e){ storageOK = false; $("storageWarn").hidden = false; }
   }
   var idbMem = {};
@@ -2090,8 +2207,9 @@ async function computeExactItems(cat, patchCode, progress){
       if (!planErr) out.appendChild(h("div", { class: "empty", text: "Press “Load mission data” to download what each mission can reward. It takes a minute and is saved on this computer." }));
       $("plMore").hidden = true; return;
     }
+    renderStanding();
     if (!Object.keys(known).length) out.appendChild(h("div", { class: "note", text: "You have not marked any blueprints as known yet, so every blueprint counts as new. Tick them on the Blueprints tab for a useful ranking." }));
-    var rows = rankPlan(planData.ms, known, { q: $("plSearch").value, sys: $("plSys").value, noIllegal: $("plIll").checked, noCombat: $("plCmb").checked });
+    var rows = rankPlan(planData.ms, known, { q: $("plSearch").value, sys: $("plSys").value, noIllegal: $("plIll").checked, noCombat: $("plCmb").checked, onlyMine: $("plMine").checked, rep: rep });
     [["Missions with blueprints", fmt(planData.ms.length)], ["With something new for you", fmt(rows.length)]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
     if (!rows.length){ out.appendChild(h("div", { class: "empty", text: "No missions match those filters." })); $("plMore").hidden = true; return; }
     rows.slice(0, planShown).forEach(function(r, ix){
@@ -2113,6 +2231,8 @@ async function computeExactItems(cat, patchCode, progress){
       var badges = h("span", null);
       if (m.g) badges.appendChild(h("span", { class: "badge", text: m.g }));
       if (m.sc) badges.appendChild(h("span", { class: "badge", text: m.sc }));
+      var ok = canAccept(m, rep);
+      badges.appendChild(h("span", { class: "badge " + (ok === false ? "warn" : ok ? "good" : ""), text: (ok === false ? "needs " : "rank ") + RANKS[Math.min(m.r, RANKS.length - 1)], title: ok === null ? "Set your standing with " + factionOf(m) + " to check this" : "" }));
       if (m.il) badges.appendChild(h("span", { class: "badge warn", text: "illegal" }));
       if (m.cb) badges.appendChild(h("span", { class: "badge warn", text: "combat" }));
       m.sy.forEach(function(y){ badges.appendChild(h("span", { class: "badge", text: y })); });
@@ -2121,15 +2241,102 @@ async function computeExactItems(cat, patchCode, progress){
     });
     $("plMore").hidden = rows.length <= planShown;
   }
-  ["plSearch", "plSys", "plIll", "plCmb"].forEach(function(id){ $(id).addEventListener("input", function(){ planShown = 40; renderPlanner(); }); });
+  ["plSearch", "plSys", "plIll", "plCmb", "plMine"].forEach(function(id){ $(id).addEventListener("input", function(){ planShown = 40; renderPlanner(); }); });
   $("plMore").onclick = function(){ planShown += 60; renderPlanner(); };
   $("plLoad").onclick = loadPlan;
 
+  function renderStanding(){
+    var box = $("plRep"), ups = $("plUps"); box.textContent = ""; ups.textContent = "";
+    if (!planData) return;
+    var facs = {}; planData.ms.forEach(function(m){ var f = factionOf(m); if (f) facs[f] = 1; });
+    var names = Object.keys(facs).sort(), setN = Object.keys(rep).filter(function(k){ return facs[k]; }).length;
+    $("plRepSum").textContent = "My standing (" + setN + " of " + names.length + " set)";
+    names.forEach(function(f){
+      var sel = h("select", { "aria-label": "Rank with " + f }, h("option", { value: "", text: "Not set" }));
+      RANKS.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
+      sel.value = rep[f] == null ? "" : String(rep[f]);
+      sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); save(); planShown = 40; renderPlanner(); };
+      box.appendChild(h("div", { class: "bphead", style: "margin-bottom:6px" }, h("span", { class: "name", text: f }), sel));
+    });
+    var list = rankUps(planData.ms, known, rep).slice(0, 5);
+    if (list.length){
+      ups.appendChild(h("div", { class: "dim", text: "Worth ranking up for" }));
+      list.forEach(function(u){ ups.appendChild(h("div", null, h("b", { text: u.f }), " to " + RANKS[u.to] + " opens " + u.miss + " mission" + (u.miss === 1 ? "" : "s") + " with " + u.bps + " blueprint" + (u.bps === 1 ? "" : "s") + " you do not have.")); });
+    } else if (setN) ups.appendChild(h("div", { class: "dim", text: "No next-rank missions would add new blueprints for the factions you set." }));
+  }
+
+  // ---------- sessions ----------
+  var ssShown = 25, ssTick = 0;
+  function fillActs(sel){ sel.textContent = ""; ACTIVITIES.forEach(function(a){ sel.appendChild(h("option", { value: a, text: a })); }); }
+  fillActs($("ssAct")); fillActs($("ssAct2"));
+  $("ssDate").value = new Date().toISOString().slice(0, 10);
+  function ssSay(t, bad){ say($("ssMsg"), t, bad); }
+  function updClock(){
+    if (!run){ $("ssClock").textContent = ""; return; }
+    $("ssClock").textContent = run.a + " · running " + fmtDur(Math.max(0, (Date.now() - Date.parse(run.t)) / 60000)) + " (started " + new Date(run.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + ")";
+  }
+  function renderSessions(){
+    $("ssStart").hidden = !!run; $("ssEnd").hidden = !run || !$("ssStop").hidden; $("ssAct").disabled = !!run;
+    if (run) $("ssAct").value = run.a;
+    updClock(); clearInterval(ssTick); ssTick = run ? setInterval(updClock, 15000) : 0;
+    var st = sessStats(sess, Number($("ssRange").value), Date.now()), S = $("ssStats"), B = $("ssBars"); S.textContent = ""; B.textContent = "";
+    [["Sessions", fmt(st.count)], ["Time", fmtDur(st.minutes)], ["Earned", fmt(st.total) + " aUEC"], ["Average", fmt(st.perHour) + " aUEC/hour"]].forEach(function(p){ S.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
+    if (!st.rows.length) B.appendChild(h("div", { class: "empty", text: "No sessions in this range yet. Press Start session when you begin playing." }));
+    var top = st.rows.reduce(function(a, r){ return Math.max(a, Math.abs(r.hr)); }, 1);
+    st.rows.forEach(function(r){
+      var w = Math.max(2, Math.round(Math.abs(r.hr) / top * 100));
+      B.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("span", { class: "name", text: r.a }),
+        h("span", { class: "badge " + (r.hr < 0 ? "warn" : "good"), text: fmt(r.hr) + " aUEC/hour" }),
+        h("span", { class: "dim", text: r.n + " session" + (r.n === 1 ? "" : "s") + " · " + fmtDur(r.m) + " · " + fmt(r.e) + " aUEC" + (r.n < 3 ? " · too few to trust" : "") })),
+        h("div", { style: "height:6px;border-radius:4px;background:var(--line);margin-top:6px" }, h("div", { style: "height:6px;border-radius:4px;width:" + w + "%;background:" + (r.hr < 0 ? "var(--warn)" : "var(--good)") }))));
+    });
+    var L = $("ssList"); L.textContent = "";
+    var rows = sess.slice().reverse();
+    if (!rows.length) L.appendChild(h("div", { class: "empty", text: "Nothing logged yet." }));
+    rows.slice(0, ssShown).forEach(function(x){
+      var del = h("button", { type: "button", class: "danger smallbtn", text: "Delete", "aria-label": "Delete session " + x.a + " " + x.t });
+      del.onclick = function(){
+        if (!del.dataset.armed){ del.dataset.armed = "1"; del.textContent = "Click again"; setTimeout(function(){ del.dataset.armed = ""; del.textContent = "Delete"; }, 3000); return; }
+        sess = sess.filter(function(y){ return y !== x; }); save(); renderSessions();
+      };
+      L.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("span", { class: "name", text: x.a }),
+        h("span", { class: "dim", text: new Date(x.t).toLocaleDateString() + " · " + fmtDur(x.m) }),
+        h("span", { class: "badge " + (x.e < 0 ? "warn" : "good"), text: fmt(x.e) + " aUEC" }),
+        x.n ? h("span", { class: "dim", text: x.n }) : h("span"), del)));
+    });
+    $("ssMore").hidden = rows.length <= ssShown;
+  }
+  function addSess(rec){ sess = sanitizeSess(sess.concat([rec])); save(); }
+  $("ssStart").onclick = function(){ run = { t: new Date().toISOString(), a: $("ssAct").value || "Other" }; save(); $("ssStop").hidden = true; ssSay(""); renderSessions(); };
+  $("ssEnd").onclick = function(){
+    if (!run) return;
+    $("ssMin").value = String(Math.max(1, Math.min(1440, Math.round((Date.now() - Date.parse(run.t)) / 60000)))); $("ssEarn").value = ""; $("ssNote").value = "";
+    $("ssStop").hidden = false; renderSessions(); $("ssEarn").focus();
+  };
+  $("ssSave").onclick = function(){
+    var m = Math.round(Number($("ssMin").value)), e = Math.round(Number($("ssEarn").value));
+    if (!(m >= 1 && m <= 1440)){ ssSay("Minutes must be between 1 and 1440.", true); return; }
+    if ($("ssEarn").value === "" || !isFinite(e)){ ssSay("Enter the aUEC you earned (0 is fine).", true); return; }
+    addSess({ t: run.t, a: run.a, m: m, e: e, n: $("ssNote").value }); run = null; save(); $("ssStop").hidden = true; ssSay("Session saved."); renderSessions();
+  };
+  $("ssDrop").onclick = function(){ run = null; save(); $("ssStop").hidden = true; ssSay("Session discarded."); renderSessions(); };
+  $("ssAdd").onclick = function(){
+    var m = Math.round(Number($("ssMin2").value)), e = Math.round(Number($("ssEarn2").value)), d = $("ssDate").value;
+    if (!d || isNaN(Date.parse(d + "T12:00:00"))){ ssSay("Pick a date.", true); return; }
+    if (!(m >= 1 && m <= 1440)){ ssSay("Minutes must be between 1 and 1440.", true); return; }
+    if ($("ssEarn2").value === "" || !isFinite(e)){ ssSay("Enter the aUEC you earned.", true); return; }
+    addSess({ t: new Date(d + "T12:00:00").toISOString(), a: $("ssAct2").value, m: m, e: e, n: $("ssNote2").value });
+    $("ssMin2").value = ""; $("ssEarn2").value = ""; $("ssNote2").value = ""; ssSay("Session added."); renderSessions();
+  };
+  $("ssRange").onchange = function(){ renderSessions(); };
+  $("ssMore").onclick = function(){ ssShown += 50; renderSessions(); };
+  $("ssCsv").onclick = function(){ if (!sess.length){ ssSay("No sessions to export yet.", true); return; } saveCsv("sc-sessions-" + new Date().toISOString().slice(0, 10) + ".csv", toSessCSV(sess), sess.length + " sessions", $("ssMsg")); };
+
   // ---------- tabs ----------
   function showTab(t){
-    ["inv", "bp", "find", "plan", "craft", "sets", "new", "hist", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
+    ["inv", "bp", "find", "plan", "sess", "craft", "sets", "new", "hist", "data"].forEach(function(k){ $("tab-" + k).hidden = k !== t; });
     Array.prototype.forEach.call($("tabs").children, function(b){ b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"); });
-    if (t === "plan") renderPlanner(); if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
+    if (t === "plan") renderPlanner(); if (t === "sess") renderSessions(); if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
     if (t === "find"){ renderFinder(); renderLootAt(); } if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
   }
   $("tabs").addEventListener("click", function(e){ var b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
@@ -2138,7 +2345,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("exportBtn").onclick = function(){
     $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 3,
       items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc, tag: i.tag || "", note: i.note || "" }; }),
-      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog }, null, 1);
+      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog, sess: sess, rep: rep }, null, 1);
     say($("ioMsg"), "Backup created: " + items.length + " stacks, " + Object.keys(known).length + " known blueprints.");
   };
   $("copyBtn").onclick = function(){
@@ -2158,8 +2365,8 @@ async function computeExactItems(cat, patchCode, progress){
     var inc;
     try { inc = parseBackup($("io").value); } catch (e){ say($("ioMsg"), "That doesn't look like a valid backup: " + e.message, true); return; }
     snapshot();
-    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; }
-    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); }
+    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; if (inc.sess.length) sess = inc.sess; if (Object.keys(inc.rep).length) rep = inc.rep; }
+    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); sess = mergeSess(sess, inc.sess); Object.keys(inc.rep).forEach(function(k){ rep[k] = inc.rep[k]; }); }
     if (mode === "replace") commit("Replaced the list from a backup (" + inc.items.length + " stacks)"); else commit();
     say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
   }
@@ -2185,21 +2392,22 @@ async function computeExactItems(cat, patchCode, progress){
     var text = toCSV(sorted, function(i){ var pi = priceInfo(i); return { size: sizeOf(i) || "", grade: gradeOf(i), weight: weightOf(i), sell: pi && pi.sell, buy: pi && pi.buy }; });
     saveCsv("sc-inventory-" + new Date().toISOString().slice(0, 10) + ".csv", text, sorted.length + " stacks");
   };
-  function saveCsv(name, text, what){
+  function saveCsv(name, text, what, msgEl){
+    var M = msgEl || $("ioMsg");
     if (NATIVE && NATIVE.saveFile){
       NATIVE.saveFile(name, text).then(function(r){
-        if (r && r.ok) say($("ioMsg"), "Saved " + what + " to " + r.path);
-        else if (r && r.canceled) say($("ioMsg"), "Export cancelled.");
-        else say($("ioMsg"), "Could not save the file.", true);
-      }).catch(function(){ say($("ioMsg"), "Could not save the file.", true); });
+        if (r && r.ok) say(M, "Saved " + what + " to " + r.path);
+        else if (r && r.canceled) say(M, "Export cancelled.");
+        else say(M, "Could not save the file.", true);
+      }).catch(function(){ say(M, "Could not save the file.", true); });
       return;
     }
     try {
       var url = URL.createObjectURL(new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" }));
       var a = h("a", { href: url, download: name }); document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-      say($("ioMsg"), "Exported " + what + ". Check your Downloads folder.");
-    } catch (e){ say($("ioMsg"), "Could not create the file.", true); }
+      say(M, "Exported " + what + ". Check your Downloads folder.");
+    } catch (e){ say(M, "Could not create the file.", true); }
   }
 
   // ---------- init ----------

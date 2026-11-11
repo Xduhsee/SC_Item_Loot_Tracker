@@ -96,6 +96,16 @@ FINDER tab
     missions. Click a mission to see the blueprints and tick them off.
   - The "per run" figure is an estimate: each reward pool is treated as one
     blueprint chosen from its list. Press Refresh after a patch.
+  - Open "My standing" in the Planner and set your rank with each giver.
+    Missions show whether you can accept them, "Only what I can accept"
+    hides the rest, and a short list shows which rank-ups unlock the most
+    blueprints you do not have yet.
+
+  SESSIONS (new in 1.7)
+  - Press Start session, play, then End session and enter the aUEC you made.
+    You can also add past sessions by hand. The Sessions tab shows aUEC per
+    hour for each activity so you can see what really pays. Negative
+    amounts are fine for sessions that lost money. Export to CSV any time.
   - Needs an internet connection.
 
 CRAFT LIST tab
