@@ -37,6 +37,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Planner tab (v1.6): ranks missions by how many blueprints you have not marked as known, using Star Citizen Wiki mission rewards (about 330 mission lookups once, then cached; estimates treat each reward pool as one blueprint from its list)
 - Redesign (v1.8): MGS Dynamics logo and icon, five sections (Home, Stuff, Find, Track, Data) with sticky navigation and sub-pages, a Home screen (quick add, session timer, what to farm next, recent loot), remembered add defaults, toast messages, compact rows, shortcuts (Alt+1 to 5, / for search)
 - Inventory as a grouped table (size and grade chips, tag pills, value column, Find/Note/Move actions); Blueprints checklist with category and material chips, plus a Cards view; Craft list and Armor sets in the same table style (v1.9.1)
+- Materials tab (v1.10): one row per material, quality and location, with quality bands and a minimum-quality setting for craftable checks; ship components show their class (Military, Stealth, Industrial, Civilian, Competition)
 - Sessions tab (v1.7): start/stop timer or manual entry, aUEC per hour by activity, CSV export. Planner standing (v1.7): set your rank per giver, filter to missions you can accept, see which rank-ups unlock the most new blueprints
 - Quick-add window on `Ctrl+Shift+L` (always on top, works over borderless windowed games)
 

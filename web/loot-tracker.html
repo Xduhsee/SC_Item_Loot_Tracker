@@ -264,6 +264,22 @@
   #cMats .mat{border:0;border-top:1px solid #16281d;background:transparent;grid-template-columns:minmax(0,1fr) 140px 70px;padding:9px 12px;align-items:center}
   #cMats .mat:first-child{border-top:0}
   .sub3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:16px 0 8px}
+  .mrow,.mcol{grid-template-columns:84px 90px 120px minmax(0,1fr) 90px}
+  .mrow .qb{font-size:11px;font-weight:700;text-align:center;padding:3px 0;border-radius:99px}
+  .q-premium{background:#2a1448;color:#d9a8ff}.q-high{background:#123a1c;color:#7dffa6}.q-mid{background:#3a2a10;color:#ffb454}.q-low{background:#3a1616;color:#ff9b9b}.q-unknown{background:#121c16;color:var(--mute)}
+  .mrow input{min-height:34px;padding:4px 8px}
+  .item.mrow .acts{opacity:1}
+  .cls{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:8px;vertical-align:middle;white-space:nowrap}
+  .cls-military{background:#3a1616;color:#ff9b9b}.cls-stealth{background:#2a1448;color:#d9a8ff}.cls-industrial{background:#3a2a10;color:#ffb454}.cls-civilian{background:#123a1c;color:#7dffa6}.cls-competition{background:#10303f;color:#7fd4ff}
+  .nameline{display:flex;align-items:center;flex-wrap:wrap}
+  @media (max-width:980px){
+    .mrow,.mcol{grid-template-columns:84px 90px 110px minmax(0,1fr) 80px}
+  }
+  @media (max-width:700px){
+    .mcol{display:none}
+    .item.mrow{grid-template-columns:auto 1fr 1fr;grid-template-areas:"b q s" "l l d"}
+    .mrow .qb{grid-area:b}.mrow input:nth-of-type(1){grid-area:q}.mrow input:nth-of-type(2){grid-area:s}.mrow .where{grid-area:l}.item.mrow .acts{grid-area:d;grid-column:auto;justify-content:flex-end}
+  }
   @media (max-width:980px){
     .item,.colhead{grid-template-columns:28px minmax(0,1fr) 130px 100px 80px 80px}
     .colhead span:last-child{display:none}
@@ -316,6 +332,7 @@
   </nav>
   <nav class="tabs subtabs" role="tablist" id="tabs" aria-label="Pages" hidden>
     <button role="tab" data-tab="inv" aria-selected="false">Inventory</button>
+    <button role="tab" data-tab="mats" aria-selected="false">Materials</button>
     <button role="tab" data-tab="bp" aria-selected="false">Blueprints</button>
     <button role="tab" data-tab="craft" aria-selected="false">Craft list</button>
     <button role="tab" data-tab="sets" aria-selected="false">Armor sets</button>
@@ -439,6 +456,49 @@
   </section>
 
   <!-- BLUEPRINTS -->
+  <section id="tab-mats" hidden>
+    <div class="panel">
+      <h2>Add material</h2>
+      <form id="mForm" class="row" autocomplete="off">
+        <label class="grow ac">Material
+          <input id="mName" placeholder="e.g. Iron, Copper, Hadanite" required maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mBox">
+          <div id="mBox" class="acbox" role="listbox" hidden></div>
+        </label>
+        <label class="qty">Quality
+          <input id="mQ" type="number" min="1" max="1000" step="1" placeholder="1 to 1000">
+        </label>
+        <label class="qty">SCU
+          <input id="mS" type="number" min="0.0001" step="any" value="1">
+        </label>
+        <label class="grow ac">Location
+          <input id="mLoc" placeholder="e.g. Cutlass hold, Lorville hab" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mLocBox">
+          <div id="mLocBox" class="acbox" role="listbox" hidden></div>
+        </label>
+        <button type="submit">Add</button>
+      </form>
+      <div id="mMsg" class="msg" role="status"></div>
+    </div>
+    <div class="panel">
+      <h2>Materials</h2>
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
+          <input id="mSearch" type="search" placeholder="Filter by name">
+        </label>
+        <label><span class="sr">Quality band</span>
+          <select id="mBand"><option value="">All qualities</option><option value="Premium">Premium (900+)</option><option value="High">High (700+)</option><option value="Mid">Mid (400+)</option><option value="Low">Low</option><option value="Unknown">Unknown</option></select>
+        </label>
+        <label><span class="sr">Location</span>
+          <select id="mLocF"></select>
+        </label>
+        <label><span class="sr">Minimum quality</span>
+          <input id="mMin" type="number" min="1" max="1000" step="1" placeholder="Min quality" style="width:130px">
+        </label>
+      </div>
+      <div class="stats" id="mStats"></div>
+      <div id="mList"></div>
+    </div>
+  </section>
+
   <section id="tab-bp" hidden>
     <div class="panel">
       <h2>Blueprints</h2>
@@ -450,6 +510,9 @@
           <select id="bCat"></select>
         </label>
         <div class="seg" role="group" aria-label="View"><button type="button" id="bViewList" aria-pressed="true">List</button><button type="button" id="bViewCards" aria-pressed="false">Cards</button></div>
+        <label><span class="sr">Minimum quality</span>
+          <input id="bMinQ" type="number" min="1" max="1000" step="1" placeholder="Min quality" style="width:130px">
+        </label>
         <label><span class="sr">Show</span>
           <select id="bStatus">
             <option value="">Show: All</option>
@@ -763,14 +826,48 @@ function parseBackup(text){
   if (!items.length && !Object.keys(known).length && hasList) throw new Error("No valid items found");
   if (!items.length && !Object.keys(known).length && !Array.isArray(list)) throw new Error("No valid items found");
   return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish), loot: Array.isArray(data) ? [] : sanitizeLoot(data && data.loot),
-    sess: Array.isArray(data) ? [] : sanitizeSess(data && data.sess), rep: Array.isArray(data) ? {} : sanitizeRep(data && data.rep) };
+    sess: Array.isArray(data) ? [] : sanitizeSess(data && data.sess), rep: Array.isArray(data) ? {} : sanitizeRep(data && data.rep), mats: Array.isArray(data) ? [] : sanitizeMats(data && data.mats) };
 }
 function mergeInto(items, incoming){ incoming.forEach(function(r){ addItem(items, r); }); }
-function ownedByName(items){
+function ownedByName(items, mats, minQ){
   var m = {};
   items.forEach(function(i){ var k = nameKey(i.name); m[k] = (m[k] || 0) + i.qty; });
+  var mq = Number(minQ) || 0;
+  (mats || []).forEach(function(x){
+    if (mq > 0 ? x.q < mq : false) return;
+    var k = nameKey(x.n); m[k] = (m[k] || 0) + x.s;
+  });
   return m;
 }
+var MAT_MAX = 5000;
+function cleanQual(q){ var n = Math.round(Number(q)); return n >= 1 && n <= 1000 ? n : 0; }
+function cleanScu(s){ var n = Math.round(Number(s) * 10000) / 10000; return n > 0 && n <= 1000000 ? n : 0; }
+function matBand(q){ return !q ? "Unknown" : q >= 900 ? "Premium" : q >= 700 ? "High" : q >= 400 ? "Mid" : "Low"; }
+function addMat(mats, o){
+  var n = norm(o.n).slice(0, 80), l = norm(o.l).slice(0, 80) || "Unsorted", q = cleanQual(o.q), s = cleanScu(o.s);
+  if (!n || !s) return false;
+  var ex = mats.find(function(x){ return nameKey(x.n) === nameKey(n) && x.q === q && x.l.toLowerCase() === l.toLowerCase(); });
+  if (ex){ ex.s = Math.min(1000000, Math.round((ex.s + s) * 10000) / 10000); return true; }
+  if (mats.length >= MAT_MAX) return false;
+  mats.push({ id: uid(), n: n, q: q, s: s, l: l });
+  return true;
+}
+function setMat(mats, id, o){
+  var x = mats.find(function(m){ return m.id === id; });
+  if (!x) return false;
+  var q = "q" in o ? cleanQual(o.q) : x.q, s = "s" in o ? cleanScu(o.s) : x.s, l = "l" in o ? (norm(o.l).slice(0, 80) || "Unsorted") : x.l;
+  if (!s) return false;
+  var other = mats.find(function(m){ return m !== x && nameKey(m.n) === nameKey(x.n) && m.q === q && m.l.toLowerCase() === l.toLowerCase(); });
+  if (other){ other.s = Math.min(1000000, Math.round((other.s + s) * 10000) / 10000); mats.splice(mats.indexOf(x), 1); return true; }
+  x.q = q; x.s = s; x.l = l; return true;
+}
+function sanitizeMats(list){
+  var out = [];
+  if (!Array.isArray(list)) return out;
+  list.forEach(function(r){ if (r && typeof r === "object") addMat(out, { n: r.n, q: r.q, s: r.s, l: r.l }); });
+  return out;
+}
+function mergeMats(a, b){ var out = a.slice().map(function(x){ return { id: x.id, n: x.n, q: x.q, s: x.s, l: x.l }; }); b.forEach(function(x){ addMat(out, x); }); return out; }
 function craftStatus(bp, owned){
   var missing = [], have = 0;
   bp.ing.forEach(function(g){
@@ -1181,7 +1278,7 @@ function rankUps(ms, known, rep){
 }
 function sanitizeUi(o){
   o = o && typeof o === "object" && !Array.isArray(o) ? o : {};
-  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0 };
+  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq) };
 }
 /*END LOGIC*/
 
@@ -1254,6 +1351,17 @@ function uexClass(section, category, name){
   if (section === "Utility") return { c: "Tool / Gadget", s: category || "" };
   return { c: "Other", s: category || "" };
 }
+var COMP_CLASSES = ["Military", "Stealth", "Industrial", "Civilian", "Competition"];
+function classOfWiki(d, depth){
+  if (!d || typeof d !== "object") return "";
+  var ks = Object.keys(d);
+  for (var i = 0; i < ks.length; i++){
+    var v = d[ks[i]];
+    if (typeof v === "string"){ var ix = COMP_CLASSES.findIndex(function(c){ return c.toLowerCase() === v.trim().toLowerCase(); }); if (ix >= 0 && /class/i.test(ks[i])) return COMP_CLASSES[ix]; }
+  }
+  if ((depth || 0) < 2) for (var j = 0; j < ks.length; j++){ var w = d[ks[j]]; if (w && typeof w === "object" && !Array.isArray(w)){ var r = classOfWiki(w, (depth || 0) + 1); if (r) return r; } }
+  return "";
+}
 function normWikiItem(d){
   if (!d || !d.uuid || !d.name) return null;
   var k = classify(d.type, d.sub_type, d.classification, d.name);
@@ -1264,6 +1372,7 @@ function normWikiItem(d){
     var z = Math.floor(Number(d.size));
     if (z >= 1 && z <= 20) o.z = z;
     if (/^[A-D]$/.test(String(d.grade || ""))) o.g = String(d.grade);
+    var cl = classOfWiki(d, 0); if (cl) o.cl = cl;
   }
   return o;
 }
@@ -1413,7 +1522,7 @@ async function runUpdate(prev, progress){
   diffs[patch] = d;
 
   P("Done", 1);
-  return { v: 2, version: latest.code, patch: patch, fetchedAt: new Date().toISOString(), versions: versions, items: items, bps: bps, mats: buildMats(bps), srcs: srcs, diffs: diffs, warnings: warnings };
+  return { v: 2, cls: 1, version: latest.code, patch: patch, fetchedAt: new Date().toISOString(), versions: versions, items: items, bps: bps, mats: buildMats(bps), srcs: srcs, diffs: diffs, warnings: warnings };
 }
 // Optional: exact item diff for one patch by downloading that patch and the one before it.
 async function computeExactItems(cat, patchCode, progress){
@@ -1437,7 +1546,7 @@ async function computeExactItems(cat, patchCode, progress){
   var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
   var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, WEIGHTBY = {}, HAS_SIZES = false;
   var armedId = null, armedTimer = null, bpShown = 60;
-  var wish = {}, lootlog = [], sess = [], rep = {}, run = null, ui = sanitizeUi(null), hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
+  var wish = {}, mats = [], lootlog = [], sess = [], rep = {}, run = null, ui = sanitizeUi(null), hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
   var sessionStart = new Date().toISOString();
   var $ = function(id){ return document.getElementById(id); };
 
@@ -1488,7 +1597,7 @@ async function computeExactItems(cat, patchCode, progress){
       try {
         var d = NATIVE.loadSync();
         items = sanitize(d.items || []); known = sanitizeKnown(d.known || []);
-        if (d.extra){ wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); sess = sanitizeSess(d.extra.sess); rep = sanitizeRep(d.extra.rep); run = sanitizeRun(d.extra.run); ui = sanitizeUi(d.extra.ui); }
+        if (d.extra){ mats = sanitizeMats(d.extra.mats); wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); sess = sanitizeSess(d.extra.sess); rep = sanitizeRep(d.extra.rep); run = sanitizeRun(d.extra.run); ui = sanitizeUi(d.extra.ui); }
         if (d.restoredFrom){ $("storageWarn").textContent = "Your data file was damaged, so it was restored from the backup " + d.restoredFrom + ". The damaged file was kept next to it in the data folder."; $("storageWarn").hidden = false; }
       } catch (e){ storageOK = false; $("storageWarn").textContent = "Could not read the saved data file."; $("storageWarn").hidden = false; }
       histBase = snapItems(items);
@@ -1497,7 +1606,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       var raw = localStorage.getItem(STORE_KEY); if (raw) items = sanitize(JSON.parse(raw));
       var kr = localStorage.getItem(KNOWN_KEY); if (kr) known = sanitizeKnown(JSON.parse(kr));
-      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); sess = sanitizeSess(xd.sess); rep = sanitizeRep(xd.rep); run = sanitizeRun(xd.run); ui = sanitizeUi(xd.ui); }
+      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); mats = sanitizeMats(xd.mats); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); sess = sanitizeSess(xd.sess); rep = sanitizeRep(xd.rep); run = sanitizeRun(xd.run); ui = sanitizeUi(xd.ui); }
     } catch (e){}
     histBase = snapItems(items);
     try { localStorage.setItem(STORE_KEY + "-t", "1"); localStorage.removeItem(STORE_KEY + "-t"); } catch (e){ storageOK = false; }
@@ -1506,7 +1615,7 @@ async function computeExactItems(cat, patchCode, progress){
   function save(){
     if (NATIVE){
       var ok = false;
-      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run, ui: ui } }); } catch (e){}
+      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { mats: mats, wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run, ui: ui } }); } catch (e){}
       if (!ok){ $("storageWarn").textContent = "Could not write to the data file. Your latest change is NOT saved. Check disk space and folder permissions."; }
       $("storageWarn").hidden = !!ok && storageOK;
       return;
@@ -1514,7 +1623,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
       localStorage.setItem(KNOWN_KEY, JSON.stringify(Object.keys(known).map(function(u){ return { u: u, n: known[u] }; })));
-      localStorage.setItem(EXTRA_KEY, JSON.stringify({ wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run, ui: ui }));
+      localStorage.setItem(EXTRA_KEY, JSON.stringify({ mats: mats, wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run, ui: ui }));
     } catch (e){ storageOK = false; $("storageWarn").hidden = false; }
   }
   var idbMem = {};
@@ -1564,7 +1673,7 @@ async function computeExactItems(cat, patchCode, progress){
         INDEX.push({ n: it.n, l: nameKey(it.n), c: it.c, s: it.s, g: it.g || "", z: it.z || 0, u: it.u });
       });
       catalogue.items.forEach(function(it){ if (it.c === "Armor" && it.g){ var wl = nameKey(it.n); if (!WEIGHTBY[wl]) WEIGHTBY[wl] = it.g; } });
-      catalogue.items.forEach(function(it){ if (it.z){ HAS_SIZES = true; var l = nameKey(it.n); if (!SIZEBY[l]) SIZEBY[l] = { z: it.z, g: it.g || "" }; } });
+      catalogue.items.forEach(function(it){ if (it.z){ HAS_SIZES = true; var l = nameKey(it.n); if (!SIZEBY[l]) SIZEBY[l] = { z: it.z, g: it.g || "", c: it.cl || "" }; } });
       var nameCount = {};
       INDEX.forEach(function(e){ nameCount[e.l] = (nameCount[e.l] || 0) + 1; });
       INDEX.forEach(function(e){ if (nameCount[e.l] > 1) e.dup = true; });
@@ -1646,6 +1755,8 @@ async function computeExactItems(cat, patchCode, progress){
   }
   var WRANK = { Light: 0, Medium: 1, Heavy: 2 };
   function weightOf(i){ return i.cat === "Armor" ? (WEIGHTBY[nameKey(i.name)] || "") : ""; }
+  function classOf(i){ var x = SIZEBY[nameKey(i.name)]; return x ? x.c || "" : ""; }
+  function clsChip(c){ return c ? h("span", { class: "cls cls-" + c.toLowerCase(), text: c }) : null; }
   function gradeOf(i){ var x = SIZEBY[nameKey(i.name)]; return x ? x.g : ""; }
 
   // ---------- autocomplete ----------
@@ -1734,11 +1845,13 @@ async function computeExactItems(cat, patchCode, progress){
     ss.textContent = ""; ss.appendChild(h("option", { value: "", text: "All sizes" }));
     Object.keys(sizes).map(Number).sort(function(a, b){ return a - b; }).forEach(function(z){ ss.appendChild(h("option", { value: String(z), text: "Size " + z })); });
     if (cur && sizes[cur]) ss.value = cur;
-    $("sizeNote").hidden = HAS_SIZES || !items.some(function(i){ return i.cat === "Ship component"; });
+    $("sizeNote").hidden = (HAS_SIZES && (!catalogue || catalogue.cls)) || !items.some(function(i){ return i.cat === "Ship component"; });
+    $("sizeNote").textContent = HAS_SIZES ? "Press Update to load component classes." : "Press Update to load sizes and grades.";
   }
   function render(){
     refreshLists(); renderInventory(); renderStatus();
     if (!$("tab-home").hidden) renderHome();
+    if (!$("tab-mats").hidden) renderMaterials();
     if (!$("tab-bp").hidden) renderBlueprints();
     if (!$("tab-new").hidden) renderNew();
     if (!$("tab-craft").hidden) renderCraft();
@@ -1843,7 +1956,7 @@ async function computeExactItems(cat, patchCode, progress){
       valc.textContent = (val.kind === "sell" ? "" : "buy ") + fmt(tot);
       valc.title = "Per item: " + fmt(val.lo) + " to " + fmt(val.hi) + " aUEC (" + (val.kind === "sell" ? "shops pay" : "shop price") + ")";
     }
-    var cell = h("div", { class: "namecell" }, h("div", { class: "name", text: i.name }), h("div", { class: "sub", text: i.sub ? i.cat + " · " + i.sub : i.cat }));
+    var cell = h("div", { class: "namecell" }, h("div", { class: "nameline" }, h("div", { class: "name", text: i.name }), i.cat === "Ship component" ? clsChip(classOf(i)) : null), h("div", { class: "sub", text: i.sub ? i.cat + " · " + i.sub : i.cat }));
     var openNote = function(){ editNoteId = i.id; renderInventory(); };
     if (editNoteId === i.id){
       var ni = h("input", { class: "noteinput", value: i.note || "", maxlength: "200", placeholder: "Add a note, then press Enter", "aria-label": "Note for " + i.name });
@@ -1917,7 +2030,8 @@ async function computeExactItems(cat, patchCode, progress){
   function addLoot(o){
     snapshot();
     var cat = o.cat;
-    if (!addItem(items, { name: o.name, cat: cat, sub: o.sub, qty: o.qty, loc: o.loc })){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return null; }
+    var added = cat === "Material" ? addMat(mats, { n: o.name, q: 0, s: o.qty, l: o.loc }) : addItem(items, { name: o.name, cat: cat, sub: o.sub, qty: o.qty, loc: o.loc });
+    if (!added){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return null; }
     logLoot({ name: o.name, cat: cat, sub: o.sub, qty: cleanQty(o.qty, cat), y: o.sys, w: o.src });
     ui.cat = cat; ui.loc = norm(o.loc).slice(0, 80); ui.sys = sysName(o.sys); ui.src = norm(o.src).slice(0, 80);
     var where = locLabel(sysName(o.sys), norm(o.src));
@@ -1941,6 +2055,62 @@ async function computeExactItems(cat, patchCode, progress){
     commit("Undid the last change"); say($("msg"), "Undid the last change.");
   };
 
+  // ---------- materials ----------
+  var matArmed = null, matTimer = null;
+  function matNames(){
+    var seen = {}, out = [];
+    ((catalogue && catalogue.mats) || []).forEach(function(m){ var k = nameKey(m.n); if (!seen[k]){ seen[k] = 1; out.push(m.n); } });
+    ((catalogue && catalogue.items) || []).forEach(function(it){ if (it.c === "Material"){ var k = nameKey(it.n); if (!seen[k]){ seen[k] = 1; out.push(it.n); } } });
+    mats.forEach(function(m){ var k = nameKey(m.n); if (!seen[k]){ seen[k] = 1; out.push(m.n); } });
+    return out.sort(function(a, b){ return a.localeCompare(b); });
+  }
+  attachAC($("mName"), $("mBox"), {
+    match: function(q){ var t = nameKey(q).split(" ").filter(Boolean); return matNames().filter(function(n){ var l = nameKey(n); return t.every(function(x){ return l.indexOf(x) >= 0; }); }).slice(0, 10).map(function(n){ return { n: n }; }); },
+    hint: function(){ return ""; }, onPick: function(){ $("mQ").focus(); }
+  });
+  attachAC($("mLoc"), $("mLocBox"), { match: function(q, f){ return matchLocations(q, f).concat(mats.map(function(m){ return { n: m.l, src: "yours" }; })).filter(function(e, i, a){ return a.findIndex(function(x){ return x.n.toLowerCase() === e.n.toLowerCase(); }) === i; }).slice(0, 12); }, hint: locHint, showOnFocus: true, onPick: function(){} });
+  function renderMaterials(){
+    var q = nameKey($("mSearch").value), band = $("mBand").value, loc = $("mLocF").value, mn = cleanQual($("mMin").value);
+    var lf = $("mLocF"), locs = uniqSorted(mats.map(function(m){ return m.l; })), prev = lf.value; lf.textContent = "";
+    lf.appendChild(h("option", { value: "", text: "All locations" })); locs.forEach(function(l){ lf.appendChild(h("option", { value: l, text: l })); }); lf.value = locs.indexOf(prev) >= 0 ? prev : ""; loc = lf.value;
+    var shown = mats.filter(function(m){ return (!q || nameKey(m.n).indexOf(q) >= 0) && (!band || matBand(m.q) === band) && (!loc || m.l === loc) && (!mn || m.q >= mn); });
+    var groups = {}; shown.forEach(function(m){ var k = nameKey(m.n); (groups[k] = groups[k] || []).push(m); });
+    var st = $("mStats"); st.textContent = "";
+    [["Materials", Object.keys(groups).length], ["Stacks", shown.length], ["Total SCU", Math.round(shown.reduce(function(a, m){ return a + m.s; }, 0) * 100) / 100]].forEach(function(p2){ st.appendChild(h("span", null, p2[0] + ": ", h("b", { text: fmt(p2[1]) }))); });
+    var L = $("mList"); L.textContent = "";
+    if (!shown.length){ L.appendChild(h("div", { class: "empty", text: mats.length ? "Nothing matches those filters." : "No materials yet." })); return; }
+    var ch = h("div", { class: "colhead mcol", "aria-hidden": "true" }); ["Band", "Quality", "SCU", "Location", ""].forEach(function(t){ ch.appendChild(h("span", { text: t })); }); L.appendChild(ch);
+    Object.keys(groups).sort(function(a, b){ return groups[a][0].n.localeCompare(groups[b][0].n); }).forEach(function(k){
+      var g = groups[k].sort(function(a, b){ return b.q - a.q || a.l.localeCompare(b.l); });
+      var tot = g.reduce(function(a, m){ return a + m.s; }, 0), best = g.reduce(function(a, m){ return Math.max(a, m.q); }, 0);
+      var box = h("div", { class: "loc" }, h("h3", null, g[0].n, h("span", { text: fmt(Math.round(tot * 100) / 100) + " SCU" + (best ? " · best Q" + best : "") })));
+      g.forEach(function(m){
+        var qi = h("input", { type: "number", min: "1", max: "1000", step: "1", value: m.q || "", placeholder: "?", "aria-label": "Quality of " + m.n });
+        qi.onchange = function(){ if (!setMat(mats, m.id, { q: qi.value })) qi.value = m.q || ""; save(); renderMaterials(); };
+        var si = h("input", { type: "number", min: "0.0001", step: "any", value: m.s, "aria-label": "SCU of " + m.n });
+        si.onchange = function(){ if (!setMat(mats, m.id, { s: si.value })) si.value = m.s; save(); renderMaterials(); };
+        var li = h("input", { class: "where", value: m.l, maxlength: "80", "aria-label": "Location of " + m.n });
+        li.onchange = function(){ setMat(mats, m.id, { l: li.value }); save(); renderMaterials(); };
+        var d = h("button", { type: "button", class: "danger", text: matArmed === m.id ? "Confirm" : "Delete" });
+        d.onclick = function(){
+          if (matArmed === m.id){ mats.splice(mats.indexOf(m), 1); matArmed = null; save(); renderMaterials(); return; }
+          matArmed = m.id; clearTimeout(matTimer); matTimer = setTimeout(function(){ matArmed = null; renderMaterials(); }, 3000); renderMaterials();
+        };
+        box.appendChild(h("div", { class: "item mrow" }, h("span", { class: "qb q-" + matBand(m.q).toLowerCase(), text: matBand(m.q) }), qi, si, li, h("div", { class: "acts" }, d)));
+      });
+      L.appendChild(box);
+    });
+  }
+  ["mSearch", "mBand", "mLocF", "mMin"].forEach(function(id){ $(id).addEventListener("input", renderMaterials); });
+  $("mForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var o = { n: $("mName").value, q: $("mQ").value, s: $("mS").value, l: $("mLoc").value };
+    if (!addMat(mats, o)){ say($("mMsg"), "Enter a material and an SCU amount above zero.", true); return; }
+    var qn = cleanQual(o.q); ui.loc = norm(o.l).slice(0, 80) || ui.loc; save();
+    say($("mMsg"), "Added " + fmt(cleanScu(o.s)) + " SCU " + norm(o.n) + (qn ? " at Q" + qn : "") + ".");
+    $("mName").value = ""; $("mQ").value = ""; $("mS").value = 1; renderMaterials(); $("mName").focus();
+  });
+
   // ---------- blueprints ----------
   function renderBlueprints(){
     var list = $("bList"); list.textContent = "";
@@ -1950,7 +2120,8 @@ async function computeExactItems(cat, patchCode, progress){
       list.appendChild(needDb(catalogue ? "No blueprint data in the item database. Try updating again." : "Download the item database to see the blueprint list."));
       $("bMore").hidden = true; return;
     }
-    var q = nameKey($("bSearch").value), cat = $("bCat").value, status = $("bStatus").value, owned = ownedByName(items);
+    ui.minq = cleanQual($("bMinQ").value);
+    var q = nameKey($("bSearch").value), cat = $("bCat").value, status = $("bStatus").value, owned = ownedByName(items, mats, ui.minq);
     var rows = bps.filter(function(b){
       if (q && nameKey(b.n).indexOf(q) < 0) return false;
       if (cat && (BPCAT[b.u] || "Other") !== cat) return false;
@@ -1986,6 +2157,7 @@ async function computeExactItems(cat, patchCode, progress){
     });
     if (b.m) ing.appendChild(h("div", { text: "Unlocked by " + b.m + " mission" + (b.m > 1 ? "s" : "") }));
     var name = h("div", { class: "name", text: b.n, role: "button", tabindex: "0", title: "Show materials" });
+    var bit = BYU[b.o], bcl = bit && bit.cl ? clsChip(bit.cl) : null;
     var toggle = function(){ ing.hidden = !ing.hidden; };
     name.onclick = toggle; name.onkeydown = function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); } };
     var sub = b.t ? b.t + " craft" : "";
@@ -1997,7 +2169,7 @@ async function computeExactItems(cat, patchCode, progress){
     var wb = h("button", { type: "button", class: "ghost smallbtn", text: wish[b.u] ? "+1 (in list: " + wish[b.u] + ")" : "+ Craft list", title: "Add to the Craft list" });
     wb.onclick = function(){ wish[b.u] = Math.min(99, (wish[b.u] || 0) + 1); save(); wb.textContent = "+1 (in list: " + wish[b.u] + ")"; };
     act.appendChild(wb);
-    return h("div", { class: "bp" + (known[b.u] ? " known" : "") }, h("div", { class: "bphead" }, chk, h("div", { class: "bpname" }, name, h("div", { class: "dim", style: "font-size:12px", text: sub })), h("div", { class: "bpcat", text: BPCAT[b.u] || "Other" }), chips, bars, act), ing);
+    return h("div", { class: "bp" + (known[b.u] ? " known" : "") }, h("div", { class: "bphead" }, chk, h("div", { class: "bpname" }, h("div", { class: "nameline" }, name, bcl), h("div", { class: "dim", style: "font-size:12px", text: sub })), h("div", { class: "bpcat", text: BPCAT[b.u] || "Other" }), chips, bars, act), ing);
   }
   function applyBView(){
     $("bList").classList.toggle("cards", !!ui.bview);
@@ -2005,12 +2177,13 @@ async function computeExactItems(cat, patchCode, progress){
   }
   $("bViewList").onclick = function(){ ui.bview = 0; applyBView(); save(); };
   $("bViewCards").onclick = function(){ ui.bview = 1; applyBView(); save(); };
-  ["bSearch", "bCat", "bStatus"].forEach(function(id){ $(id).addEventListener("input", function(){ bpShown = 60; renderBlueprints(); }); });
+  ["bSearch", "bCat", "bStatus", "bMinQ"].forEach(function(id){ $(id).addEventListener("input", function(){ bpShown = 60; renderBlueprints(); }); });
+  $("bMinQ").addEventListener("change", function(){ save(); render(); });
   $("bMore").onclick = function(){ bpShown += 120; renderBlueprints(); };
 
   // ---------- craft list ----------
   function renderCraft(){
-    var bps = (catalogue && catalogue.bps) || [], plan = craftPlan(bps, wish, ownedByName(items));
+    var bps = (catalogue && catalogue.bps) || [], plan = craftPlan(bps, wish, ownedByName(items, mats, ui.minq));
     var st = $("cStats"); st.textContent = "";
     var shortN = plan.rows.filter(function(r){ return r.short > 0; }).length;
     [["Blueprints", plan.list.length], ["Materials", plan.rows.length], ["Short on", shortN]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: fmt(p[1]) }))); });
@@ -2039,7 +2212,7 @@ async function computeExactItems(cat, patchCode, progress){
     $("cCopy").disabled = !plan.rows.length; $("cClear").disabled = !plan.list.length;
   }
   $("cCopy").onclick = function(){
-    var plan = craftPlan((catalogue && catalogue.bps) || [], wish, ownedByName(items));
+    var plan = craftPlan((catalogue && catalogue.bps) || [], wish, ownedByName(items, mats, ui.minq));
     var lines = ["Craft list: " + plan.list.map(function(e){ return e.n + " × " + e.bp.n; }).join(", ")];
     var need = plan.rows.filter(function(r){ return r.short > 0; });
     if (!need.length) lines.push("Nothing short. You have all the materials.");
@@ -2547,7 +2720,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("ssCsv").onclick = function(){ if (!sess.length){ ssSay("No sessions to export yet.", true); return; } saveCsv("sc-sessions-" + new Date().toISOString().slice(0, 10) + ".csv", toSessCSV(sess), sess.length + " sessions", $("ssMsg")); };
 
   // ---------- tabs ----------
-  var TABGROUP = { home: "home", inv: "stuff", bp: "stuff", craft: "stuff", sets: "stuff", find: "find", plan: "find", sess: "track", "new": "track", hist: "track", data: "data" };
+  var TABGROUP = { home: "home", inv: "stuff", mats: "stuff", bp: "stuff", craft: "stuff", sets: "stuff", find: "find", plan: "find", sess: "track", "new": "track", hist: "track", data: "data" };
   var GROUPORDER = ["home", "stuff", "find", "track", "data"], FIRSTIN = { home: "home", stuff: "inv", find: "find", track: "sess", data: "data" }, lastIn = {}, curTab = "home";
   Array.prototype.forEach.call($("tabs").children, function(b){ b.dataset.group = TABGROUP[b.dataset.tab] || ""; });
   function showTab(t){
@@ -2562,7 +2735,7 @@ async function computeExactItems(cat, patchCode, progress){
     });
     $("tabs").hidden = n < 2;
     if (t === "home") renderHome(); if (t === "plan") renderPlanner(); if (t === "sess") renderSessions(); if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
-    if (t === "find"){ renderFinder(); renderLootAt(); } if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
+    if (t === "find"){ renderFinder(); renderLootAt(); } if (t === "mats") renderMaterials(); if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
     try { history.replaceState(null, "", "#" + t); } catch (e){}
     window.scrollTo(0, 0);
   }
@@ -2633,16 +2806,16 @@ async function computeExactItems(cat, patchCode, progress){
     var G = $("hGlance"); G.textContent = "";
     var units = items.reduce(function(a, i){ return a + i.qty; }, 0), bpN = ((catalogue && catalogue.bps) || []).length;
     var tiles = h("div", { class: "tiles" });
-    [[fmt(items.length), "Stacks"], [fmt(Math.round(units * 100) / 100), "Total units"], [Object.keys(known).length + (bpN ? " / " + fmt(bpN) : ""), "Blueprints known"], [fmt(lootlog.length), "Loot entries"]].forEach(function(t){ tiles.appendChild(h("div", { class: "tile" }, h("b", { text: t[0] }), h("span", { text: t[1] }))); });
+    [[fmt(items.length), "Stacks"], [fmt(Math.round(units * 100) / 100), "Total units"], [Object.keys(known).length + (bpN ? " / " + fmt(bpN) : ""), "Blueprints known"], [fmt(lootlog.length), "Loot entries"], [fmt(Math.round(mats.reduce(function(x, m){ return x + m.s; }, 0) * 100) / 100), "SCU of materials"]].forEach(function(t){ tiles.appendChild(h("div", { class: "tile" }, h("b", { text: t[0] }), h("span", { text: t[1] }))); });
     G.appendChild(tiles);
-    if (!items.length) G.appendChild(h("div", { class: "note", style: "margin-top:8px", text: "No items yet." }));
+    if (!items.length && !mats.length) G.appendChild(h("div", { class: "note", style: "margin-top:8px", text: "No items yet." }));
   }
 
   // ---------- backup / restore ----------
   $("exportBtn").onclick = function(){
     $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 3,
       items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc, tag: i.tag || "", note: i.note || "" }; }),
-      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog, sess: sess, rep: rep }, null, 1);
+      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog, sess: sess, rep: rep, mats: mats }, null, 1);
     say($("ioMsg"), "Backup created: " + items.length + " stacks, " + Object.keys(known).length + " known blueprints.");
   };
   $("copyBtn").onclick = function(){
@@ -2662,8 +2835,8 @@ async function computeExactItems(cat, patchCode, progress){
     var inc;
     try { inc = parseBackup($("io").value); } catch (e){ say($("ioMsg"), "That doesn't look like a valid backup: " + e.message, true); return; }
     snapshot();
-    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; if (inc.sess.length) sess = inc.sess; if (Object.keys(inc.rep).length) rep = inc.rep; }
-    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); sess = mergeSess(sess, inc.sess); Object.keys(inc.rep).forEach(function(k){ rep[k] = inc.rep[k]; }); }
+    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; if (inc.sess.length) sess = inc.sess; if (Object.keys(inc.rep).length) rep = inc.rep; if (inc.mats.length) mats = inc.mats; }
+    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); sess = mergeSess(sess, inc.sess); Object.keys(inc.rep).forEach(function(k){ rep[k] = inc.rep[k]; }); mats = mergeMats(mats, inc.mats); }
     if (mode === "replace") commit("Replaced the list from a backup (" + inc.items.length + " stacks)"); else commit();
     say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
   }
@@ -2722,7 +2895,9 @@ async function computeExactItems(cat, patchCode, progress){
     if (p.src || p.sys) logLoot({ name: p.name, cat: p.cat, sub: p.sub, qty: cleanQty(p.qty, p.cat), y: p.sys, w: p.src });
     commit(); say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
   });
-  load(); buildIndex(); render();
+  load();
+  (function(){ var mv = items.filter(function(i){ return i.cat === "Material"; }); if (!mv.length) return; mv.forEach(function(i){ addMat(mats, { n: i.name, q: 0, s: i.qty, l: i.loc }); }); items = items.filter(function(i){ return i.cat !== "Material"; }); save(); histBase = snapItems(items); })();
+  buildIndex(); render();
   idbGet("cat").then(function(c){
     if (c && c.v === 2 && c.items){ catalogue = c; buildIndex(); render(); checkNewPatch(); }
   });
@@ -2733,7 +2908,7 @@ async function computeExactItems(cat, patchCode, progress){
   (function(){
     if (ui.cat && Array.prototype.some.call($("fCat").options, function(o){ return o.value === ui.cat; })) $("fCat").value = ui.cat;
     if (ui.loc) $("fLoc").value = ui.loc; if (ui.sys) $("fSys").value = ui.sys; if (ui.src) $("fSrc").value = ui.src;
-    applyCompact(); applyBView();
+    applyCompact(); applyBView(); $("bMinQ").value = ui.minq || "";
     var h0 = String(location.hash || "").replace(/^#/, ""); showTab(TABGROUP[h0] ? h0 : "home");
   })();
   window.__sc = { runUpdate: runUpdate, showTab: showTab, get catalogue(){ return catalogue; }, get items(){ return items; } };
