@@ -4,6 +4,9 @@ contextBridge.exposeInMainWorld('scStore', {
   // Synchronous on purpose: the page reads its saved data once at startup, and writes are small.
   loadSync: () => ipcRenderer.sendSync('store:load'),
   save: (data) => ipcRenderer.sendSync('store:save', data) === true,
+  snapshot: (label) => ipcRenderer.sendSync('store:snapshot', label) === true,
+  listBackups: () => ipcRenderer.invoke('store:backups'),
+  restoreBackup: (name) => ipcRenderer.invoke('store:restore', name),
   loadCatalogue: () => ipcRenderer.invoke('cat:load'),
   saveCatalogue: (cat) => ipcRenderer.invoke('cat:save', cat),
   loadBlob: (name) => ipcRenderer.invoke('blob:load', name),

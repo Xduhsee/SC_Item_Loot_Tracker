@@ -283,6 +283,29 @@
   .cls{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:8px;vertical-align:middle;white-space:nowrap}
   .cls-military{background:#3a1616;color:#ff9b9b}.cls-stealth{background:#2a1448;color:#d9a8ff}.cls-industrial{background:#3a2a10;color:#ffb454}.cls-civilian{background:#123a1c;color:#7dffa6}.cls-competition{background:#10303f;color:#7fd4ff}
   .nameline{display:flex;align-items:center;flex-wrap:wrap}
+  /* planner and sessions */
+  .chk{flex-direction:row;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);border-radius:99px;font-size:13px;color:#b9d9c4;background:none;cursor:pointer}
+  .chk input{width:16px;height:16px;min-height:0;accent-color:var(--accent2)}
+  .chk:has(input:checked){background:#1b3a22;border-color:var(--accent);color:#e9ffe3}
+  #plOut,#ssBars,#ssList{margin-top:10px}
+  #plOut .bp,#ssBars .bp,#ssList .bp{border:1px solid var(--line);border-top:0;border-radius:0;background:transparent;padding:0}
+  #plOut .bp:hover,#ssList .bp:hover{background:#14211a}
+  #plOut .bphead,#ssList .bphead,#ssBars .bphead{display:grid;align-items:center;gap:12px;padding:10px 12px}
+  .tcol,#plOut .bphead{grid-template-columns:36px minmax(0,1.3fr) minmax(0,1.4fr) 160px}
+  .tcol,.wcol,.scol{display:grid;gap:12px;padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;margin:0}
+  .scorecell{display:flex;flex-direction:column;align-items:flex-end;font-size:13px}
+  .scorecell b{color:var(--good)}.scorecell .dim{font-size:12px}
+  #plOut .ing{padding:0 12px 10px 48px}
+  #ssBars .badge,#ssList .badge{justify-self:start}
+  #ssBars .bphead .dim{overflow-wrap:anywhere}
+  .wcol,#ssBars .bphead{grid-template-columns:minmax(0,1fr) 150px minmax(0,2fr)}
+  .scol,#ssList .bphead{grid-template-columns:minmax(0,1fr) 150px 130px minmax(0,1.2fr) 80px}
+  #ssList .bp:last-child,#ssBars .bp:last-child,#plOut .bp:last-child{border-radius:0 0 10px 10px}
+  @media (max-width:700px){
+    .tcol,.wcol,.scol{display:none}
+    #plOut .bphead,#ssBars .bphead,#ssList .bphead{grid-template-columns:1fr}
+    .scorecell{align-items:flex-start}
+  }
   @media (max-width:980px){
     .mrow,.mcol{grid-template-columns:84px 90px 110px minmax(0,1fr) 80px}
   }
@@ -367,6 +390,9 @@
         <label class="qty">Qty
           <input id="hQty" type="number" min="0.01" step="any" value="1">
         </label>
+        <label class="qty" id="hQWrap" hidden>Quality
+          <input id="hQ" type="number" min="1" max="1000" step="1" placeholder="1 to 1000">
+        </label>
         <button type="submit">Add</button>
       </form>
       <div class="note" id="hWhere"></div>
@@ -397,6 +423,9 @@
         </label>
         <label class="qty">Qty
           <input id="fQty" type="number" min="0.01" step="any" value="1">
+        </label>
+        <label class="qty" id="fQWrap" hidden>Quality
+          <input id="fQ" type="number" min="1" max="1000" step="1" placeholder="1 to 1000">
         </label>
         <label class="grow ac">Location
           <input id="fLoc" placeholder="e.g. Lorville hab, Cutlass hold, Carrying" maxlength="80" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="locBox">
@@ -504,6 +533,7 @@
         <label><span class="sr">Minimum quality</span>
           <input id="mMin" type="number" min="1" max="1000" step="1" placeholder="Min quality" style="width:130px">
         </label>
+        <button class="ghost" id="mUndo" type="button" disabled>Undo</button>
       </div>
       <div class="stats" id="mStats"></div>
       <div id="mList"></div>
@@ -564,17 +594,16 @@
   <section id="tab-plan" hidden>
     <div class="panel">
       <h2>Missing-blueprint planner</h2>
-      <p class="note" style="margin-top:0">Each reward pool counts as one blueprint from its list, so per-run figures are estimates.</p>
-      <div class="row">
-        <label class="grow">Search
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
           <input id="plSearch" type="search" placeholder="Mission, giver or faction" maxlength="80">
         </label>
-        <label>System
-          <select id="plSys"><option value="">Any</option><option>Stanton</option><option>Pyro</option><option>Nyx</option></select>
+        <label><span class="sr">System</span>
+          <select id="plSys"><option value="">Any system</option><option>Stanton</option><option>Pyro</option><option>Nyx</option></select>
         </label>
-        <label style="flex-direction:row;align-items:center;gap:6px"><input id="plIll" type="checkbox"> Hide illegal</label>
-        <label style="flex-direction:row;align-items:center;gap:6px"><input id="plCmb" type="checkbox"> Hide combat</label>
-        <label style="flex-direction:row;align-items:center;gap:6px"><input id="plMine" type="checkbox"> Only what I can accept</label>
+        <label class="chk"><input id="plIll" type="checkbox"> Hide illegal</label>
+        <label class="chk"><input id="plCmb" type="checkbox"> Hide combat</label>
+        <label class="chk"><input id="plMine" type="checkbox"> Only what I can accept</label>
       </div>
       <details id="plRepBox" style="margin-top:12px"><summary id="plRepSum">My standing</summary>
         <div id="plRep"></div>
@@ -594,7 +623,7 @@
   <section id="tab-sess" hidden>
     <div class="panel">
       <h2>Session income</h2>
-      <div class="row">
+      <div class="row tbar">
         <label>Activity
           <select id="ssAct"></select>
         </label>
@@ -712,7 +741,7 @@
     </div>
     <div class="panel">
       <h2>Backup &amp; share</h2>
-      <div id="nativeInfo" hidden style="margin-bottom:10px"><p class="note" style="margin-top:0">Saved automatically on this computer, with a daily backup (last 14 kept).</p><div class="row"><button type="button" class="ghost" id="openFolderBtn">Open data folder</button><span class="note" id="dataPath"></span></div></div>
+      <div id="nativeInfo" hidden style="margin-bottom:10px"><p class="note" style="margin-top:0">Saved automatically. Daily backups, last 14 kept.</p><div class="row"><button type="button" class="ghost" id="bkNow">Back up now</button><button type="button" class="ghost" id="openFolderBtn">Open data folder</button><span class="note" id="dataPath"></span></div><div id="bkList" style="margin-top:10px"></div></div>
       <p class="note" id="browserNote" style="margin-top:0">Saved in this browser only. Clearing browser data erases it, so keep a backup.</p>
       <div class="row" style="margin:10px 0">
         <button type="button" id="exportBtn">Create backup text</button>
@@ -1651,7 +1680,8 @@ async function computeExactItems(cat, patchCode, progress){
     idbMem[k] = v;
     return idb().then(function(db){ return new Promise(function(res, rej){ var tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = function(){ rej(tx.error); }; }); }).catch(function(){ return false; });
   }
-  function snapshot(){ undoStack.push(JSON.stringify({ i: items, k: known, ll: lootlog.length })); if (undoStack.length > 30) undoStack.shift(); $("undoBtn").disabled = false; }
+  function syncUndo(){ var d = !undoStack.length; $("undoBtn").disabled = d; $("mUndo").disabled = d; }
+  function snapshot(){ undoStack.push(JSON.stringify({ i: items, k: known, m: mats, ll: lootlog.length })); if (undoStack.length > 30) undoStack.shift(); syncUndo(); }
   function pruneSel(){ var ids = {}; items.forEach(function(i){ ids[i.id] = 1; }); Object.keys(sel).forEach(function(id){ if (!ids[id]) delete sel[id]; }); }
   function commit(note){
     var now = new Date().toISOString(), add;
@@ -2001,7 +2031,7 @@ async function computeExactItems(cat, patchCode, progress){
     if (!ids.length) return;
     if (!loc){ say($("msg"), "Type a location to move the selected items to.", true); return; }
     snapshot(); var n = bulkMove(items, ids, loc);
-    if (!n){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; say($("msg"), "Those items are already there."); return; }
+    if (!n){ undoStack.pop(); syncUndo(); say($("msg"), "Those items are already there."); return; }
     $("bulkLoc").value = ""; commit(); say($("msg"), "Moved " + n + " stack" + (n > 1 ? "s" : "") + " to " + loc + ".");
   };
   $("bulkTag").onchange = function(){
@@ -2035,8 +2065,8 @@ async function computeExactItems(cat, patchCode, progress){
   function addLoot(o){
     snapshot();
     var cat = o.cat;
-    var added = cat === "Material" ? addMat(mats, { n: o.name, q: 0, s: o.qty, l: o.loc }) : addItem(items, { name: o.name, cat: cat, sub: o.sub, qty: o.qty, loc: o.loc });
-    if (!added){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return null; }
+    var added = cat === "Material" ? addMat(mats, { n: o.name, q: o.q, s: o.qty, l: o.loc }) : addItem(items, { name: o.name, cat: cat, sub: o.sub, qty: o.qty, loc: o.loc });
+    if (!added){ undoStack.pop(); syncUndo(); return null; }
     logLoot({ name: o.name, cat: cat, sub: o.sub, qty: cleanQty(o.qty, cat), y: o.sys, w: o.src });
     ui.cat = cat; ui.loc = norm(o.loc).slice(0, 80); ui.sys = sysName(o.sys); ui.src = norm(o.src).slice(0, 80);
     var where = locLabel(sysName(o.sys), norm(o.src));
@@ -2045,19 +2075,20 @@ async function computeExactItems(cat, patchCode, progress){
   }
   $("addForm").addEventListener("submit", function(ev){
     ev.preventDefault();
-    var r = addLoot({ name: $("fName").value, cat: $("fCat").value, sub: $("fSub").value, qty: $("fQty").value, loc: $("fLoc").value, sys: $("fSys").value, src: $("fSrc").value });
+    var r = addLoot({ name: $("fName").value, cat: $("fCat").value, sub: $("fSub").value, qty: $("fQty").value, q: $("fQ").value, loc: $("fLoc").value, sys: $("fSys").value, src: $("fSrc").value });
     if (r === null){ say($("msg"), "Enter an item name and a quantity above zero.", true); return; }
     say($("msg"), r);
-    $("fName").value = ""; $("fQty").value = 1; $("fSub").value = ""; acClose(); $("fName").focus();
+    $("fName").value = ""; $("fQty").value = 1; $("fQ").value = ""; $("fSub").value = ""; acClose(); $("fName").focus();
   });
   ["qSearch", "qCat", "qSub", "qLoc", "qSize", "qSort", "qTag"].forEach(function(id){ $(id).addEventListener("input", renderInventory); });
+  $("mUndo").onclick = function(){ $("undoBtn").click(); };
   $("undoBtn").onclick = function(){
     if (!undoStack.length) return;
     var s = JSON.parse(undoStack.pop());
-    items = sanitize(s.i); known = s.k || {};
+    items = sanitize(s.i); known = s.k || {}; if (Array.isArray(s.m)) mats = sanitizeMats(s.m);
     if (typeof s.ll === "number" && s.ll < lootlog.length) lootlog = lootlog.slice(0, s.ll);
-    $("undoBtn").disabled = !undoStack.length;
-    commit("Undid the last change"); say($("msg"), "Undid the last change.");
+    syncUndo();
+    commit("Undid the last change"); say($("msg"), "Undid the last change."); say($("mMsg"), "Undid the last change.");
   };
 
   // ---------- materials ----------
@@ -2091,14 +2122,14 @@ async function computeExactItems(cat, patchCode, progress){
       var box = h("div", { class: "loc" }, h("h3", null, g[0].n, h("span", { text: fmt(Math.round(tot * 100) / 100) + " SCU" + (best ? " · best Q" + best : "") })));
       g.forEach(function(m){
         var qi = h("input", { type: "number", min: "1", max: "1000", step: "1", value: m.q || "", placeholder: "?", "aria-label": "Quality of " + m.n });
-        qi.onchange = function(){ if (!setMat(mats, m.id, { q: qi.value })) qi.value = m.q || ""; save(); renderMaterials(); };
+        qi.onchange = function(){ snapshot(); if (!setMat(mats, m.id, { q: qi.value })) qi.value = m.q || ""; save(); renderMaterials(); };
         var si = h("input", { type: "number", min: "0.0001", step: "any", value: m.s, "aria-label": "SCU of " + m.n });
-        si.onchange = function(){ if (!setMat(mats, m.id, { s: si.value })) si.value = m.s; save(); renderMaterials(); };
+        si.onchange = function(){ snapshot(); if (!setMat(mats, m.id, { s: si.value })) si.value = m.s; save(); renderMaterials(); };
         var li = h("input", { class: "where", value: m.l, maxlength: "80", "aria-label": "Location of " + m.n });
-        li.onchange = function(){ setMat(mats, m.id, { l: li.value }); save(); renderMaterials(); };
+        li.onchange = function(){ snapshot(); setMat(mats, m.id, { l: li.value }); save(); renderMaterials(); };
         var d = h("button", { type: "button", class: "danger", text: matArmed === m.id ? "Confirm" : "Delete" });
         d.onclick = function(){
-          if (matArmed === m.id){ mats.splice(mats.indexOf(m), 1); matArmed = null; save(); renderMaterials(); return; }
+          if (matArmed === m.id){ snapshot(); mats.splice(mats.indexOf(m), 1); matArmed = null; save(); renderMaterials(); return; }
           matArmed = m.id; clearTimeout(matTimer); matTimer = setTimeout(function(){ matArmed = null; renderMaterials(); }, 3000); renderMaterials();
         };
         box.appendChild(h("div", { class: "item mrow" }, h("span", { class: "qb q-" + matBand(m.q).toLowerCase(), text: matBand(m.q) }), qi, si, li, h("div", { class: "acts" }, d)));
@@ -2110,7 +2141,8 @@ async function computeExactItems(cat, patchCode, progress){
   $("mForm").addEventListener("submit", function(ev){
     ev.preventDefault();
     var o = { n: $("mName").value, q: $("mQ").value, s: $("mS").value, l: $("mLoc").value };
-    if (!addMat(mats, o)){ say($("mMsg"), "Enter a material and an SCU amount above zero.", true); return; }
+    snapshot();
+    if (!addMat(mats, o)){ undoStack.pop(); syncUndo(); say($("mMsg"), "Enter a material and an SCU amount above zero.", true); return; }
     var qn = cleanQual(o.q); ui.loc = norm(o.l).slice(0, 80) || ui.loc; save();
     say($("mMsg"), "Added " + fmt(cleanScu(o.s)) + " SCU " + norm(o.n) + (qn ? " at Q" + qn : "") + ".");
     $("mName").value = ""; $("mQ").value = ""; $("mS").value = 1; renderMaterials(); $("mName").focus();
@@ -2628,6 +2660,7 @@ async function computeExactItems(cat, patchCode, progress){
     var rows = rankPlan(planData.ms, known, { q: $("plSearch").value, sys: $("plSys").value, noIllegal: $("plIll").checked, noCombat: $("plCmb").checked, onlyMine: $("plMine").checked, rep: rep });
     [["Missions with blueprints", fmt(planData.ms.length)], ["With something new for you", fmt(rows.length)]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
     if (!rows.length){ out.appendChild(h("div", { class: "empty", text: "No missions match those filters." })); $("plMore").hidden = true; return; }
+    var ph = h("div", { class: "colhead tcol", "aria-hidden": "true" }); ["#", "Mission", "Details", "New blueprints"].forEach(function(t, i){ ph.appendChild(h("span", { class: i === 3 ? "r" : "", text: t })); }); out.appendChild(ph);
     rows.slice(0, planShown).forEach(function(r, ix){
       var m = r.m, s = r.s;
       var det = h("div", { class: "ing", hidden: true });
@@ -2644,7 +2677,7 @@ async function computeExactItems(cat, patchCode, progress){
       var name = h("div", { class: "name", text: m.t, role: "button", tabindex: "0", title: "Show the blueprints" });
       var toggle = function(){ det.hidden = !det.hidden; };
       name.onclick = toggle; name.onkeydown = function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); } };
-      var badges = h("span", null);
+      var badges = h("span", { class: "chipcol" });
       if (m.g) badges.appendChild(h("span", { class: "badge", text: m.g }));
       if (m.sc) badges.appendChild(h("span", { class: "badge", text: m.sc }));
       var ok = canAccept(m, rep);
@@ -2652,7 +2685,7 @@ async function computeExactItems(cat, patchCode, progress){
       if (m.il) badges.appendChild(h("span", { class: "badge warn", text: "illegal" }));
       if (m.cb) badges.appendChild(h("span", { class: "badge warn", text: "combat" }));
       m.sy.forEach(function(y){ badges.appendChild(h("span", { class: "badge", text: y })); });
-      var score = h("span", { class: "badge good", text: s.unknown + " new of " + s.total + " · about " + (Math.round(s.exp * 100) / 100) + " per run" });
+      var score = h("span", { class: "scorecell" }, h("b", { text: s.unknown + " new of " + s.total }), h("span", { class: "dim", text: "about " + (Math.round(s.exp * 100) / 100) + " per run" }));
       out.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("span", { class: "dim", text: "#" + (ix + 1) }), name, badges, score), det));
     });
     $("plMore").hidden = rows.length <= planShown;
@@ -2698,6 +2731,7 @@ async function computeExactItems(cat, patchCode, progress){
     var st = sessStats(sess, Number($("ssRange").value), Date.now()), S = $("ssStats"), B = $("ssBars"); S.textContent = ""; B.textContent = "";
     [["Sessions", fmt(st.count)], ["Time", fmtDur(st.minutes)], ["Earned", fmt(st.total) + " aUEC"], ["Average", fmt(st.perHour) + " aUEC/hour"]].forEach(function(p){ S.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
     if (!st.rows.length) B.appendChild(h("div", { class: "empty", text: "No sessions in this range." }));
+    if (st.rows.length){ var wh = h("div", { class: "colhead wcol", "aria-hidden": "true" }); ["Activity", "Per hour", "Totals"].forEach(function(t){ wh.appendChild(h("span", { text: t })); }); B.appendChild(wh); }
     var top = st.rows.reduce(function(a, r){ return Math.max(a, Math.abs(r.hr)); }, 1);
     st.rows.forEach(function(r){
       var w = Math.max(2, Math.round(Math.abs(r.hr) / top * 100));
@@ -2709,6 +2743,7 @@ async function computeExactItems(cat, patchCode, progress){
     var L = $("ssList"); L.textContent = "";
     var rows = sess.slice().sort(function(p, q){ return Date.parse(q.t) - Date.parse(p.t); });
     if (!rows.length) L.appendChild(h("div", { class: "empty", text: "Nothing logged yet." }));
+    if (rows.length){ var sh = h("div", { class: "colhead scol", "aria-hidden": "true" }); ["Activity", "When", "Earned", "Note", ""].forEach(function(t){ sh.appendChild(h("span", { text: t })); }); L.appendChild(sh); }
     rows.slice(0, ssShown).forEach(function(x){
       var del = h("button", { type: "button", class: "danger smallbtn", text: "Delete", "aria-label": "Delete session " + x.a + " " + x.t });
       del.onclick = function(){
@@ -2802,10 +2837,13 @@ async function computeExactItems(cat, patchCode, progress){
   $("hForm").addEventListener("submit", function(ev){
     ev.preventDefault();
     var name = $("hName").value, e = hPick && hPick.n === norm(name) ? hPick : exactEntry(name);
-    var r = addLoot({ name: name, cat: e ? e.c : (ui.cat || "Other"), sub: e ? (e.s || "") : "", qty: $("hQty").value, loc: ui.loc, sys: ui.sys, src: ui.src });
+    var r = addLoot({ name: name, cat: isMaterialName(name) ? "Material" : (e ? e.c : (ui.cat || "Other")), sub: e ? (e.s || "") : "", qty: $("hQty").value, q: $("hQ").value, loc: ui.loc, sys: ui.sys, src: ui.src });
     if (r === null){ say($("hMsg"), "Enter an item name and a quantity above zero.", true); return; }
-    say($("hMsg"), r); $("hName").value = ""; $("hQty").value = 1; hPick = null; $("hName").focus();
+    say($("hMsg"), r); $("hName").value = ""; $("hQty").value = 1; $("hQ").value = ""; $("hQWrap").hidden = true; hPick = null; $("hName").focus();
   });
+  function isMaterialName(name){ var k = nameKey(name); if (!k) return false; var e = exactEntry(name); if (e && e.c === "Material") return true; return matNames().some(function(n){ return nameKey(n) === k; }); }
+  $("hName").addEventListener("input", function(){ $("hQWrap").hidden = !isMaterialName($("hName").value); });
+  $("fCat").addEventListener("change", function(){ $("fQWrap").hidden = $("fCat").value !== "Material"; });
   function homeRow(a, b){ return h("div", { class: "lrow" }, h("span", { text: a }), h("span", { class: "dim", text: b })); }
   function renderHome(){
     $("hWhere").textContent = homeWhere();
@@ -2844,6 +2882,21 @@ async function computeExactItems(cat, patchCode, progress){
   }
 
   // ---------- backup / restore ----------
+  var bkArmed = null, bkTimer = null, BKLABEL = { daily: "Daily", "import": "Before import", restore: "Before restore", manual: "Manual" };
+  function renderBackups(){
+    if (!NATIVE || !NATIVE.listBackups) return;
+    NATIVE.listBackups().then(function(list){
+      var L = $("bkList"); L.textContent = "";
+      (list || []).forEach(function(b){
+        var btn = h("button", { type: "button", class: "danger smallbtn", text: bkArmed === b.name ? "Confirm" : "Restore" });
+        btn.onclick = function(){
+          if (bkArmed !== b.name){ bkArmed = b.name; clearTimeout(bkTimer); bkTimer = setTimeout(function(){ bkArmed = null; renderBackups(); }, 3000); renderBackups(); return; }
+          NATIVE.restoreBackup(b.name).then(function(ok){ if (ok) location.reload(); else say($("ioMsg"), "Couldn't restore that backup.", true); });
+        };
+        L.appendChild(h("div", { class: "hrow", style: "grid-template-columns:130px 1fr auto;align-items:center" }, h("b", { text: BKLABEL[b.kind] || b.kind }), h("span", { class: "dim", text: new Date(b.time).toLocaleString() + " · " + fmt(b.items) + " stacks" + (b.mats ? ", " + fmt(b.mats) + " materials" : "") }), btn));
+      });
+    }).catch(function(){});
+  }
   $("exportBtn").onclick = function(){
     $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 3,
       items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc, tag: i.tag || "", note: i.note || "" }; }),
@@ -2881,8 +2934,8 @@ async function computeExactItems(cat, patchCode, progress){
       armedBtns[btn.id] = setTimeout(function(){ armedBtns[btn.id] = 0; btn.textContent = label; btn.classList.remove("armed"); }, 3000);
     };
   }
-  twoClick($("replaceBtn"), "Replace my list", function(){ importWith("replace"); });
-  twoClick($("clearBtn"), "Clear everything", function(){ snapshot(); items = []; known = {}; wish = {}; sel = {}; commit("Cleared the list"); say($("ioMsg"), "List cleared. Use Undo to bring it back."); });
+  twoClick($("replaceBtn"), "Replace my list", function(){ if (NATIVE && NATIVE.snapshot) NATIVE.snapshot("import"); importWith("replace"); renderBackups(); });
+  twoClick($("clearBtn"), "Clear everything", function(){ if (NATIVE && NATIVE.snapshot) NATIVE.snapshot("manual"); snapshot(); items = []; known = {}; wish = {}; mats = []; sel = {}; commit("Cleared the list"); say($("ioMsg"), "List cleared. Use Undo to bring it back."); });
 
   // ---------- CSV export ----------
   $("lootCsvBtn").onclick = function(){
@@ -2918,12 +2971,14 @@ async function computeExactItems(cat, patchCode, progress){
     if (NATIVE.version) NATIVE.version().then(function(v){ if (v){ $("appVer").textContent = "v" + v; $("appVer").hidden = false; } }).catch(function(){});
     NATIVE.dataPath().then(function(p){ $("dataPath").textContent = p; }).catch(function(){});
     $("openFolderBtn").addEventListener("click", function(){ NATIVE.openFolder(); });
+    $("bkNow").addEventListener("click", function(){ if (NATIVE.snapshot && NATIVE.snapshot("manual")){ say($("ioMsg"), "Backup saved."); renderBackups(); } else say($("ioMsg"), "Couldn't make a backup.", true); });
+    renderBackups();
   }
   fillSelect($("fCat"), CATS); fillSelect($("qCat"), CATS, "All categories"); fillSelect($("bCat"), CATS, "All categories");
   fillTagFilter();
   if (NATIVE && NATIVE.onQuickAdd) NATIVE.onQuickAdd(function(p){
     snapshot();
-    if (!p || !addItem(items, { name: p.name, cat: p.cat, sub: p.sub, qty: p.qty, loc: p.loc })){ undoStack.pop(); $("undoBtn").disabled = !undoStack.length; return; }
+    if (!p || !addItem(items, { name: p.name, cat: p.cat, sub: p.sub, qty: p.qty, loc: p.loc })){ undoStack.pop(); syncUndo(); return; }
     if (p.src || p.sys) logLoot({ name: p.name, cat: p.cat, sub: p.sub, qty: cleanQty(p.qty, p.cat), y: p.sys, w: p.src });
     commit(); say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
   });

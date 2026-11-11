@@ -125,6 +125,9 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.on('store:save', (e, data) => {
       try { e.returnValue = fromApp(e) ? store.save(data) : false; } catch (err) { e.returnValue = false; }
     });
+    ipcMain.on('store:snapshot', (e, label) => { try { e.returnValue = fromApp(e) ? store.snapshot(String(label)) : false; } catch (err) { e.returnValue = false; } });
+    ipcMain.handle('store:backups', (e) => { try { return fromApp(e) ? store.listBackups() : []; } catch (err) { return []; } });
+    ipcMain.handle('store:restore', (e, name) => { try { return fromApp(e) ? store.restoreBackup(String(name)) : false; } catch (err) { return false; } });
     ipcMain.handle('cat:load', (e) => { try { return fromApp(e) ? store.loadCatalogue() : null; } catch (err) { return null; } });
     ipcMain.handle('cat:save', (e, cat) => { try { return fromApp(e) ? store.saveCatalogue(cat) : false; } catch (err) { return false; } });
     ipcMain.handle('blob:load', (e, name) => { try { return fromApp(e) ? store.loadBlob(String(name)) : null; } catch (err) { return null; } });

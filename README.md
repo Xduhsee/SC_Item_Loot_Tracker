@@ -54,3 +54,8 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 2. `git tag v1.1.1` then `git push --tags`.
 3. The workflow builds the installer and publishes it, with `latest.yml`, to Releases.
 4. Installed copies (installer build only) check on launch, download it, and offer to restart. The portable .exe never auto-updates. The repo must be public for this to work.
+
+## v1.11.0
+- Data tab: labelled backups (import, restore, manual) with a Restore button. Restoring takes a snapshot of your current data first.
+- Quality field on Home quick-add for materials; Undo now covers materials.
+- Planner and Sessions restyled as tables to match the rest of the app.
