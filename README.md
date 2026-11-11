@@ -96,6 +96,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - How to use: new button in the header and footer. A short guide for each section, plus a Credits page.
 - Home shows a Start here note until the item database is downloaded.
 - Clear history is now a red outline button, like the other destructive buttons. Fixed "1 missions" wording, clearer Quick add location text, and "Export sessions CSV".
+- Renamed Stuff to My Stuff and Board to Mission board. Find links on Loot by location and the Load a file button are easier to see. On phones the item buttons are larger and always visible.
 
 ## Data sources and credits
 - Items, blueprints, missions and mining locations: [Star Citizen Wiki API](https://api.star-citizen.wiki), made by the community. Their guidance is to credit them in public projects and not use the data commercially.

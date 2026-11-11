@@ -103,6 +103,7 @@
   .howlist{margin:12px 0 4px;padding-left:20px;display:flex;flex-direction:column;gap:9px}.howlist li{line-height:1.45}.howlist b{color:var(--text)}
   #hClear{background:transparent;border:1px solid #6a2a2a;color:var(--bad);font-weight:500}#hClear.armed{background:var(--bad);color:#1a0b0b}
   .findbtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;font-weight:400;text-decoration:underline dotted}
+  .findbtn.vis{border:1px solid #2f6a45;border-radius:8px;padding:4px 10px;font-size:12px;color:#b9d9c4;text-decoration:none;margin-left:8px}
   .findbtn:hover:not(:disabled){background:none;box-shadow:none;color:var(--accent)}
   .item:last-child{border-radius:0 0 8px 8px}
   .name{overflow-wrap:anywhere}
@@ -383,7 +384,7 @@
   .bktbl{border:1px solid var(--line);border-radius:10px;overflow:hidden}.bktbl .empty{border:0}
   .bkrow{display:grid;grid-template-columns:120px minmax(0,1fr) minmax(0,1fr) 90px;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid #16281d;font-size:14px}.bkrow:first-child{border-top:0}
   .bkrow .badge{justify-self:start}
-  .filebtn{flex-direction:row;align-items:center;cursor:pointer}.filebtn span{padding:8px 14px;border:1px solid var(--line);border-radius:6px;font-weight:600}
+  .filebtn{flex-direction:row;align-items:center;cursor:pointer}.filebtn span{display:inline-flex;align-items:center;min-height:38px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-weight:600}
   .filebtn input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;padding:0}
   .filebtn:focus-within span{outline:2px solid var(--accent)}
   .dangerzone{border-color:#6a2a2a}.dangerzone h2{color:#ff9b9b}
@@ -428,6 +429,12 @@
   .ladder{display:flex;gap:4px}.ladder div{flex:1;min-width:0;font-size:11px;color:var(--mute)}
   .ladder i{display:block;height:6px;border-radius:99px;background:#16281d;margin-bottom:4px}.ladder .on i{background:var(--accent2)}.ladder .cur{color:var(--text);font-weight:700}
   @media (max-width:760px){.mgrid{grid-template-columns:1fr}.mstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (hover:none){.item .acts,.bpact .findbtn{opacity:1}}
+  @media (max-width:700px){
+    .item .stepper button{width:38px;min-height:38px}
+    .tagsel{min-height:36px}
+    .acts button,.bpact .smallbtn,.bpact .findbtn,.bcfoot .findbtn,.bcfoot .primary{min-height:36px;padding:7px 12px}
+  }
 </style>
 </head>
 <body>
@@ -445,14 +452,14 @@
           </div>
   </header>
 
-  <div id="storageWarn" class="banner" hidden>This browser is blocking saved data, so your list will disappear when you close the page. Use the Data &amp; backup tab to copy it out before you leave.</div>
+  <div id="storageWarn" class="banner" hidden>This browser is blocking saved data, so your list will disappear when you close the page. Use the Data tab to copy it out before you leave.</div>
   <div id="patchBanner" class="banner info" hidden><span id="patchText"></span><button type="button" id="patchBtn">Update now</button></div>
   <div id="prog" class="prog" hidden><div class="bar"><i id="barFill"></i></div><div class="mini" id="progText"></div></div>
 
   <div class="navwrap">
   <nav class="tabs groups" role="tablist" id="groups" aria-label="Sections">
     <button role="tab" data-group="home" data-tab="home" aria-selected="true">Home</button>
-    <button role="tab" data-group="stuff" aria-selected="false">Stuff</button>
+    <button role="tab" data-group="stuff" aria-selected="false">My Stuff</button>
     <button role="tab" data-group="missions" aria-selected="false">Missions</button>
     <button role="tab" data-group="find" aria-selected="false">Find</button>
     <button role="tab" data-group="mining" aria-selected="false">Mining / Salvaging</button>
@@ -471,7 +478,7 @@
     <button role="tab" data-tab="mfind" aria-selected="false">Find ore</button>
     <button role="tab" data-tab="msalv" aria-selected="false">Salvage</button>
     <button role="tab" data-tab="mref" aria-selected="false">Refinery</button>
-    <button role="tab" data-tab="mis" aria-selected="false">Board</button>
+    <button role="tab" data-tab="mis" aria-selected="false">Mission board</button>
     <button role="tab" data-tab="stand" aria-selected="false">My standing</button>
     <button role="tab" data-tab="plan" aria-selected="false">Blueprint planner</button>
     <button role="tab" data-tab="sess" aria-selected="false">Sessions</button>
@@ -2937,7 +2944,7 @@ async function computeExactItems(cat, patchCode, progress){
       out.appendChild(h("div", { class: "hrow2 lrow2" },
         h("span", null, h("span", { class: "name", text: r.n }), h("div", { class: "dim", text: [r.c, r.s].filter(Boolean).join(" · ") })),
         h("span", { text: r.cnt + (r.cnt === 1 ? " time" : " times") }), h("span", { text: fmt(r.q) }),
-        h("span", { class: "r" }, h("span", { class: "dim", text: r.last.slice(0, 10) + "  " }), h("button", { type: "button", class: "findbtn", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFindPopup(r.n, r.s, ""); } }))));
+        h("span", { class: "r" }, h("span", { class: "dim", text: r.last.slice(0, 10) + "  " }), h("button", { type: "button", class: "findbtn vis", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFindPopup(r.n, r.s, ""); } }))));
     });
     if (rows.length > 150) out.appendChild(h("div", { class: "dim", style: "margin-top:6px", text: "Showing the top 150 items. Narrow it with a place." }));
   }
@@ -3535,7 +3542,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Quick add.", "Type an item, set the quantity, press Enter. It goes to the location shown under the form."],
       ["Worth farming next.", "Missions with the most blueprints you do not know yet. Needs mission data."],
       ["Session.", "Pick an activity and press Start. When you end it, enter what you earned."]]],
-    ["Stuff", [
+    ["My Stuff", [
       ["Inventory.", "Items grouped by location. Tag each Keep, Sell, Scrap or Trade. Refresh UEX prices to see values."],
       ["Materials.", "SCU by quality. Quality runs 1 to 1000 and sets how good crafted items are."],
       ["Blueprints.", "Tick I know this one. Craftable now means your materials cover it. +1 adds it to the Craft list."],
@@ -3543,8 +3550,8 @@ async function computeExactItems(cat, patchCode, progress){
       ["Armor sets.", "Which pieces of each set you own."]]],
     ["Missions", [
       ["First.", "Load mission data once. It is about 1,800 missions."],
-      ["Board.", "Missions by giver with reward, time, rep and blueprints."],
-      ["My standing.", "Set your rank with each faction once. The Board then shows what you can accept."],
+      ["Mission board.", "Missions by giver with reward, time, rep and blueprints."],
+      ["My standing.", "Set your rank with each faction once. The Mission board then shows what you can accept."],
       ["Blueprint planner.", "Missions ranked by new blueprints you do not have."]]],
     ["Find", [
       ["Finder.", "Type an item or blueprint. Shows shops and prices, missions that reward it, and what it scraps into."],
@@ -3570,7 +3577,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Prices and refining.", "Shop prices, refinery bonuses and methods come from UEX (uexcorp.space). Crowdsourced, so it can be wrong or behind the live game."],
       ["Fan-made.", "Free and non-commercial. Not affiliated with or endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen and Squadron 42 are their trademarks."]]]
   ];
-  var HOWGROUP = { home: "Home", stuff: "Stuff", missions: "Missions", find: "Find", mining: "Mining / Salvaging", track: "Track", data: "Data" }, howOpener = null, howSec = "Start";
+  var HOWGROUP = { home: "Home", stuff: "My Stuff", missions: "Missions", find: "Find", mining: "Mining / Salvaging", track: "Track", data: "Data" }, howOpener = null, howSec = "Start";
   function howOpen(){ return !$("hpop").hidden; }
   function howClose(){ $("hpop").hidden = true; document.body.classList.remove("modalopen"); if (howOpener && document.contains(howOpener)) howOpener.focus(); howOpener = null; }
   function renderHow(){
