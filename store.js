@@ -6,7 +6,7 @@ const KEEP_BACKUPS = 14;
 const KEEP_SNAPSHOTS = 10;
 const SNAP_LABELS = ['import', 'restore', 'manual'];
 const MAX_BYTES = 25e6;
-const BLOBS = ['prices', 'plan']; // small extra files the page may keep next to the data file
+const BLOBS = ['prices', 'plan', 'mine']; // small extra files the page may keep next to the data file
 
 function createStore(dir) {
   const dataFile = path.join(dir, 'tracker-data.json');

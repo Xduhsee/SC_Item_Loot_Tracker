@@ -4,9 +4,11 @@ const fs = require('fs');
 const { createStore } = require('./store');
 
 const HOTKEY = 'CommandOrControl+Shift+L';
+const SCAN_HOTKEY = 'CommandOrControl+Shift+S';
 
 let win = null;
 let quick = null;
+let scan = null;
 let store = null;
 let updater = null;
 let manualCheck = false;
@@ -106,6 +108,35 @@ function toggleQuick() {
   else show();
 }
 
+// Small always-on-top window for decoding scan numbers while flying. Same rules as the quick-add window.
+function createScan() {
+  scan = new BrowserWindow({
+    width: 360,
+    height: 460,
+    show: false,
+    minimizable: false,
+    maximizable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    title: 'Scan decoder',
+    backgroundColor: '#060a07',
+    icon: path.join(__dirname, 'build', 'icon.png'),
+    webPreferences: webPrefs()
+  });
+  scan.setMenu(null);
+  scan.setAlwaysOnTop(true, 'screen-saver');
+  hardenWindow(scan);
+  scan.on('close', (e) => { if (!quitting) { e.preventDefault(); scan.hide(); } });
+  scan.on('closed', () => { scan = null; });
+  return scan.loadFile(path.join(__dirname, 'app', 'scan.html'));
+}
+function toggleScan() {
+  if (scan && !scan.isDestroyed() && scan.isVisible()) { scan.hide(); return; }
+  const show = () => { scan.show(); scan.focus(); scan.webContents.send('scan:shown'); };
+  if (!scan || scan.isDestroyed()) createScan().then(show).catch(() => {});
+  else show();
+}
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
@@ -160,6 +191,10 @@ if (!app.requestSingleInstanceLock()) {
       return true;
     });
     ipcMain.on('quick:hide', (e) => { if (fromApp(e) && quick && !quick.isDestroyed()) quick.hide(); });
+    ipcMain.on('scan:hide', (e) => { if (fromApp(e) && scan && !scan.isDestroyed()) scan.hide(); });
+    ipcMain.on('scan:pin', (e, on) => {
+      if (fromApp(e) && scan && !scan.isDestroyed()) { if (on) scan.setAlwaysOnTop(true, 'screen-saver'); else scan.setAlwaysOnTop(false); }
+    });
     ipcMain.on('cat:changed', (e) => {
       if (fromApp(e) && quick && !quick.isDestroyed()) quick.webContents.send('cat:changed');
     });
@@ -170,7 +205,10 @@ if (!app.requestSingleInstanceLock()) {
       { role: 'windowMenu' },
       {
         label: 'Tools',
-        submenu: [{ label: 'Quick add window', accelerator: HOTKEY, registerAccelerator: false, click: toggleQuick }]
+        submenu: [
+          { label: 'Quick add window', accelerator: HOTKEY, registerAccelerator: false, click: toggleQuick },
+          { label: 'Scan decoder window', accelerator: SCAN_HOTKEY, registerAccelerator: false, click: toggleScan }
+        ]
       },
       { label: 'Help', submenu: [{ label: 'Check for updates', click: checkNow }, { label: 'Version ' + app.getVersion(), enabled: false }] }
     ]));
@@ -192,6 +230,7 @@ if (!app.requestSingleInstanceLock()) {
 
     // Global hotkey. If another program already owns it, the Tools menu item still works.
     try { globalShortcut.register(HOTKEY, toggleQuick); } catch (e) {}
+    try { globalShortcut.register(SCAN_HOTKEY, toggleScan); } catch (e) {}
 
     setupUpdater();
   });

@@ -20,6 +20,10 @@ contextBridge.exposeInMainWorld('scStore', {
   quickHide: () => ipcRenderer.send('quick:hide'),
   onQuickAdd: (cb) => ipcRenderer.on('quick:apply', (_e, item) => cb(item)),
   onQuickShown: (cb) => ipcRenderer.on('quick:shown', () => cb()),
+  // scan decoder window
+  scanHide: () => ipcRenderer.send('scan:hide'),
+  scanPin: (on) => ipcRenderer.send('scan:pin', !!on),
+  onScanShown: (cb) => ipcRenderer.on('scan:shown', () => cb()),
   notifyCatalogue: () => ipcRenderer.send('cat:changed'),
   onCatalogueChanged: (cb) => ipcRenderer.on('cat:changed', () => cb())
 });

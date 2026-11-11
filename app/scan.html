@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scan decoder</title>
+<style>
+  :root{color-scheme:dark;--bg:#060a07;--panel:#0d1410;--line:#1e3a28;--text:#e0f5e6;--mute:#7da58a;--accent:#39ff14;--bad:#ff6b6b;--good:#7dffa6;--warn:#ffb454}
+  *{box-sizing:border-box}
+  body{margin:0;padding:12px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  h1{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0}
+  .pin{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--mute);cursor:pointer}
+  .pin input{accent-color:var(--accent);width:16px;height:16px}
+  input[type=text]{width:100%;min-height:46px;padding:6px 12px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;font:700 24px/1 inherit;letter-spacing:.04em}
+  input[type=text]:focus{outline:2px solid var(--accent)}
+  #recent{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  #recent button{background:none;border:1px solid var(--line);color:#b9d9c4;border-radius:99px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+  .card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px 12px;margin-top:8px}
+  .big{font-size:18px;font-weight:700}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#123a1c;color:var(--good);margin-left:6px;vertical-align:middle}
+  .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:13px;border-top:1px dashed var(--line)}
+  .row:first-of-type{border-top:0}.dim{color:var(--mute);text-align:right}
+  .h{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:8px 0 2px}
+  #msg{color:var(--mute);font-size:13px;margin-top:8px}
+  .hint{font-size:11px;color:var(--mute);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="top"><h1>Scan decoder</h1><label class="pin"><input type="checkbox" id="pin" checked> Pinned on top</label></div>
+<input id="n" type="text" inputmode="numeric" maxlength="9" placeholder="Scan number" aria-label="Scan number" autocomplete="off">
+<div id="recent"></div>
+<div id="out"></div>
+<div class="hint">Enter decodes &middot; Esc closes &middot; Ctrl+Shift+S shows or hides this window</div>
+<script>
+(function(){
+  var S = window.scStore, $ = function(id){ return document.getElementById(id); };
+  var KINDS = { ship: "Ship mining", fps: "Hand mining", veh: "Ground vehicle", salv: "Salvage" }, ORDER = { ship: 0, fps: 1, veh: 2, salv: 3 };
+  var mine = null, table = {}, recent = [];
+  function ok(k){ return String(k == null ? "" : k).replace(/\s*\((ore|raw)\)\s*$/i, "").trim().replace(/\s+/g, " ").toLowerCase(); }
+  function fmt(n){ return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+  function load(){
+    if (!S || !S.loadBlob){ say("This window only works inside the desktop app."); return; }
+    S.loadBlob("mine").then(function(m){
+      if (!m || !Array.isArray(m.locs)){ mine = null; say("No mining data yet. Open the Mining tab in the main window and press Download mining data."); return; }
+      mine = m; table = {}; var seen = {};
+      m.locs.forEach(function(L){ (L.g || []).forEach(function(g){ (g.r || []).forEach(function(x){
+        var key = g.k + "|" + ok(x.l) + "|" + x.sg; if (seen[key]) return; seen[key] = 1; (table[x.sg] = table[x.sg] || []).push({ k: g.k, l: x.l, sg: x.sg });
+      }); }); });
+      if ($("n").value) decode(); else say("Type the number from your scanner.");
+    }).catch(function(){ say("Could not read the mining data."); });
+  }
+  function say(t){ var o = $("out"); o.textContent = ""; var d = document.createElement("div"); d.id = "msg"; d.textContent = t; o.appendChild(d); }
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function decode(){
+    var n = Math.round(Number($("n").value.replace(/[\s,]/g, "")));
+    if (!(n > 0)){ say("Type the number from your scanner."); return; }
+    if (!mine){ load(); return; }
+    recent = [n].concat(recent.filter(function(x){ return x !== n; })).slice(0, 6); drawRecent();
+    var exact = [];
+    Object.keys(table).forEach(function(s){ var b = Number(s), k = Math.round(n / b); if (k >= 1 && k <= 30 && b * k === n) table[s].forEach(function(e){ exact.push({ k: e.k, l: e.l, sg: b, count: k }); }); });
+    exact.sort(function(a, b){ return a.count - b.count || (ORDER[a.k] || 0) - (ORDER[b.k] || 0) || a.l.localeCompare(b.l); });
+    var o = $("out"); o.textContent = "";
+    if (!exact.length){ say("No exact match for " + fmt(n) + "."); return; }
+    var best = exact[0], c = el("div", "card"), t = el("div", "big", best.l + (best.count > 1 ? " × " + best.count : ""));
+    t.appendChild(el("span", "badge", KINDS[best.k] || best.k)); c.appendChild(t);
+    var r = el("div", "row"); r.appendChild(el("span", "", "Signature")); r.appendChild(el("span", "dim", fmt(best.sg) + " each × " + best.count + " = " + fmt(n))); c.appendChild(r);
+    var key = ok(best.l), p = (mine.prices && mine.prices[key]) || (mine.sell && mine.sell[key]);
+    if (p){ var r2 = el("div", "row"); r2.appendChild(el("span", "", "Sells for")); r2.appendChild(el("span", "dim", fmt(p) + " aUEC per SCU")); c.appendChild(r2); }
+    var where = [];
+    mine.locs.forEach(function(L){ var sc = 0; (L.g || []).forEach(function(g){ if (g.k !== best.k) return; (g.r || []).forEach(function(x){ if (ok(x.l) === key) sc = Math.max(sc, g.p * x.pc / 100); }); }); if (sc > 0) where.push({ n: L.n, s: L.s, sc: sc }); });
+    where.sort(function(a, b){ return b.sc - a.sc; });
+    if (where.length){ c.appendChild(el("div", "h", "Best places")); where.slice(0, 3).forEach(function(w){ var rr = el("div", "row"); rr.appendChild(el("span", "", w.n)); rr.appendChild(el("span", "dim", w.s)); c.appendChild(rr); }); }
+    o.appendChild(c);
+    if (exact.length > 1){ var c2 = el("div", "card"); c2.appendChild(el("div", "h", "Could also be")); exact.slice(1, 5).forEach(function(x){ var rr = el("div", "row"); rr.appendChild(el("span", "", x.l + " × " + x.count)); rr.appendChild(el("span", "dim", KINDS[x.k] || x.k)); c2.appendChild(rr); }); o.appendChild(c2); }
+  }
+  function drawRecent(){
+    var b = $("recent"); b.textContent = "";
+    recent.forEach(function(n){ var x = el("button", "", fmt(n)); x.type = "button"; x.onclick = function(){ $("n").value = n; decode(); $("n").focus(); }; b.appendChild(x); });
+  }
+  $("pin").onchange = function(){ if (S && S.scanPin) S.scanPin($("pin").checked); };
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){ if (S && S.scanHide) S.scanHide(); }
+    else if (e.key === "Enter"){ e.preventDefault(); decode(); }
+  });
+  function shown(){ $("n").value = ""; $("n").focus(); load(); }
+  if (S){ if (S.onScanShown) S.onScanShown(shown); }
+  shown();
+})();
+</script>
+</body>
+</html>

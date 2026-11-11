@@ -192,6 +192,32 @@
     .navwrap{margin:0 -16px 8px}
   }
 
+  /* mining */
+  .minebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+  .minebar .err{color:var(--bad)}
+  .msbig{font-size:26px;font-weight:700;letter-spacing:.04em;min-height:52px;max-width:260px;width:auto;flex:1 1 150px;min-width:0}
+  .mtw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:6px 0}
+  table.mt{width:100%;border-collapse:collapse;font-size:13px}
+  table.mt th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);background:var(--panel2);padding:8px 12px;white-space:nowrap}
+  table.mt td{padding:8px 12px;border-top:1px solid #16281d;vertical-align:top}
+  table.mt tr:hover td{background:#14211a}
+  .mrow2{align-items:center;gap:8px;margin-bottom:6px}.mrow2 input[type=text]{flex:1 1 200px;min-width:0}
+  .mrdet{margin:10px 0;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+  .mrdet summary{cursor:pointer;color:#b9d9c4}
+  .mrgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+  .mrgrid label{font-size:12px;color:var(--mute)}.mrgrid input{width:100%;min-height:34px}
+  .mbar{display:inline-block;width:70px;height:6px;border-radius:4px;background:var(--line);vertical-align:middle}
+  .mbar i{display:block;height:6px;border-radius:4px;background:var(--violet)}
+  .mbar.y i{background:var(--accent)}.mbar.c i{background:#ffb454}
+  .mcell{display:inline-flex;align-items:center;gap:8px}
+  @media (max-width:700px){
+    table.mt thead{display:none}
+    table.mt,table.mt tbody,table.mt tr,table.mt td{display:block}
+    table.mt tr{border-top:1px solid #16281d;padding:8px 10px}
+    table.mt td{border:0;padding:2px 0}
+    table.mt td::before{content:attr(data-l) ": ";color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+    .msbig{max-width:none;flex:1}
+  }
   /* tables */
   .sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
   .tbar{align-items:center}
@@ -427,6 +453,7 @@
     <button role="tab" data-group="stuff" aria-selected="false">Stuff</button>
     <button role="tab" data-group="missions" aria-selected="false">Missions</button>
     <button role="tab" data-group="find" aria-selected="false">Find</button>
+    <button role="tab" data-group="mining" aria-selected="false">Mining</button>
     <button role="tab" data-group="track" aria-selected="false">Track</button>
     <button role="tab" data-group="data" data-tab="data" aria-selected="false" title="Data and backup">Data</button>
   </nav>
@@ -438,6 +465,10 @@
     <button role="tab" data-tab="sets" aria-selected="false">Armor sets</button>
     <button role="tab" data-tab="find" aria-selected="false">Finder</button>
     <button role="tab" data-tab="loot" aria-selected="false">Loot by location</button>
+    <button role="tab" data-tab="mscan" aria-selected="false">Scan decoder</button>
+    <button role="tab" data-tab="mfind" aria-selected="false">Find ore</button>
+    <button role="tab" data-tab="msalv" aria-selected="false">Salvage</button>
+    <button role="tab" data-tab="mref" aria-selected="false">Refinery</button>
     <button role="tab" data-tab="mis" aria-selected="false">Board</button>
     <button role="tab" data-tab="stand" aria-selected="false">My standing</button>
     <button role="tab" data-tab="plan" aria-selected="false">Blueprint planner</button>
@@ -639,6 +670,45 @@
       <div class="bprog" id="bStats"></div>
       <div id="bList"></div>
       <div class="row" style="margin-top:10px"><button class="ghost" id="bMore" type="button" hidden>Show more</button></div>
+    </div>
+  </section>
+
+  <!-- MINING -->
+  <section id="tab-mscan" hidden>
+    <div class="panel">
+      <h2>Scan decoder</h2>
+      <div class="minebar" id="mbarScan"></div>
+      <div class="row tbar">
+        <input id="msIn" class="msbig" type="text" inputmode="numeric" maxlength="9" placeholder="Scan number" aria-label="Scan number" autocomplete="off">
+        <button type="button" id="msGo">Decode</button>
+      </div>
+      <div class="pills" id="msRecent"></div>
+      <div id="msOut"></div>
+      <div id="msLog"></div>
+    </div>
+  </section>
+  <section id="tab-mfind" hidden>
+    <div class="panel">
+      <h2>Find ore</h2>
+      <div class="minebar" id="mbarFind"></div>
+      <div class="row tbar" id="mfCtl"></div>
+      <div id="mfOut"></div>
+    </div>
+  </section>
+  <section id="tab-msalv" hidden>
+    <div class="panel">
+      <h2>Salvage</h2>
+      <div class="minebar" id="mbarSalv"></div>
+      <div class="row tbar"><select id="mvSys" aria-label="System"><option value="">All systems</option></select><input id="mvQ" class="grow" type="search" placeholder="Filter by place or wreck" maxlength="60" aria-label="Filter salvage sites"></div>
+      <div id="mvOut"></div>
+    </div>
+  </section>
+  <section id="tab-mref" hidden>
+    <div class="panel">
+      <h2>Refinery</h2>
+      <div class="minebar" id="mbarRef"></div>
+      <div id="mrCtl"></div>
+      <div id="mrOut"></div>
     </div>
   </section>
 
@@ -914,7 +984,7 @@
     <div id="fpBody"></div>
   </div>
 </div>
-  <div class="foot"><a href="#" id="bugLink">Report a bug</a> · Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>6</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
+  <div class="foot"><a href="#" id="bugLink">Report a bug</a> · Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>7</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
 </div>
 <div id="toasts" aria-live="polite" role="status"></div>
 
@@ -1568,7 +1638,196 @@ function rankUps(ms, known, rep){
 }
 function sanitizeUi(o){
   o = o && typeof o === "object" && !Array.isArray(o) ? o : {};
-  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq) };
+  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine) };
+}
+// ---------- mining ----------
+var MINE_KINDS = { ship: "Ship mining", fps: "Hand mining", veh: "Ground vehicle", salv: "Salvage" };
+var MINE_ORDER = { ship: 0, fps: 1, veh: 2, salv: 3 };
+function oreKey(s){ return nameKey(String(s == null ? "" : s).replace(/\s*\((ore|raw)\)\s*$/i, "")); }
+function compactLoc(d){
+  if (!d || typeof d !== "object") return null;
+  var g = [];
+  (Array.isArray(d.resources) ? d.resources : []).forEach(function(grp){
+    if (!grp) return;
+    var k = grp.resource_kind === "salvage" ? "salv" : grp.mining_type === "Ship Mining" ? "ship" : grp.mining_type === "FPS Mining" ? "fps" : grp.mining_type === "Vehicle Mining" ? "veh" : "";
+    if (!k) return;
+    var r = (Array.isArray(grp.resources) ? grp.resources : []).map(function(x){
+      x = x || {}; var cl = x.clustering;
+      return { l: norm(x.label || x.name).slice(0, 60), sg: Math.round(Number(x.signature)) || 0, pc: Math.max(0, Math.min(100, Number(x.relative_probability_max_percent) || 0)), c: cl && Number(cl.max_size) > 0 ? [Number(cl.min_size) || 0, Number(cl.max_size) || 0] : null };
+    }).filter(function(x){ return x.l && x.sg > 0; });
+    if (r.length) g.push({ k: k, p: Math.max(0, Math.min(100, Number(grp.group_probability_max_percent) || 0)), r: r });
+  });
+  if (!g.length) return null;
+  var par = d.parent && typeof d.parent === "object" ? d.parent.name : d.parent;
+  return { n: norm(d.name).slice(0, 80), s: norm(d.system).replace(/ System$/i, "").slice(0, 24), p: norm(par).slice(0, 60), t: norm(d.type && d.type.name).slice(0, 30), g: g };
+}
+function cleanLoc(l){
+  if (!l || typeof l !== "object" || !norm(l.n) || !Array.isArray(l.g)) return null;
+  var g = l.g.map(function(x){
+    if (!x || !MINE_KINDS[x.k] || !Array.isArray(x.r)) return null;
+    var r = x.r.map(function(y){ return y && norm(y.l) && Number(y.sg) > 0 ? { l: norm(y.l).slice(0, 60), sg: Math.round(Number(y.sg)), pc: Math.max(0, Math.min(100, Number(y.pc) || 0)), c: Array.isArray(y.c) ? [Number(y.c[0]) || 0, Number(y.c[1]) || 0] : null } : null; }).filter(Boolean);
+    return r.length ? { k: x.k, p: Math.max(0, Math.min(100, Number(x.p) || 0)), r: r } : null;
+  }).filter(Boolean);
+  return g.length ? { n: norm(l.n).slice(0, 80), s: norm(l.s).slice(0, 24), p: norm(l.p).slice(0, 60), t: norm(l.t).slice(0, 30), g: g } : null;
+}
+var REF_BASE = { 1: 70, 2: 82, 3: 92 };
+var REF_DEFAULT = [["Cormack", 1, 2, 3], ["Dinyx Solventation", 3, 1, 1], ["Electrostarolysis", 2, 2, 2], ["Gaskin Process", 2, 3, 3], ["Pyrometric Chromalysis", 3, 3, 1], ["Kazen Winnowing", 1, 2, 2], ["Thermonatic Deposition", 2, 2, 1], ["Ferron Exchange", 3, 2, 1], ["XCR Reaction", 1, 3, 3]];
+function refMethods(raw, over){
+  var src = Array.isArray(raw) && raw.length ? raw : REF_DEFAULT.map(function(m){ return { name: m[0], rating_yield: m[1], rating_cost: m[2], rating_speed: m[3] }; });
+  over = over && typeof over === "object" ? over : {};
+  return src.map(function(m){
+    var n = norm(m && m.name).slice(0, 40), yr = Math.max(1, Math.min(3, Math.round(Number(m.rating_yield)) || 2));
+    var o = Number(over[n]), y = o > 0 && o <= 100 ? o : REF_BASE[yr];
+    return n ? { n: n, y: y, yr: yr, c: Math.max(1, Math.min(3, Math.round(Number(m.rating_cost)) || 2)), s: Math.max(1, Math.min(3, Math.round(Number(m.rating_speed)) || 2)) } : null;
+  }).filter(Boolean);
+}
+function sanitizeMine(m){
+  if (!m || typeof m !== "object" || !Array.isArray(m.locs)) return null;
+  var locs = m.locs.slice(0, 800).map(cleanLoc).filter(Boolean);
+  if (!locs.length) return null;
+  var yields = (Array.isArray(m.yields) ? m.yields : []).slice(0, 3000).map(function(y){
+    return y && norm(y.st) && norm(y.k) && isFinite(Number(y.b)) ? { st: norm(y.st).slice(0, 80), sys: norm(y.sys).slice(0, 24), k: norm(y.k).slice(0, 40), b: Math.max(-50, Math.min(50, Number(y.b))) } : null;
+  }).filter(Boolean);
+  var prices = {}; if (m.prices && typeof m.prices === "object") Object.keys(m.prices).slice(0, 400).forEach(function(k){ var p = Number(m.prices[k]); if (p >= 0 && isFinite(p)) prices[norm(k).slice(0, 40)] = p; });
+  var sell = {}; if (m.sell && typeof m.sell === "object") Object.keys(m.sell).slice(0, 400).forEach(function(k){ var p = Number(m.sell[k]); if (p >= 0 && isFinite(p)) sell[norm(k).slice(0, 40)] = p; });
+  var methods = (Array.isArray(m.methods) ? m.methods : []).slice(0, 30).map(function(x){ return x && norm(x.name) ? { name: norm(x.name).slice(0, 40), rating_yield: Number(x.rating_yield) || 2, rating_cost: Number(x.rating_cost) || 2, rating_speed: Number(x.rating_speed) || 2 } : null; }).filter(Boolean);
+  return { v: 1, t: norm(m.t).slice(0, 30), locs: locs, yields: yields, prices: prices, sell: sell, methods: methods };
+}
+function sigTable(locs){
+  var by = {}, seen = {};
+  (locs || []).forEach(function(L){ L.g.forEach(function(g){ g.r.forEach(function(x){
+    var key = g.k + "|" + oreKey(x.l) + "|" + x.sg; if (seen[key]) return; seen[key] = 1;
+    (by[x.sg] = by[x.sg] || []).push({ k: g.k, l: x.l, sg: x.sg });
+  }); }); });
+  return by;
+}
+function decodeSig(by, n, maxCount){
+  n = Math.round(Number(n)); maxCount = maxCount || 30;
+  var exact = [], near = [], have = {};
+  if (!(n > 0) || !by) return { exact: exact, near: near };
+  Object.keys(by).forEach(function(s){
+    var b = Number(s), k = Math.round(n / b);
+    if (k < 1 || k > maxCount) return;
+    if (b * k === n) by[s].forEach(function(e){ exact.push({ k: e.k, l: e.l, sg: b, count: k }); });
+  });
+  exact.forEach(function(e){ have[oreKey(e.l)] = 1; });
+  Object.keys(by).forEach(function(s){
+    var b = Number(s), k = Math.round(n / b);
+    if (k < 1 || k > maxCount || b * k === n || Math.abs(b * k - n) / n > 0.015) return;
+    by[s].forEach(function(e){ if (!have[oreKey(e.l)]) near.push({ k: e.k, l: e.l, sg: b, count: k, diff: b * k - n }); });
+  });
+  var kord = function(a, b){ return (MINE_ORDER[a.k] || 0) - (MINE_ORDER[b.k] || 0) || a.l.localeCompare(b.l); };
+  exact.sort(function(a, b){ return a.count - b.count || kord(a, b); });
+  near.sort(function(a, b){ return Math.abs(a.diff) - Math.abs(b.diff) || kord(a, b); });
+  return { exact: exact, near: near.slice(0, 6) };
+}
+function oreLocations(locs, label, kind){
+  var key = oreKey(label), out = [];
+  (locs || []).forEach(function(L){
+    var best = null;
+    L.g.forEach(function(g){
+      if (kind && g.k !== kind) return;
+      g.r.forEach(function(x){
+        if (oreKey(x.l) !== key) return;
+        var sc = g.p * x.pc / 100;
+        if (!best || sc > best.score) best = { loc: L, k: g.k, sg: x.sg, score: sc, gp: g.p, pc: x.pc, c: x.c };
+      });
+    });
+    if (best) out.push(best);
+  });
+  out.sort(function(a, b){ return b.score - a.score || a.loc.n.localeCompare(b.loc.n); });
+  return out;
+}
+function mineLabels(locs, kinds){
+  var seen = {}, out = [];
+  (locs || []).forEach(function(L){ L.g.forEach(function(g){ if (kinds && kinds.indexOf(g.k) < 0) return; g.r.forEach(function(x){ var k = oreKey(x.l); if (!seen[k]){ seen[k] = 1; out.push({ l: x.l, k: g.k, key: k }); } }); }); });
+  out.sort(function(a, b){ return (MINE_ORDER[a.k] || 0) - (MINE_ORDER[b.k] || 0) || a.l.localeCompare(b.l); });
+  return out;
+}
+function coverage(locs, labels, kinds){
+  var want = {}; (labels || []).forEach(function(l){ want[oreKey(l)] = l; });
+  var keys = Object.keys(want), out = [];
+  if (!keys.length) return out;
+  (locs || []).forEach(function(L){
+    var have = {}, score = 0;
+    L.g.forEach(function(g){
+      if (g.k === "salv" || (kinds && kinds.indexOf(g.k) < 0)) return;
+      g.r.forEach(function(x){ var k = oreKey(x.l); if (want[k]){ var s = g.p * x.pc / 100; if (!have[k] || s > have[k]) have[k] = s; } });
+    });
+    var hk = Object.keys(have); if (!hk.length) return;
+    hk.forEach(function(k){ score += have[k]; });
+    out.push({ loc: L, have: hk.map(function(k){ return want[k]; }), score: score });
+  });
+  out.sort(function(a, b){ return b.have.length - a.have.length || b.score - a.score || a.loc.n.localeCompare(b.loc.n); });
+  return out;
+}
+function salvageSites(locs){
+  var out = [];
+  (locs || []).forEach(function(L){
+    L.g.forEach(function(g){ if (g.k !== "salv") return; out.push({ loc: L, gp: g.p, items: g.r.slice().sort(function(a, b){ return b.pc - a.pc; }) }); });
+  });
+  out.sort(function(a, b){ return b.gp - a.gp || a.loc.n.localeCompare(b.loc.n); });
+  return out;
+}
+function salvSigSheet(locs){
+  var by = {};
+  (locs || []).forEach(function(L){ L.g.forEach(function(g){ if (g.k !== "salv") return; g.r.forEach(function(x){ var e = by[x.sg] || (by[x.sg] = {}); e[x.l] = 1; }); }); });
+  return Object.keys(by).map(Number).sort(function(a, b){ return a - b; }).map(function(sg){ return { sg: sg, names: Object.keys(by[sg]).sort() }; });
+}
+function refStations(yields, sys){
+  var seen = {}, out = [];
+  (yields || []).forEach(function(y){ if (sys && y.sys !== sys) return; if (!seen[y.st]){ seen[y.st] = 1; out.push({ st: y.st, sys: y.sys }); } });
+  return out.sort(function(a, b){ return a.st.localeCompare(b.st); });
+}
+function planRefine(rows, ctx){
+  rows = (rows || []).filter(function(r){ return r && r.k && r.scu > 0; });
+  var st = refStations(ctx.yields, ctx.sys), ms = ctx.methods || [], goal = ctx.goal || "out";
+  if (!rows.length || !st.length || !ms.length) return null;
+  var bonus = {}; (ctx.yields || []).forEach(function(y){ bonus[y.st + "|" + y.k] = y.b; });
+  var prices = ctx.prices || {}, anyPrice = rows.some(function(r){ return prices[r.k] > 0; });
+  if (goal === "profit" && !anyPrice) goal = "out";
+  function opt(r, s, m){
+    var b = bonus[s.st + "|" + r.k] || 0, out = r.scu * m.y / 100 * (1 + b / 100);
+    return { name: r.name, k: r.k, scu: r.scu, st: s.st, sys: s.sys, m: m, b: b, out: out, val: out * (prices[r.k] || 0) };
+  }
+  function score(o){
+    if (goal === "profit") return o.val;
+    if (goal === "fast") return o.m.s * 1e6 + o.out;
+    if (goal === "bal") return (o.out / o.scu * 0.6 + o.m.s / 3 * 0.2 + (4 - o.m.c) / 3 * 0.2) * o.scu;
+    return o.out;
+  }
+  function bestFor(r, list){
+    var best = null;
+    list.forEach(function(s){ ms.forEach(function(m){ var o = opt(r, s, m); if (!best || score(o) > score(best)) best = o; }); });
+    return best;
+  }
+  var multi = rows.map(function(r){ return bestFor(r, st); });
+  var oneBest = null;
+  st.forEach(function(s){
+    var picks = rows.map(function(r){ return bestFor(r, [s]); }), tot = 0;
+    picks.forEach(function(p){ tot += score(p); });
+    if (!oneBest || tot > oneBest.tot) oneBest = { tot: tot, picks: picks, st: s };
+  });
+  function sum(list, f){ var t = 0; list.forEach(function(o){ t += o[f]; }); return t; }
+  var chosen = ctx.one ? oneBest.picks : multi;
+  var stops = {}; chosen.forEach(function(o){ (stops[o.st] = stops[o.st] || { st: o.st, sys: o.sys, items: [] }).items.push(o); });
+  var chart = ms.map(function(m){
+    var best = null;
+    st.forEach(function(s){ var out = 0, val = 0; rows.forEach(function(r){ var o = opt(r, s, m); out += o.out; val += o.val; }); if (!best || out > best.out) best = { out: out, val: val, st: s.st }; });
+    return { m: m, out: best.out, val: best.val, st: best.st };
+  }).sort(function(a, b){ return b.out - a.out; });
+  return { goal: goal, items: chosen, stops: Object.keys(stops).map(function(k){ return stops[k]; }), out: sum(chosen, "out"), val: sum(chosen, "val"), scu: sum(chosen, "scu"),
+    multiOut: sum(multi, "out"), oneOut: sum(oneBest.picks, "out"), oneStation: oneBest.st.st, chart: chart };
+}
+function cleanOver(o){
+  var r = {}; if (o && typeof o === "object" && !Array.isArray(o)) Object.keys(o).slice(0, 30).forEach(function(k){ var v = Number(o[k]); if (v > 0 && v <= 100) r[norm(k).slice(0, 40)] = v; });
+  return r;
+}
+function sanitizeMineUi(o){
+  o = o && typeof o === "object" && !Array.isArray(o) ? o : {};
+  var rows = (Array.isArray(o.rows) ? o.rows : []).slice(0, 20).map(function(r){ return r && norm(r.o) ? { o: norm(r.o).slice(0, 60), s: Math.max(0, Math.min(100000, Number(r.s) || 0)) } : null; }).filter(Boolean);
+  var recent = (Array.isArray(o.recent) ? o.recent : []).map(function(n){ return Math.round(Number(n)); }).filter(function(n){ return n > 0 && n < 1e7; }).slice(0, 8);
+  return { rows: rows, recent: recent, goal: ["out", "profit", "fast", "bal"].indexOf(o.goal) >= 0 ? o.goal : "out", sys: norm(o.sys).slice(0, 24), one: o.one ? 1 : 0, over: cleanOver(o.over), pin: o.pin ? 1 : 0, log: (Array.isArray(o.log) ? o.log : []).slice(0, 40).map(function(e){ return e && Number(e.n) > 0 ? { n: Math.round(Number(e.n)), l: norm(e.l).slice(0, 60), c: Math.max(1, Math.min(99, Math.round(Number(e.c)) || 1)), t: norm(e.t).slice(0, 16) } : null; }).filter(Boolean) };
 }
 /*END LOGIC*/
 
@@ -3255,11 +3514,324 @@ async function computeExactItems(cat, patchCode, progress){
   $("ssCsv").onclick = function(){ if (!sess.length){ ssSay("No sessions to export yet.", true); return; } saveCsv("sc-sessions-" + new Date().toISOString().slice(0, 10) + ".csv", toSessCSV(sess), sess.length + " sessions", $("ssMsg")); };
 
   // ---------- tabs ----------
-  var TABGROUP = { home: "home", inv: "stuff", mats: "stuff", bp: "stuff", craft: "stuff", sets: "stuff", find: "find", loot: "find", mis: "missions", stand: "missions", plan: "missions", sess: "track", "new": "track", hist: "track", data: "data" };
-  var GROUPORDER = ["home", "stuff", "missions", "find", "track", "data"], FIRSTIN = { home: "home", stuff: "inv", missions: "mis", find: "find", track: "sess", data: "data" }, lastIn = {}, curTab = "home";
+  // ---------- mining ----------
+  var mine = null, mineSigT = null, mineBusy = false, mineErr = "", mfMode = "craft", mfPick = "", mfSig = "", msNum = 0, msqStr = "";
+  function mineSet(m){ mine = m; mineSigT = m ? sigTable(m.locs) : null; }
+  function mu(){ return ui.mine; }
+  function pc(n){ return (n >= 10 ? Math.round(n) : Math.round(n * 10) / 10) + "%"; }
+  function mtable(cols, rows, cls){
+    var t = h("table", { class: "mt" }), tr = h("tr");
+    cols.forEach(function(c){ tr.appendChild(h("th", { text: c })); });
+    t.appendChild(h("thead", null, tr));
+    var tb = h("tbody");
+    rows.forEach(function(r){
+      var row = h("tr");
+      r.forEach(function(c, i){ var td = h("td", { "data-l": cols[i] }); if (c && c.nodeType) td.appendChild(c); else td.textContent = c == null ? "" : String(c); row.appendChild(td); });
+      tb.appendChild(row);
+    });
+    t.appendChild(tb);
+    return h("div", { class: "mtw" + (cls ? " " + cls : "") }, t);
+  }
+  function mseg(opts, cur, fn, label){
+    var box = h("div", { class: "seg", role: "group", "aria-label": label });
+    opts.forEach(function(o){ box.appendChild(h("button", { type: "button", text: o[1], "aria-pressed": cur === o[0] ? "true" : "false", onclick: function(){ fn(o[0]); } })); });
+    return box;
+  }
+  function mchip(text, fn, on){ return h("button", { type: "button", class: "pill" + (on ? " on" : ""), text: text, onclick: fn }); }
+  function whereName(L){ return L.n + (L.p && L.p !== L.n && L.t !== "Planet" ? " (" + L.p + ")" : ""); }
+  function kindName(k){ return MINE_KINDS[k] || k; }
+  function mineCraftShort(){
+    if (!catalogue) return [];
+    return craftPlan(catalogue.bps || [], wish, ownedByName(items, mats, ui.minq)).rows.filter(function(r){ return r.short > 0; });
+  }
+  function mineCraftFor(key){
+    var rows = mineCraftShort();
+    for (var i = 0; i < rows.length; i++) if (oreKey(rows[i].name) === key) return rows[i];
+    return null;
+  }
+  function mineBar(id){
+    var el = $(id); if (!el) return; el.textContent = "";
+    var b = h("button", { type: "button", class: "ghost smallbtn", text: mine ? "Refresh mining data" : "Download mining data", disabled: mineBusy || null, onclick: loadMine });
+    var txt = mineBusy ? "Downloading…" : mine ? "Mining data from " + String(mine.t).slice(0, 10) + " · " + fmt(mine.locs.length) + " locations (Star Citizen Wiki) · refinery and prices (UEX)" : "Mining data is not downloaded yet.";
+    el.appendChild(h("span", { class: "note" + (mineErr ? " err" : ""), text: mineErr || txt })); el.appendChild(b);
+  }
+  function mineGate(out){
+    if (mine) return false;
+    out.appendChild(emptyState("Download the mining data", "One download from the Star Citizen Wiki and UEX gives you scan numbers, ore locations, salvage sites and refinery bonuses. It is saved on this computer.", mineBusy ? null : "Download mining data", loadMine));
+    return true;
+  }
+  async function loadMine(){
+    if (mineBusy) return;
+    mineBusy = true; mineErr = ""; renderMineAll();
+    try {
+      progress("Finding mining locations", 0);
+      var list = await fetchPaged(WIKI + "locations", "filter[has_resources]=1", function(a){ return a.filter(function(x){ return x && x.uuid; }).map(function(x){ return x.uuid; }); }, function(d, l){ progress("Finding mining locations", 0.05 * d / l); });
+      var det = [], done = 0;
+      await pool(6, list, async function(u){
+        try { var r = await getJSON(WIKI + "locations/" + encodeURIComponent(u) + "?include=resources"); var c = compactLoc(r && r.data); if (c) det.push(c); } catch (e){}
+        done++; progress("Reading locations " + done + " of " + list.length, 0.05 + 0.8 * done / list.length);
+      });
+      if (!det.length || det.length < Math.min(list.length, 20) * 0.8) throw new Error("Only " + det.length + " of " + list.length + " locations loaded");
+      progress("Getting refinery data", 0.9);
+      var methods = [], yields = [], pr = {}, sell = {};
+      try {
+        var m = await getJSON(UEX + "refineries_methods"); methods = (m && m.data) || [];
+        var y = await getJSON(UEX + "refineries_yields");
+        ((y && y.data) || []).forEach(function(r){ if (r && r.space_station_name && r.commodity_name && isFinite(Number(r.value))) yields.push({ st: r.space_station_name, sys: r.star_system_name || "", k: oreKey(r.commodity_name), b: Number(r.value) }); });
+        var cm = await getJSON(UEX + "commodities"), byId = {};
+        ((cm && cm.data) || []).forEach(function(c){ byId[c.id] = c; });
+        ((cm && cm.data) || []).forEach(function(c){
+          if (!c || !c.name) return;
+          var k = oreKey(c.name);
+          if (Number(c.is_refinable) === 1){ var par = byId[c.id_parent]; var p = Number(par && par.price_sell) || 0; if (p > 0) pr[k] = p; }
+          else if (Number(c.price_sell) > 0 && Number(c.is_raw) === 1) sell[k] = Number(c.price_sell);
+        });
+      } catch (e){ mineErr = "Locations loaded, but refinery data from UEX did not (" + (e && e.message ? e.message : e) + "). Press Refresh to try again."; }
+      var nm = sanitizeMine({ v: 1, t: new Date().toISOString(), locs: det, yields: yields, prices: pr, sell: sell, methods: methods });
+      if (!nm) throw new Error("No usable mining data");
+      if (!nm.yields.length && mine && mine.yields.length){ nm.yields = mine.yields; nm.prices = mine.prices; nm.methods = mine.methods; }
+      mineSet(nm); await idbSet("mine", nm);
+    } catch (e){ mineErr = "Download failed: " + (e && e.message ? e.message : e) + ". Check your connection and try again."; }
+    mineBusy = false; setTimeout(function(){ if (!updating) $("prog").hidden = true; }, 600);
+    renderMineAll();
+  }
+  function renderMineAll(){
+    ["mbarScan", "mbarFind", "mbarSalv", "mbarRef"].forEach(mineBar);
+    if (curTab === "mscan") renderScan(); if (curTab === "mfind") renderMineFind(); if (curTab === "msalv") renderSalvage(); if (curTab === "mref") renderRefinery();
+  }
+  function goMine(tab){ showTab(tab); }
+
+  // ---- scan decoder
+  function runDecode(n){
+    n = Math.round(Number(String(n).replace(/[\s,]/g, "")));
+    if (!(n > 0)){ msNum = 0; renderScan(); return; }
+    msNum = n;
+    var r = mu().recent.filter(function(x){ return x !== n; }); r.unshift(n); mu().recent = r.slice(0, 8); save();
+    renderScan();
+  }
+  function renderScan(){
+    mineBar("mbarScan"); renderScanLog();
+    var out = $("msOut"); out.textContent = "";
+    if (mineGate(out)) return;
+    var rc = $("msRecent"); rc.textContent = "";
+    mu().recent.forEach(function(n){ rc.appendChild(mchip(fmt(n), function(){ $("msIn").value = n; runDecode(n); }, n === msNum)); });
+    if (!msNum){ out.appendChild(emptyState("Type a scan number", "Use the number the scanner shows over a rock, a wreck or a gem deposit. Rock clusters show the number times the rock count, and this works that out.")); return; }
+    var d = decodeSig(mineSigT, msNum), best = d.exact[0];
+    if (!best){
+      var c = fcard("No exact match for " + fmt(msNum));
+      c.body.appendChild(h("p", { class: "note", text: "The number may be two kinds added together, or from a type this data does not list." }));
+      if (d.near.length){ c.body.appendChild(h("div", { class: "sub3", text: "Also close" })); d.near.forEach(function(x){ c.body.appendChild(h("div", { class: "lrow" }, h("span", { text: x.l + " × " + x.count + " (" + kindName(x.k) + ")" }), h("span", { class: "dim", text: fmt(x.sg) + " each, " + (x.diff > 0 ? "+" : "") + x.diff + " off" }))); }); }
+      out.appendChild(c.el); return;
+    }
+    var k = oreKey(best.l), card = fcard(best.l + (best.count > 1 ? " × " + best.count : ""));
+    card.body.appendChild(h("div", { class: "meta", style: "display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" }, h("span", { class: "badge good", text: "Best match" }), h("span", { class: "badge", text: kindName(best.k) })));
+    card.body.appendChild(h("div", { class: "lrow" }, h("span", { text: "What it means" }), h("span", { class: "dim", text: fmt(best.sg) + " each × " + best.count + " = " + fmt(msNum) })));
+    var sellP = mine.prices[k] || mine.sell[k];
+    if (sellP) card.body.appendChild(h("div", { class: "lrow" }, h("span", { text: mine.prices[k] ? "Refined sells for" : "Sells for" }), h("span", { class: "dim", text: fmt(sellP) + " aUEC per SCU (UEX)" })));
+    var cr = best.k === "salv" ? null : mineCraftFor(k);
+    if (cr) card.body.appendChild(h("div", { class: "lrow" }, h("span", { text: "On your Craft list" }), h("span", { class: "bbadge warn", text: fmt(cr.short) + " " + cr.unit + " short" })));
+    var acts = h("div", { class: "row", style: "margin-top:10px" });
+    if (best.k !== "salv") acts.appendChild(h("button", { type: "button", text: "Where to find more " + best.l, onclick: function(){ mfMode = "pick"; mfPick = best.l; goMine("mfind"); } }));
+    else acts.appendChild(h("button", { type: "button", text: "Where to find salvage", onclick: function(){ goMine("msalv"); } }));
+    if (best.k === "ship" && (mine.prices[k] || mine.yields.some(function(y){ return y.k === k; }))) acts.appendChild(h("button", { type: "button", class: "ghost", text: "Refine it", onclick: function(){ var rr = mu().rows.filter(function(x){ return oreKey(x.o) !== k; }); rr.push({ o: best.l, s: 0 }); mu().rows = rr; save(); goMine("mref"); } }));
+    acts.appendChild(h("button", { type: "button", class: "ghost", text: "Add to scan log", onclick: function(){
+      var lg = mu().log.slice(); lg.unshift({ n: msNum, l: best.l, c: best.count, t: new Date().toISOString().slice(0, 16).replace("T", " ") }); mu().log = lg.slice(0, 40); save(); toast("Added to the scan log"); renderScan(); } }));
+    card.body.appendChild(acts);
+    out.appendChild(card.el);
+    if (d.exact.length > 1){
+      var oc = fcard("Other things with this number");
+      d.exact.slice(1, 9).forEach(function(x){ oc.body.appendChild(h("div", { class: "lrow" }, h("span", { text: x.l + " × " + x.count }), h("span", { class: "dim", text: kindName(x.k) + " · " + fmt(x.sg) + " each" }))); });
+      out.appendChild(oc.el);
+    }
+    var seen = oreLocations(mine.locs, best.l, best.k).slice(0, 8);
+    if (seen.length){
+      var sc = fcard("Seen at");
+      sc.body.appendChild(mtable(["Where", "System", "Chance", "Cluster"], seen.map(function(s){ return [whereName(s.loc), s.loc.s, pc(s.score), s.c ? s.c[0] + " to " + s.c[1] + " rocks" : ""]; })));
+      out.appendChild(sc.el);
+    }
+    if (d.near.length){
+      var nc = fcard("Also close");
+      d.near.forEach(function(x){ nc.body.appendChild(h("div", { class: "lrow" }, h("span", { text: x.l + " × " + x.count }), h("span", { class: "dim", text: (x.diff > 0 ? "+" : "") + x.diff + " off" }))); });
+      out.appendChild(nc.el);
+    }
+  }
+  function renderScanLog(){
+    var box = $("msLog"); box.textContent = ""; var lg = mu().log;
+    if (!lg.length) return;
+    var c = fcard("Scan log");
+    c.body.appendChild(mtable(["When", "Number", "Result"], lg.slice(0, 12).map(function(e){ return [e.t, fmt(e.n), e.l + (e.c > 1 ? " × " + e.c : "")]; })));
+    c.body.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "Clear log", onclick: function(){ mu().log = []; save(); renderScan(); } }));
+    box.appendChild(c.el);
+  }
+
+  // ---- find ore
+  function placesCard(title, rows, withLists){
+    var c = fcard(title);
+    c.body.appendChild(mtable(["Where", "System", "Type", withLists ? "Covers" : "Chance", withLists ? "Of your list" : "Cluster"], rows));
+    return c.el;
+  }
+  function renderMineFind(){
+    mineBar("mbarFind");
+    var out = $("mfOut"), ctl = $("mfCtl"); out.textContent = ""; ctl.textContent = "";
+    if (mineGate(out)) return;
+    ctl.appendChild(mseg([["craft", "What my Craft list needs"], ["pick", "Pick a material"], ["sig", "By signature"]], mfMode, function(m){ mfMode = m; renderMineFind(); }, "Find by"));
+    if (mfMode === "pick"){
+      var dl = h("datalist", { id: "mfList" }); mineLabels(mine.locs, ["ship", "fps", "veh"]).forEach(function(x){ dl.appendChild(h("option", { value: x.l })); });
+      var inp = h("input", { type: "text", list: "mfList", placeholder: "Start typing a material", value: mfPick, maxlength: "60", "aria-label": "Material" });
+      inp.onchange = function(){ mfPick = inp.value; renderMineFind(); };
+      ctl.appendChild(inp); ctl.appendChild(dl);
+      if (!mfPick){ out.appendChild(emptyState("Pick a material", "Choose an ore or gem to see where it spawns.")); return; }
+      var list = oreLocations(mine.locs, mfPick);
+      if (!list.length){ out.appendChild(emptyState("Not found", "No mining location in this data lists " + mfPick + ".")); return; }
+      out.appendChild(placesCard("Where to find " + mfPick, list.slice(0, 25).map(function(s){ return [whereName(s.loc), s.loc.s, kindName(s.k), pc(s.score), s.c ? s.c[0] + " to " + s.c[1] + " rocks" : ""]; })));
+      return;
+    }
+    if (mfMode === "sig"){
+      var si = h("input", { type: "text", inputmode: "numeric", placeholder: "Scan number", value: mfSig, maxlength: "9", "aria-label": "Scan number" });
+      si.onchange = function(){ mfSig = si.value; renderMineFind(); };
+      ctl.appendChild(si);
+      var n = Math.round(Number(String(mfSig).replace(/[\s,]/g, "")));
+      if (!(n > 0)){ out.appendChild(emptyState("Type a scan number", "Shows where that signature appears.")); return; }
+      var ds = decodeSig(mineSigT, n).exact.filter(function(x){ return x.k !== "salv"; });
+      if (!ds.length){ out.appendChild(emptyState("No ore matches " + fmt(n), "Try the Scan decoder tab, which also checks salvage and near misses.")); return; }
+      ds.slice(0, 4).forEach(function(x){
+        var l2 = oreLocations(mine.locs, x.l, x.k);
+        out.appendChild(placesCard(x.l + (x.count > 1 ? " × " + x.count : "") + " · where it spawns", l2.slice(0, 12).map(function(s){ return [whereName(s.loc), s.loc.s, kindName(s.k), pc(s.score), s.c ? s.c[0] + " to " + s.c[1] + " rocks" : ""]; })));
+      });
+      return;
+    }
+    // craft list
+    var rows = mineCraftShort(), have = {}; mineLabels(mine.locs, ["ship", "fps", "veh"]).forEach(function(x){ have[x.key] = x; });
+    var need = rows.filter(function(r){ return have[oreKey(r.name)]; });
+    if (!catalogue || !Object.keys(wish).length){ out.appendChild(emptyState("Your Craft list is empty", "Add blueprints to the Craft list and the materials you are short on show up here.", "Open Blueprints", function(){ showTab("bp"); })); return; }
+    if (!need.length){ out.appendChild(emptyState("Nothing to mine for", rows.length ? "You are short on materials, but none of them are ores or gems found by mining." : "You have every material your Craft list needs.", "Pick a material instead", function(){ mfMode = "pick"; renderMineFind(); })); return; }
+    need.forEach(function(r){
+      var l3 = oreLocations(mine.locs, r.name), c = fcard(r.name + " · " + fmt(r.short) + " " + r.unit + " short");
+      if (!l3.length) c.body.appendChild(h("p", { class: "note", text: "No location lists this." }));
+      else c.body.appendChild(mtable(["Where", "System", "Chance"], l3.slice(0, 3).map(function(s){ return [whereName(s.loc), s.loc.s, pc(s.score)]; })));
+      c.body.appendChild(h("div", { class: "note", text: "Scan for " + oreSigs(r.name) }));
+      out.appendChild(c.el);
+    });
+    var cov = coverage(mine.locs, need.map(function(r){ return r.name; })).slice(0, 8);
+    if (need.length > 1 && cov.length) out.appendChild(placesCard("Best places for the whole list", cov.map(function(c){ return [whereName(c.loc), c.loc.s, c.loc.t, c.have.length + " of " + need.length, c.have.join(", ")]; }), true));
+  }
+  function oreSigs(label){
+    var key = oreKey(label), seen = {}, out = [];
+    mine.locs.forEach(function(L){ L.g.forEach(function(g){ if (g.k === "salv") return; g.r.forEach(function(x){ if (oreKey(x.l) === key && !seen[x.sg]){ seen[x.sg] = 1; out.push(x.sg); } }); }); });
+    return out.length ? label + ": " + out.map(function(s){ return fmt(s) + " per rock (× the rock count)"; }).join(", ") : label;
+  }
+
+  // ---- salvage
+  function renderSalvage(){
+    mineBar("mbarSalv");
+    var out = $("mvOut"); out.textContent = "";
+    if (mineGate(out)) return;
+    var sites = salvageSites(mine.locs), sysSel = $("mvSys").value, q = nameKey($("mvQ").value);
+    var systems = {}; sites.forEach(function(s){ systems[s.loc.s] = 1; });
+    var cur = $("mvSys").value; $("mvSys").textContent = ""; $("mvSys").appendChild(h("option", { value: "", text: "All systems" }));
+    Object.keys(systems).sort().forEach(function(s){ $("mvSys").appendChild(h("option", { value: s, text: s })); }); $("mvSys").value = systems[cur] ? cur : ""; sysSel = $("mvSys").value;
+    var shown = sites.filter(function(s){ return (!sysSel || s.loc.s === sysSel) && (!q || nameKey(s.loc.n + " " + s.loc.p + " " + s.items.map(function(i){ return i.l; }).join(" ")).indexOf(q) >= 0); });
+    if (!shown.length){ out.appendChild(emptyState("No salvage sites match", "Clear the filter to see every site in the data.")); }
+    else {
+      var c = fcard("Where to find ship salvage");
+      c.body.appendChild(mtable(["Where", "System", "What is there", "Signature", "Chance"], shown.slice(0, 60).map(function(s){
+        var top = s.items.slice(0, 3).map(function(i){ return i.l; }).join(", ") + (s.items.length > 3 ? " +" + (s.items.length - 3) + " more" : "");
+        var sg = {}; s.items.forEach(function(i){ sg[i.sg] = 1; });
+        return [whereName(s.loc), s.loc.s, top, Object.keys(sg).map(Number).sort(function(a, b){ return a - b; }).map(fmt).join(", "), pc(s.gp)];
+      })));
+      if (shown.length > 60) c.body.appendChild(h("p", { class: "note", text: "Showing the first 60 of " + shown.length + ". Use the filter to narrow it." }));
+      out.appendChild(c.el);
+    }
+    var sh = fcard("Salvage signatures");
+    sh.body.appendChild(h("p", { class: "note", text: "A scan shows the number times how many pieces are close together. 6,000 can be three 2,000 pieces." }));
+    sh.body.appendChild(mtable(["Signature", "What it is"], salvSigSheet(mine.locs).map(function(e){ return [fmt(e.sg), e.names.slice(0, 6).join(", ") + (e.names.length > 6 ? " +" + (e.names.length - 6) + " more" : "")]; })));
+    out.appendChild(sh.el);
+    out.appendChild(h("p", { class: "note", text: "Wrecks left by player fights and missions are not in any data source, so they will not appear here. Sites are named bodies and stations, not coordinates." }));
+  }
+
+  // ---- refinery
+  function refOres(){
+    var seen = {}, out = [];
+    mineLabels(mine.locs, ["ship"]).forEach(function(x){ if ((mine.prices[x.key] || mine.yields.some(function(y){ return y.k === x.key; })) && !seen[x.key]){ seen[x.key] = 1; out.push(x.l); } });
+    return out;
+  }
+  function renderRefinery(){
+    mineBar("mbarRef");
+    var out = $("mrOut"), ctl = $("mrCtl"); out.textContent = ""; ctl.textContent = "";
+    if (mineGate(out)) return;
+    var U = mu(), ores = refOres(), rowsBox = h("div", { class: "mrows" });
+    var dl = h("datalist", { id: "mrList" }); ores.forEach(function(o){ dl.appendChild(h("option", { value: o })); }); ctl.appendChild(dl);
+    function setRows(r){ U.rows = r; save(); renderRefinery(); }
+    if (!U.rows.length) U.rows = [{ o: "", s: 0 }];
+    U.rows.forEach(function(r, i){
+      var o = h("input", { type: "text", list: "mrList", value: r.o, placeholder: "Ore", maxlength: "60", "aria-label": "Ore " + (i + 1) });
+      var s = h("input", { type: "number", min: "0", step: "any", value: r.s || "", placeholder: "SCU", "aria-label": "SCU of ore " + (i + 1), style: "width:96px" });
+      o.onchange = function(){ U.rows[i].o = norm(o.value); save(); renderRefinery(); };
+      s.onchange = function(){ U.rows[i].s = Math.max(0, Number(s.value) || 0); save(); renderRefinery(); };
+      rowsBox.appendChild(h("div", { class: "row mrow2" }, o, s, h("span", { class: "dim", text: "SCU" }), h("button", { type: "button", class: "ghost smallbtn", text: "Remove", onclick: function(){ setRows(U.rows.filter(function(_, j){ return j !== i; })); } })));
+    });
+    ctl.appendChild(rowsBox);
+    var bar = h("div", { class: "row" });
+    bar.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "+ Add ore", onclick: function(){ setRows(U.rows.concat([{ o: "", s: 0 }])); } }));
+    bar.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "Fill from my Craft list", onclick: function(){
+      var have = {}; ores.forEach(function(o){ have[oreKey(o)] = o; });
+      var add = mineCraftShort().filter(function(r){ return have[oreKey(r.name)]; }).map(function(r){ return { o: have[oreKey(r.name)], s: Math.ceil(r.short * 100) / 100 }; });
+      if (!add.length){ toast("Nothing on your Craft list is a refinable ore", true); return; }
+      setRows(add); toast("Filled with what you are short on"); } }));
+    ctl.appendChild(bar);
+    var sysSet = {}; mine.yields.forEach(function(y){ if (y.sys) sysSet[y.sys] = 1; });
+    var sel = h("select", { "aria-label": "Refinery system" }, h("option", { value: "", text: "Any system" }));
+    Object.keys(sysSet).sort().forEach(function(s){ sel.appendChild(h("option", { value: s, text: s })); }); sel.value = U.sys; if (sel.value !== U.sys) sel.value = "";
+    sel.onchange = function(){ U.sys = sel.value; save(); renderRefinery(); };
+    var one = h("input", { type: "checkbox", checked: U.one ? true : null }); one.onchange = function(){ U.one = one.checked ? 1 : 0; save(); renderRefinery(); };
+    ctl.appendChild(h("div", { class: "row tbar" },
+      mseg([["out", "Most output"], ["profit", "Most profit"], ["fast", "Fastest"], ["bal", "Balanced"]], U.goal, function(g){ U.goal = g; save(); renderRefinery(); }, "Goal"), sel,
+      h("label", { class: "chk" }, one, "One stop only")));
+    var methods = refMethods(mine.methods, U.over);
+    var det = h("details", { class: "mrdet" }, h("summary", { text: "Edit refinery yield numbers" }),
+      h("p", { class: "note", text: "These base yields are community estimates, not game data. If you know better numbers from your own runs, type them here." }));
+    var grid = h("div", { class: "mrgrid" });
+    methods.forEach(function(m){
+      var inp = h("input", { type: "number", min: "1", max: "100", step: "1", value: m.y, "aria-label": m.n + " yield percent" });
+      inp.onchange = function(){ var v = Number(inp.value); if (v > 0 && v <= 100) U.over[m.n] = v; else delete U.over[m.n]; save(); renderRefinery(); };
+      grid.appendChild(h("label", null, m.n, inp));
+    });
+    det.appendChild(grid); ctl.appendChild(det);
+    var prows = U.rows.map(function(r){ return { name: r.o, k: oreKey(r.o), scu: Number(r.s) || 0 }; }).filter(function(r){ return r.k && r.scu > 0; });
+    if (!prows.length){ out.appendChild(emptyState("Add the ore you have", "Type an ore and how many SCU, then the best place and method show up here.")); return; }
+    if (!mine.yields.length){ out.appendChild(emptyState("No refinery data", "UEX refinery bonuses did not download. Press Refresh mining data to try again.")); return; }
+    var plan = planRefine(prows, { methods: methods, yields: mine.yields, prices: mine.prices, goal: U.goal, sys: U.sys, one: !!U.one });
+    if (!plan){ out.appendChild(emptyState("No refinery matches", "Try Any system.")); return; }
+    var c = fcard("Best plan");
+    c.body.appendChild(h("div", { class: "tiles", style: "margin-bottom:10px" },
+      h("span", { class: "tile" }, h("b", { text: fmt(Math.round(plan.out * 100) / 100) }), h("span", { text: "SCU out" })),
+      plan.val > 0 ? h("span", { class: "tile" }, h("b", { text: fmt(Math.round(plan.val)) }), h("span", { text: "aUEC before fees" })) : null,
+      h("span", { class: "tile" }, h("b", { text: String(plan.stops.length) }), h("span", { text: plan.stops.length === 1 ? "stop" : "stops" }))));
+    c.body.appendChild(mtable(["Ore", "SCU in", "Where", "Method", "Station bonus", "SCU out"], plan.items.map(function(o){ return [o.name, fmt(o.scu), o.st, o.m.n, (o.b > 0 ? "+" : "") + o.b + "%", fmt(Math.round(o.out * 100) / 100)]; })));
+    var diff = Math.round((plan.multiOut - plan.oneOut) * 100) / 100;
+    if (U.one && diff > 0.01) c.body.appendChild(h("p", { class: "note", text: "Splitting across stops would give " + fmt(diff) + " SCU more than " + plan.oneStation + " alone." }));
+    else if (!U.one && plan.stops.length > 1 && diff > 0.01) c.body.appendChild(h("p", { class: "note", text: "This uses " + plan.stops.length + " stops for " + fmt(diff) + " SCU more than the best single stop, " + plan.oneStation + "." }));
+    out.appendChild(c.el);
+    var mc = fcard("Method chart"), mx = Math.max.apply(null, plan.chart.map(function(x){ return x.out; })) || 1;
+    mc.body.appendChild(mtable(["Method", "Yield (estimate)", "Speed", "Cost", "Your ore out", "Best at"], plan.chart.map(function(x){
+      var bar = function(v, mxv, cls){ return h("span", { class: "mbar " + (cls || "") }, h("i", { style: "width:" + Math.round(v / mxv * 100) + "%" })); };
+      return [x.m.n, h("span", { class: "mcell" }, bar(x.m.y, 100, "y"), x.m.y + "%"), bar(x.m.s, 3), bar(x.m.c, 3, "c"), fmt(Math.round(x.out * 100) / 100) + " SCU", x.st];
+    })));
+    mc.body.appendChild(h("p", { class: "note", text: "Speed and cost are the relative ratings from UEX, not hours or aUEC. Higher cost bar means a bigger fee." }));
+    out.appendChild(mc.el);
+    out.appendChild(h("div", { class: "banner" }, h("b", { text: "Check the quote. " }), "Community figures differ by source and the in-game tooltips are known to be wrong. Compare this with the quote the refinery terminal gives you before you commit."));
+  }
+
+  $("msGo").onclick = function(){ runDecode($("msIn").value); };
+  $("msIn").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); runDecode($("msIn").value); } });
+  $("mvSys").onchange = renderSalvage; $("mvQ").oninput = renderSalvage;
+  idbGet("mine").then(function(m){ var c = sanitizeMine(m); if (c){ mineSet(c); renderMineAll(); } });
+
+  var TABGROUP = { mscan: "mining", mfind: "mining", msalv: "mining", mref: "mining", home: "home", inv: "stuff", mats: "stuff", bp: "stuff", craft: "stuff", sets: "stuff", find: "find", loot: "find", mis: "missions", stand: "missions", plan: "missions", sess: "track", "new": "track", hist: "track", data: "data" };
+  var GROUPORDER = ["home", "stuff", "missions", "find", "mining", "track", "data"], FIRSTIN = { home: "home", stuff: "inv", missions: "mis", find: "find", mining: "mscan", track: "sess", data: "data" }, lastIn = {}, curTab = "home";
   Array.prototype.forEach.call($("tabs").children, function(b){ b.dataset.group = TABGROUP[b.dataset.tab] || ""; });
   var TABINFO = { home: "Home: quick add and what to farm", inv: "Inventory: items and where they are", mats: "Materials: SCU by quality", bp: "Blueprints: known and craftable", craft: "Craft list: materials needed",
-    sets: "Armor sets: pieces collected", find: "Finder: where to get items", loot: "Loot by location: where your loot came from", mis: "Missions: what to run and what it needs", stand: "My standing: rank with each faction", plan: "Blueprint planner: missions with new blueprints", sess: "Sessions: time and income", "new": "Added this patch: new items", hist: "History: changes made", data: "Data: backup and restore" };
+    sets: "Armor sets: pieces collected", find: "Finder: where to get items", loot: "Loot by location: where your loot came from", mis: "Missions: what to run and what it needs", stand: "My standing: rank with each faction", plan: "Blueprint planner: missions with new blueprints", sess: "Sessions: time and income", "new": "Added this patch: new items", hist: "History: changes made", data: "Data: backup and restore", mscan: "Scan decoder: what a scan number means", mfind: "Find ore: where materials spawn", msalv: "Salvage: where to find ship salvage", mref: "Refinery: best place and method" };
   function showTab(t){
     if (!TABGROUP[t]) t = "home";
     var g = TABGROUP[t]; lastIn[g] = t; curTab = t;
@@ -3272,6 +3844,7 @@ async function computeExactItems(cat, patchCode, progress){
     });
     $("tabs").hidden = n < 2;
     if (t === "home") renderHome(); if (t === "plan") renderPlanner(); if (t === "sess") renderSessions(); if (t === "bp") renderBlueprints(); if (t === "new") renderNew(); if (t === "data") renderStatus();
+    if (t === "mscan") renderScan(); if (t === "mfind") renderMineFind(); if (t === "msalv") renderSalvage(); if (t === "mref") renderRefinery();
     if (t === "find") renderFinder(); if (t === "loot") renderLootAt(); if (t === "mis") renderBoard(); if (t === "stand") renderStandTab(); if (t === "mats") renderMaterials(); if (t === "craft") renderCraft(); if (t === "sets") renderSets(); if (t === "hist") renderHist();
     try { history.replaceState(null, "", "#" + t); } catch (e){}
     document.title = (TABINFO[t] || "Home") + " \u00b7 Loot Tracker";
@@ -3281,7 +3854,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("groups").addEventListener("click", function(e){ var b = e.target.closest("button[data-group]"); if (b) showTab(lastIn[b.dataset.group] || FIRSTIN[b.dataset.group]); });
   document.addEventListener("keydown", function(e){
     var tag = e.target && e.target.tagName, typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-    if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-6]$/.test(e.key)){ e.preventDefault(); var g = GROUPORDER[Number(e.key) - 1]; showTab(lastIn[g] || FIRSTIN[g]); return; }
+    if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-7]$/.test(e.key)){ e.preventDefault(); var g = GROUPORDER[Number(e.key) - 1]; showTab(lastIn[g] || FIRSTIN[g]); return; }
     if (e.key === "/" && !typing && !e.ctrlKey && !e.metaKey && !e.altKey){
       var sec = $("tab-" + curTab), box = curTab === "home" ? $("hName") : sec.querySelector("input[type=search]") || (curTab === "inv" ? $("fName") : null);
       if (box){ e.preventDefault(); box.focus(); if (box.select) box.select(); }
