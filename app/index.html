@@ -95,6 +95,11 @@
   .frow .dim{color:var(--mute);font-size:12px}
   .linkbtn{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:var(--accent);text-decoration:none;font-size:13px;margin:0 8px 8px 0}
   .linkbtn:hover{border-color:var(--accent)}
+  .fpop{position:fixed;inset:0;z-index:50;background:rgba(3,6,4,.72);display:flex;justify-content:center;align-items:flex-start;padding:30px 14px;box-sizing:border-box;overflow:auto}.fpop[hidden]{display:none}
+  .fpbox{width:100%;max-width:700px;background:var(--panel);border:1px solid #2f6a45;border-radius:14px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .fphead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.fptitle{font-size:18px;font-weight:700}
+  .fptabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 2px}.fptab{padding:5px 14px;border-radius:99px;font-size:13px;font-weight:600;color:var(--mute);border:1px solid var(--line);background:none;min-height:0}.fpbox .fptab.on{color:#fff;background:#3a1a5c;border-color:#b44cff;box-shadow:none}.fpbox .fptab{background:none;color:var(--mute);box-shadow:none}.fpbox .fptab.on{color:#fff;background:#3a1a5c}
+  body.modalopen{overflow:hidden}
   .findbtn{background:none;border:0;color:var(--mute);font-size:11px;padding:0;min-height:0;font-weight:400;text-decoration:underline dotted}
   .findbtn:hover:not(:disabled){background:none;box-shadow:none;color:var(--accent)}
   .item:last-child{border-radius:0 0 8px 8px}
@@ -892,6 +897,13 @@
       </div>
     </div>
   </section>
+  <div id="fpop" class="fpop" hidden>
+  <div class="fpbox" role="dialog" aria-modal="true" aria-labelledby="fpTitle">
+    <div class="fphead"><div><div class="fptitle" id="fpTitle"></div><div class="note" id="fpSub"></div></div><div class="row"><button type="button" class="ghost smallbtn" id="fpOpenTab">Open in Finder</button><button type="button" class="ghost smallbtn" id="fpClose">Close</button></div></div>
+    <div class="fptabs" id="fpTabs" role="tablist"></div>
+    <div id="fpBody"></div>
+  </div>
+</div>
   <div class="foot">Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>6</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
 </div>
 <div id="toasts" aria-live="polite" role="status"></div>
@@ -2245,7 +2257,7 @@ async function computeExactItems(cat, patchCode, progress){
       cell.appendChild(h("div", { class: "noteline", text: i.note, title: "Click to edit the note", role: "button", tabindex: "0", onclick: openNote, onkeydown: function(e){ if (e.key === "Enter"){ openNote(); } } }));
     }
     var acts = h("div", { class: "acts" },
-      h("button", { type: "button", class: "findbtn", text: "Find", title: "Where to get this, and which missions reward the blueprint", "aria-label": "Find " + i.name, onclick: function(){ openFinder(i.name, i.sub, uuidFor(i)); } }),
+      h("button", { type: "button", class: "findbtn", text: "Find", title: "Where to get this, and which missions reward the blueprint", "aria-label": "Find " + i.name, onclick: function(){ openFindPopup(i.name, i.sub, uuidFor(i)); } }),
       h("button", { type: "button", class: "notebtn", text: "Note", "aria-label": "Note for " + i.name, onclick: openNote }),
       h("button", { type: "button", class: "movebtn", text: "Move", "aria-label": "Move " + i.name }), d);
     var mv = h("div", { class: "moverow" }, wrap); mv.hidden = true;
@@ -2480,7 +2492,7 @@ async function computeExactItems(cat, patchCode, progress){
         h("span", { class: "bbadge " + (cs.ok ? "good" : "warn"), text: cs.ok ? "Craftable now" : (b.ing.length - cs.have) + " short" })),
       bars,
       h("div", { class: "bcfoot" }, h("label", { class: "know" }, chk, "I know this one"),
-        h("button", { type: "button", class: "findbtn", text: "Find", title: "Shops and mission rewards", "aria-label": "Find " + b.n, onclick: function(){ openFinder(b.n, "", b.o); } }), wb));
+        h("button", { type: "button", class: "findbtn", text: "Find", title: "Shops and mission rewards", "aria-label": "Find " + b.n, onclick: function(){ openFindPopup(b.n, "", b.o); } }), wb));
   }
   function bpRow(b, owned){
     var cs = craftStatus(b, owned);
@@ -2503,7 +2515,7 @@ async function computeExactItems(cat, patchCode, progress){
     var sub = b.t ? b.t + " craft" : "";
     var act = h("div", { class: "bpact" });
     if (b.d) act.appendChild(h("span", { class: "badge good", text: "default" }));
-    act.appendChild(h("button", { type: "button", class: "findbtn", text: "Find", title: "Shops and mission rewards", "aria-label": "Find " + b.n, onclick: function(){ openFinder(b.n, "", b.o); } }));
+    act.appendChild(h("button", { type: "button", class: "findbtn", text: "Find", title: "Shops and mission rewards", "aria-label": "Find " + b.n, onclick: function(){ openFindPopup(b.n, "", b.o); } }));
     if (cs.ok) act.appendChild(h("span", { class: "badge good", text: "craftable now" }));
 
     var wb = h("button", { type: "button", class: "ghost smallbtn", text: wish[b.u] ? "+1 (in list: " + wish[b.u] + ")" : "+ Craft list", title: "Add to the Craft list" });
@@ -2647,7 +2659,7 @@ async function computeExactItems(cat, patchCode, progress){
       out.appendChild(h("div", { class: "hrow2 lrow2" },
         h("span", null, h("span", { class: "name", text: r.n }), h("div", { class: "dim", text: [r.c, r.s].filter(Boolean).join(" · ") })),
         h("span", { text: r.cnt + (r.cnt === 1 ? " time" : " times") }), h("span", { text: fmt(r.q) }),
-        h("span", { class: "r" }, h("span", { class: "dim", text: r.last.slice(0, 10) + "  " }), h("button", { type: "button", class: "findbtn", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFinder(r.n, r.s, ""); } }))));
+        h("span", { class: "r" }, h("span", { class: "dim", text: r.last.slice(0, 10) + "  " }), h("button", { type: "button", class: "findbtn", text: "Find", "aria-label": "Find " + r.n, onclick: function(){ openFindPopup(r.n, r.s, ""); } }))));
     });
     if (rows.length > 150) out.appendChild(h("div", { class: "dim", style: "margin-top:6px", text: "Showing the top 150 items. Narrow it with a place." }));
   }
@@ -2710,16 +2722,45 @@ async function computeExactItems(cat, patchCode, progress){
   function runFinder(){
     var name = fqName, bp = findBp(name, fqEntry);
     if (bp) delete bpErr[bp.u];
-    renderFinder();
+    renderFinder(); if (fpOpen()) renderPopup();
     var jobs = [ensureShops()]; if (bp) jobs.push(ensureBp(bp.u));
-    Promise.all(jobs).then(function(){ if (fqName === name) renderFinder(); });
+    Promise.all(jobs).then(function(){ if (fqName === name){ renderFinder(); if (fpOpen()) renderPopup(); } });
   }
   function openFinder(name, sub, uuid){
     fqName = name; fqEntry = pickEntry(name, sub, uuid); $("fqIn").value = name; showTab("find"); runFinder();
   }
-  function renderFinder(){
-    var out = $("fqOut"); out.textContent = "";
-    if (!fqName){ out.appendChild(emptyState("Search for an item", "Type a name above to see where to buy it, which missions give the blueprint, and what it scraps into.")); return; }
+  var fpTab = 0, fpOpener = null;
+  function fpOpen(){ return !$("fpop").hidden; }
+  function fpClose(){ $("fpop").hidden = true; document.body.classList.remove("modalopen"); if (fpOpener && document.contains(fpOpener)) fpOpener.focus(); fpOpener = null; }
+  function openFindPopup(name, sub, uuid){
+    fqName = name; fqEntry = pickEntry(name, sub, uuid); fpTab = 0; fpOpener = document.activeElement;
+    $("fqIn").value = name; $("fpop").hidden = false; document.body.classList.add("modalopen"); runFinder();
+    $("fpClose").focus();
+  }
+  function renderPopup(){
+    var c = renderFinder(true), e = fqEntry, own = items.filter(function(i){ return nameKey(i.name) === nameKey(fqName); });
+    var q = own.reduce(function(a, i){ return a + (Number(i.qty) || 0); }, 0), locs = {}; own.forEach(function(i){ if (i.loc) locs[i.loc] = 1; });
+    var lk = Object.keys(locs);
+    $("fpTitle").textContent = fqName;
+    $("fpSub").textContent = [e ? describe(e) : "Not in the item database", own.length ? "you own " + q + (lk.length === 1 ? " at " + lk[0] : lk.length > 1 ? " across " + lk.length + " locations" : "") : ""].filter(Boolean).join(" · ");
+    var names = ["Where to get it", "Blueprint missions", "Scraps into"], keys = [["title", "shops", "loot"], ["bp"], ["scrap"]];
+    var tabs = $("fpTabs"), body = $("fpBody"); tabs.textContent = ""; body.textContent = "";
+    names.forEach(function(n, i){
+      var b = h("button", { type: "button", role: "tab", class: "fptab" + (i === fpTab ? " on" : ""), text: n, "aria-selected": i === fpTab ? "true" : "false" });
+      b.onclick = function(){ fpTab = i; renderPopup(); }; tabs.appendChild(b);
+    });
+    keys[fpTab].forEach(function(k){ if (c[k]) body.appendChild(c[k]); });
+    if (fpTab === 1 && !c.bp) body.appendChild(emptyState("No blueprint found", "Nothing rewards a blueprint for this item."));
+  }
+  $("fpClose").onclick = fpClose;
+  $("fpOpenTab").onclick = function(){ fpClose(); showTab("find"); };
+  $("fpop").addEventListener("mousedown", function(ev){ if (ev.target === $("fpop")) fpClose(); });
+  document.addEventListener("keydown", function(ev){ if (ev.key === "Escape" && fpOpen()) fpClose(); });
+  function renderFinder(pop){
+    var out = pop ? null : $("fqOut"), cards = {};
+    if (out) out.textContent = "";
+    function put(k, el){ if (out) out.appendChild(el); else cards[k] = el; }
+    if (!fqName){ if (!out) return cards; out.appendChild(emptyState("Search for an item", "Type a name above to see where to buy it, which missions give the blueprint, and what it scraps into.")); return; }
     var e = fqEntry, u = e && e.u ? e.u : "", bp = findBp(fqName, e);
     // title
     var t = fcard(fqName);
@@ -2734,7 +2775,7 @@ async function computeExactItems(cat, patchCode, progress){
     }
     var sc = bp ? scrapText(scrapOf(bp)) : "";
     if (sc) t.body.appendChild(h("div", { class: "scrapln", text: "Scraps into about " + sc }));
-    out.appendChild(t.el);
+    put("title", t.el);
     // shops
     var s1 = fcard("Where to buy (UEX)");
     if (shopIdx){
@@ -2754,7 +2795,7 @@ async function computeExactItems(cat, patchCode, progress){
       s1.body.appendChild(h("div", { class: "dim", text: "Could not load UEX shop data" + (shopErr ? ": " + shopErr : "") + "." }));
       s1.body.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "Try again", style: "margin-top:6px", onclick: runFinder }));
     }
-    out.appendChild(s1.el);
+    put("shops", s1.el);
     // blueprint
     var s2 = fcard("Blueprint and missions (Star Citizen Wiki)");
     if (!catalogue) s2.body.appendChild(h("div", { class: "dim", text: "Update the item database to load blueprint data." }));
@@ -2776,7 +2817,7 @@ async function computeExactItems(cat, patchCode, progress){
         s2.body.appendChild(h("div", { class: "dim", style: "margin-top:8px", text: "Wiki data for game version " + (c.ver || "unknown") + "." }));
       }
     }
-    out.appendChild(s2.el);
+    put("bp", s2.el);
     // loot
     var s3 = fcard("Loot locations (your own log)");
     var seen = lootSummary(lootlog, fqName);
@@ -2788,7 +2829,17 @@ async function computeExactItems(cat, patchCode, progress){
     } else {
       s3.body.appendChild(h("div", { class: "dim", text: "Not logged yet. No public source lists drop locations." }));
     }
-    out.appendChild(s3.el);
+    put("loot", s3.el);
+      var s4 = fcard("Scraps into");
+    var parts = bp ? scrapOf(bp) : [];
+    if (!bp) s4.body.appendChild(h("div", { class: "dim", text: "No blueprint found for this item, so there is no scrap estimate." }));
+    else if (!parts.length) s4.body.appendChild(h("div", { class: "dim", text: "Nothing listed to get back." }));
+    else {
+      parts.forEach(function(x){ s4.body.appendChild(h("div", { class: "frow" }, h("span", { text: x.n }), h("span", { text: x.unit === "x" ? x.amt + "×" : x.amt + " SCU" }), h("span"))); });
+      s4.body.appendChild(h("div", { class: "dim", style: "margin-top:8px", text: "Estimate: half of each crafting recipe, quality unknown. Verify in game." }));
+    }
+    cards.scrap = s4.el;
+    return cards;
   }
   attachAC($("fqIn"), $("fqBox"), {
     match: function(q){ return searchIndex(q, 14); }, hint: describe,
