@@ -78,6 +78,7 @@
   function drawRecent(){
     var b = $("recent"); b.textContent = "";
     recent.forEach(function(n){ var x = el("button", "", fmt(n)); x.type = "button"; x.onclick = function(){ $("n").value = n; decode(); $("n").focus(); }; b.appendChild(x); });
+    if (recent.length){ var c = el("button", "", "Clear"); c.type = "button"; c.onclick = function(){ recent = []; $("n").value = ""; $("out").textContent = ""; drawRecent(); $("n").focus(); }; b.appendChild(c); }
   }
   $("pin").onchange = function(){ if (S && S.scanPin) S.scanPin($("pin").checked); };
   document.addEventListener("keydown", function(e){

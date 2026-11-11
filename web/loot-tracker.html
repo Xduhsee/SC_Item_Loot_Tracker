@@ -284,6 +284,7 @@
   #bList .ing{padding:0 12px 10px 52px}
   #bList.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border:0;overflow:visible}
   .pills{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+  .rchip{display:inline-flex;align-items:center}.rchip .pill{border-top-right-radius:0;border-bottom-right-radius:0;border-right:0}.rchip .rx{min-height:0;padding:7px 9px;border:1px solid var(--line);border-left:0;border-radius:0 99px 99px 0;background:none;color:#8fb09a;font-size:14px;line-height:1;box-shadow:none}.rchip .rx:hover{color:#ff8a8a}
   .pill{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:none;color:#b9d9c4;font-size:13px;font-weight:400;min-height:0}
   button.pill{box-shadow:none}button.pill.on,button.pill.on:hover:not(:disabled){background:#1b3a22;border-color:var(--accent);color:#e9ffe3;font-weight:600;box-shadow:none}
   .banner{padding:10px 14px;border-radius:10px;background:#0f1a22;border:1px solid #1f4f66;font-size:13px;margin:8px 0}.banner b{color:#7fd4ff}
@@ -3979,7 +3980,12 @@ async function computeExactItems(cat, patchCode, progress){
     var out = $("msOut"); out.textContent = "";
     if (mineGate(out)) return;
     var rc = $("msRecent"); rc.textContent = "";
-    mu().recent.forEach(function(n){ rc.appendChild(mchip(fmt(n), function(){ $("msIn").value = n; runDecode(n); }, n === msNum)); });
+    mu().recent.forEach(function(n){
+      rc.appendChild(h("span", { class: "rchip" },
+        mchip(fmt(n), function(){ $("msIn").value = n; runDecode(n); }, n === msNum),
+        h("button", { type: "button", class: "rx", text: "\u00d7", title: "Remove " + fmt(n), "aria-label": "Remove " + fmt(n) + " from recent", onclick: function(){ mu().recent = mu().recent.filter(function(x){ return x !== n; }); if (msNum === n){ msNum = 0; $("msIn").value = ""; } save(); renderScan(); } })));
+    });
+    if (mu().recent.length > 1) rc.appendChild(h("button", { type: "button", class: "ghost smallbtn", text: "Clear recent", onclick: function(){ mu().recent = []; msNum = 0; $("msIn").value = ""; save(); renderScan(); } }));
     if (!msNum){ out.appendChild(emptyState("Type a scan number", "Use the number the scanner shows over a rock, a wreck or a gem deposit. Rock clusters show the number times the rock count, and this works that out.")); return; }
     var d = decodeSig(mineSigT, msNum), best = d.exact[0];
     if (!best){
