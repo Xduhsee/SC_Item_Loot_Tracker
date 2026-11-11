@@ -34,6 +34,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - UEX price estimates behind a manual "Refresh UEX prices" button
 - Finder tab (v1.3): UEX shops and prices, wiki blueprint missions with drop chances, links to Cstone and SC Craft Tools
 - Loot log (v1.4, v1.5): optional system and place when adding an item (also in quick-add), a "Loot by location" panel and per-item history in the Finder, CSV export
+- Planner tab (v1.6): ranks missions by how many blueprints you have not marked as known, using Star Citizen Wiki mission rewards (about 330 mission lookups once, then cached; estimates treat each reward pool as one blueprint from its list)
 - Quick-add window on `Ctrl+Shift+L` (always on top, works over borderless windowed games)
 
 ## Repo layout

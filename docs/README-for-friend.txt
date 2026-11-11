@@ -88,6 +88,14 @@ FINDER tab
     Both are community-maintained and can lag behind a patch, so check the
     dates shown. Loot drop locations are not available from any source, so
     the Finder says so instead of guessing.
+
+  PLANNER (new in 1.6)
+  - Open the Planner tab and press "Load mission data" once (about a minute).
+    It ranks missions by how many blueprints you have NOT ticked as known
+    on the Blueprints tab, with filters for system, illegal and combat
+    missions. Click a mission to see the blueprints and tick them off.
+  - The "per run" figure is an estimate: each reward pool is treated as one
+    blueprint chosen from its list. Press Refresh after a patch.
   - Needs an internet connection.
 
 CRAFT LIST tab

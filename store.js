@@ -4,7 +4,7 @@ const path = require('path');
 
 const KEEP_BACKUPS = 14;
 const MAX_BYTES = 25e6;
-const BLOBS = ['prices']; // small extra files the page may keep next to the data file
+const BLOBS = ['prices', 'plan']; // small extra files the page may keep next to the data file
 
 function createStore(dir) {
   const dataFile = path.join(dir, 'tracker-data.json');
