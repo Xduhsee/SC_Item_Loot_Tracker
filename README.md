@@ -86,10 +86,10 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Report a bug: new panel on the Data tab and a link in the footer. It opens a prefilled issue on GitHub (needs a free GitHub account) with an optional block of app details: version, database version and counts. No item names or personal data.
 
 ## v1.16.0
-- New Mining tab with four pages. One download (Star Citizen Wiki and UEX) feeds all of them and is saved on your computer.
+- New Mining / Salvaging tab with four pages. One download (Star Citizen Wiki and UEX) feeds all of them and is saved on your computer.
 - Scan decoder: type a scanner number and it works out what it is and how many rocks (the scanner shows the base number times the rock count). Shows what it sells for, where it spawns, whether your Craft list is short on it, and near misses. Keeps recent numbers and a small scan log.
 - Find ore: what your Craft list needs, pick a material, or search by signature. Shows the best places, and the best places that cover several materials at once.
 - Salvage: where ship salvage sites are, what is there, the signature numbers, and how likely it is.
 - Refinery: enter your ore and SCU and pick Most output, Most profit, Fastest or Balanced. Shows the best station and method per ore, with a one-stop option and a method chart. Base yields per method are community estimates you can edit. Check the in-game quote before you commit.
 - Scan decoder window (desktop app): `Ctrl+Shift+S` shows or hides a small always-on-top decoder. It works over the game in borderless windowed mode, not exclusive fullscreen.
-- Alt+1 to Alt+7 now switch sections (Mining is Alt+5).
+- Alt+1 to Alt+7 now switch sections (Mining / Salvaging is Alt+5).
