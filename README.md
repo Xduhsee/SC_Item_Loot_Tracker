@@ -80,3 +80,6 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 ## v1.14.2
 - Blueprints: List now uses the bar layout (one blueprint per row) and Cards shows the same layout in two columns. The old table rows are gone.
+
+## v1.15.0
+- Report a bug: new panel on the Data tab and a link in the footer. It opens a prefilled issue on GitHub (needs a free GitHub account) with an optional block of app details: version, database version and counts. No item names or personal data.

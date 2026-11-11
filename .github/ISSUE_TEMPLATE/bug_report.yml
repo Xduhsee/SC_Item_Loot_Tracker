@@ -1,0 +1,16 @@
+name: Bug report
+description: Something in Loot Tracker is not working
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What went wrong?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: info
+    attributes:
+      label: App details
+      description: Filled in by the app. Contains no item names or personal data.

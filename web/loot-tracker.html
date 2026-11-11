@@ -890,6 +890,15 @@
       <div class="row"><button type="button" class="ghost" id="mergeBtn">Merge into my list</button></div>
       <div id="ioMsg" class="msg" role="status"></div>
     </div>
+    <div class="panel" id="bugPanel">
+      <h2>Report a bug</h2>
+      <div class="note" style="margin:0">Opens a prefilled issue on GitHub (you need a free GitHub account to submit it). Nothing is sent until you press the button on GitHub.</div>
+      <label for="bugWhat">What went wrong?</label>
+      <textarea id="bugWhat" rows="4" maxlength="3000" placeholder="What you did, what you expected, what happened instead"></textarea>
+      <label class="chk"><input id="bugInfo" type="checkbox" checked> Include app details (version, database version, counts, current tab). No item names or personal data.</label>
+      <pre id="bugPreview" class="note" style="white-space:pre-wrap;margin:0"></pre>
+      <div class="row"><button type="button" id="bugOpen">Open on GitHub</button><button type="button" class="ghost" id="bugCopy">Copy report</button></div>
+    </div>
     <div class="panel dangerzone">
       <h2>Danger zone</h2>
       <div class="row" style="justify-content:space-between;align-items:center">
@@ -905,7 +914,7 @@
     <div id="fpBody"></div>
   </div>
 </div>
-  <div class="foot">Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>6</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
+  <div class="foot"><a href="#" id="bugLink">Report a bug</a> · Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>6</kbd> switch section, <kbd>/</kbd> jump to search. MGS Dynamics. Fan-made, not affiliated with CIG.</div>
 </div>
 <div id="toasts" aria-live="polite" role="status"></div>
 
@@ -3278,6 +3287,34 @@ async function computeExactItems(cat, patchCode, progress){
       if (box){ e.preventDefault(); box.focus(); if (box.select) box.select(); }
     }
   });
+
+
+  // ---------- bug report ----------
+  var ISSUES = "https://github.com/Xduhsee/SC_Item_Loot_Tracker/issues/new";
+  function bugInfo(){
+    var lines = ["App: " + ($("appVer").textContent || "web build"), "Mode: " + (NATIVE ? "desktop app" : "browser"), "Tab: " + curTab,
+      "Item database: " + (catalogue ? catalogue.version + " (" + fmt(catalogue.items.length) + " items, " + fmt((catalogue.bps || []).length) + " blueprints)" : "not downloaded"),
+      "Mission data: " + (planData && planData.ms ? fmt(planData.ms.length) + " missions" : "not loaded"),
+      "Stacks: " + items.length + " / Materials: " + mats.length + " / Known blueprints: " + Object.keys(known).length,
+      "Screen: " + window.innerWidth + "x" + window.innerHeight, "Browser: " + navigator.userAgent];
+    return lines.join("\n");
+  }
+  function bugReport(){ return { what: $("bugWhat").value.trim(), info: $("bugInfo").checked ? bugInfo() : "" }; }
+  function renderBugPreview(){ $("bugPreview").textContent = $("bugInfo").checked ? bugInfo() : "No app details will be included."; }
+  ["bugWhat", "bugInfo"].forEach(function(id){ $(id).addEventListener("input", renderBugPreview); });
+  $("bugOpen").onclick = function(){
+    var r = bugReport();
+    if (!r.what){ toast("Describe what went wrong first.", true); $("bugWhat").focus(); return; }
+    var url = ISSUES + "?template=bug_report.yml&title=" + encodeURIComponent(r.what.split("\n")[0].slice(0, 80)) + "&what=" + encodeURIComponent(r.what) + (r.info ? "&info=" + encodeURIComponent(r.info) : "");
+    window.open(url, "_blank", "noopener");
+  };
+  $("bugCopy").onclick = function(){
+    var r = bugReport(), text = r.what + (r.info ? "\n\n" + r.info : "");
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){ toast("Report copied."); }, function(){ toast("Could not copy. Select the text yourself.", true); });
+    else toast("Could not copy. Select the text yourself.", true);
+  };
+  $("bugLink").onclick = function(ev){ ev.preventDefault(); showTab("data"); renderBugPreview(); $("bugPanel").scrollIntoView({ block: "center" }); $("bugWhat").focus(); };
+  renderBugPreview();
 
   // ---------- compact rows ----------
   function applyCompact(){ document.body.classList.toggle("compact", !!ui.compact); $("compactBtn").setAttribute("aria-pressed", ui.compact ? "true" : "false"); $("compactBtn").textContent = ui.compact ? "Normal size" : "Compact"; }
