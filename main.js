@@ -178,7 +178,7 @@ if (!app.requestSingleInstanceLock()) {
       minWidth: 420,
       minHeight: 520,
       backgroundColor: '#060a07',
-      title: 'SC Loot Tracker',
+      title: 'Loot Tracker',
       icon: path.join(__dirname, 'build', 'icon.png'),
       autoHideMenuBar: true,
       webPreferences: webPrefs()
