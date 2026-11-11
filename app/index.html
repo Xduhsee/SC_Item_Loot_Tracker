@@ -114,7 +114,7 @@
   .wherewrap .acbox{left:auto;right:0;width:270px}
   .where{width:100%;min-height:34px;padding:4px 8px;font-size:13px}
   .empty{color:var(--mute);text-align:center;padding:28px 10px;border:1px dashed var(--line);border-radius:10px}
-  .chip{display:inline-block;max-width:100%;white-space:normal;margin-top:6px;padding:3px 10px;border:1px solid var(--line);border-radius:99px;background:var(--panel)}.prog{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0}.empty.rich{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px}.empty.rich .etitle{color:var(--text);font-weight:700;font-size:15px}.empty.rich .note{max-width:340px;margin:0}
+  .dbchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 2px}.dbchips .badge{padding:3px 10px}.compact .brand img,.compact .top .sub{display:none}.compact .top{padding-top:4px;padding-bottom:4px}.prog{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0}.empty.rich{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px}.empty.rich .etitle{color:var(--text);font-weight:700;font-size:15px}.empty.rich .note{max-width:340px;margin:0}
   .msg{min-height:20px;font-size:13px;color:var(--good);margin-top:8px}
   .msg.err{color:var(--bad)}
   .banner{background:#2a2112;border:1px solid #5a4416;color:var(--warn);padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -413,8 +413,7 @@
     </div>
     <div class="upd">
       <button id="updBtn" type="button">Update item database</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
-      <div class="mini chip" id="dbStatus">Item database: not downloaded yet</div>
-    </div>
+          </div>
   </header>
 
   <div id="storageWarn" class="banner" hidden>This browser is blocking saved data, so your list will disappear when you close the page. Use the Data &amp; backup tab to copy it out before you leave.</div>
@@ -446,6 +445,7 @@
     <button role="tab" data-tab="hist" aria-selected="false">History</button>
   </nav>
   </div>
+  <div class="dbchips" id="dbStatus" aria-live="polite"></div>
 
   <!-- HOME -->
   <section id="tab-home">
@@ -2927,7 +2927,7 @@ async function computeExactItems(cat, patchCode, progress){
       catalogue = cat; await idbSet("cat", cat); buildIndex(); render();
       if (NATIVE && NATIVE.notifyCatalogue) try { NATIVE.notifyCatalogue(); } catch (e){}
       var d = (cat.diffs || {})[cat.patch], n = d ? d.items.length : 0;
-      $("dbStatus").textContent = statusText();
+      renderChips();
       var w = (cat.warnings || []).length ? " " + cat.warnings.join(" ") : "";
       showNotice("Updated to " + cat.patch + ": " + fmt(cat.items.length) + " items, " + fmt((cat.bps || []).length) + " blueprints." + (n ? " " + fmt(n) + " new since your last update." : "") + w, !!(cat.warnings || []).length);
     } catch (e){ showNotice("Update failed: " + (e && e.message ? e.message : e) + ". Check your connection and try again.", true); }
@@ -2940,8 +2940,19 @@ async function computeExactItems(cat, patchCode, progress){
     if (!catalogue) return "Item database: not downloaded yet";
     return "Item database: " + catalogue.patch + " · " + fmt(catalogue.items.length) + " items · " + fmt((catalogue.bps || []).length) + " blueprints · " + String(catalogue.fetchedAt).slice(0, 10);
   }
+  function renderChips(){
+    var box = $("dbStatus"); box.textContent = "";
+    if (!catalogue){ box.appendChild(h("span", { class: "badge warn", text: "Item database not downloaded yet" })); }
+    else {
+      box.appendChild(h("span", { class: "badge good", text: "Database " + catalogue.patch + " · " + String(catalogue.fetchedAt).slice(0, 10) }));
+      box.appendChild(h("span", { class: "badge", text: fmt(catalogue.items.length) + " items" }));
+      box.appendChild(h("span", { class: "badge", text: fmt((catalogue.bps || []).length) + " blueprints" }));
+    }
+    if (planData && planData.ms) box.appendChild(h("span", { class: "badge", text: fmt(planData.ms.filter(function(m){ return m.rl !== 0; }).length) + " missions" }));
+    box.appendChild(h("span", { class: "note", text: storageOK ? "All data is saved on this computer." : "Saving is blocked. Back up from the Data tab." }));
+  }
   function renderStatus(){
-    $("dbStatus").textContent = statusText();
+    renderChips();
     var s = $("srcInfo"); s.textContent = "";
     var rows = [["Version", catalogue ? catalogue.version : "—"]];
     if (catalogue && catalogue.srcs){
@@ -2969,7 +2980,7 @@ async function computeExactItems(cat, patchCode, progress){
   var planData = null, planBusy = false, planShown = 40, planErr = "";
   function loadPlanCache(){
     return idbGet("plan").then(function(c){
-      if (c && (c.v === 1 || c.v === 2) && Array.isArray(c.ms)) planData = c;
+      if (c && (c.v === 1 || c.v === 2) && Array.isArray(c.ms)){ planData = c; renderChips(); }
     }).catch(function(){});
   }
   async function loadPlan(){
@@ -2995,7 +3006,7 @@ async function computeExactItems(cat, patchCode, progress){
         done++; progress("Reading mission rewards (" + done + "/" + total + ")", 0.1 + 0.9 * done / total);
       });
       if (!ms.length) throw new Error("no missions came back");
-      planData = { v: 2, t: Date.now(), total: total, failed: failed, ms: ms };
+      planData = { v: 2, t: Date.now(), total: total, failed: failed, ms: ms }; renderChips();
       await idbSet("plan", planData);
     } catch (e){ planErr = e && e.message ? e.message : String(e); }
     planBusy = false; $("plLoad").disabled = false; setTimeout(function(){ if (!updating) $("prog").hidden = true; }, 600); renderPlanner();
@@ -3269,7 +3280,7 @@ async function computeExactItems(cat, patchCode, progress){
   });
 
   // ---------- compact rows ----------
-  function applyCompact(){ document.body.classList.toggle("compact", !!ui.compact); $("compactBtn").setAttribute("aria-pressed", ui.compact ? "true" : "false"); $("compactBtn").textContent = ui.compact ? "Compact: on" : "Compact"; }
+  function applyCompact(){ document.body.classList.toggle("compact", !!ui.compact); $("compactBtn").setAttribute("aria-pressed", ui.compact ? "true" : "false"); $("compactBtn").textContent = ui.compact ? "Normal size" : "Compact"; }
   window.addEventListener("hashchange", function(){ var h1 = String(location.hash || "").replace(/^#/, ""); if (TABGROUP[h1] && h1 !== curTab) showTab(h1); });
   $("compactBtn").onclick = function(){ ui.compact = ui.compact ? 0 : 1; applyCompact(); save(); };
 

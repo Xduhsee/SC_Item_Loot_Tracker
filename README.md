@@ -71,5 +71,6 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - New top-level Missions tab: mission cards grouped by faction, filter and sort by activity (Hauling, Combat, Mining, Salvage and so on), with requirements shown up front (cargo and SCU, enemies, system, where offered). The wiki data has no pickup or drop-off locations, so those show as chosen in game.
 - New My Standing tab: set your rank per faction once; the Missions board and Planner use it.
 - Home, Finder, Loot by location, History, Data and "Added this patch" restyled to match Inventory and Blueprints, with proper empty states and header status chip.
+- Header: database status is now chips under the tabs (version, items, blueprints, missions). Compact mode drops the logo and the button reads "Normal size" while on.
 - Find buttons now open a popup with three tabs (Where to get it, Blueprint missions, Scraps into). "Open in Finder" jumps to the full tab; Esc closes it.
 - Fixed: horizontal scrolling on phone-width screens.
