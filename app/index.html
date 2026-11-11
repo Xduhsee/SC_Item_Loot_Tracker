@@ -97,6 +97,7 @@
   .linkbtn:hover{border-color:var(--accent)}
   .fpop{position:fixed;inset:0;z-index:50;background:rgba(3,6,4,.72);display:flex;justify-content:center;align-items:flex-start;padding:30px 14px;box-sizing:border-box;overflow:auto}.fpop[hidden]{display:none}
   .fpbox{width:100%;max-width:700px;background:var(--panel);border:1px solid #2f6a45;border-radius:14px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .exp{font-size:11px;font-weight:700;color:#ffb84d;letter-spacing:.3px;margin-left:8px;white-space:nowrap}
   .fphead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.fptitle{font-size:18px;font-weight:700}
   .fptabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 2px}.fptab{padding:5px 14px;border-radius:99px;font-size:13px;font-weight:600;color:var(--mute);border:1px solid var(--line);background:none;min-height:0}.fpbox .fptab.on{color:#fff;background:#3a1a5c;border-color:#b44cff;box-shadow:none}.fpbox .fptab{background:none;color:var(--mute);box-shadow:none}.fpbox .fptab.on{color:#fff;background:#3a1a5c}
   body.modalopen{overflow:hidden}
@@ -519,7 +520,7 @@
   <!-- INVENTORY -->
   <section id="tab-inv" hidden>
     <div class="panel">
-      <h2>Add loot</h2>
+      <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Add loot</h2><span class="row" style="align-items:center;gap:0"><button type="button" class="ghost smallbtn" id="glBtn2">Import Game.log</button><span class="exp">*experimental</span></span></div>
       <form id="addForm" class="row" autocomplete="off">
         <label class="grow ac">Item (start typing)
           <input id="fName" placeholder='e.g. Karna, Arden, suppressor, Hadanite' required maxlength="120" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="acBox">
@@ -958,6 +959,11 @@
       <div id="bkList" class="bktbl"></div>
     </div>
     <div class="panel">
+      <h2>Import from Game.log</h2>
+      <p class="note" style="margin-top:0">Reads the game's log file and lists items you looted, bought or moved. You tick what to add. Nothing is added on its own.</p>
+      <div class="row" style="align-items:center;gap:0"><button type="button" id="glBtn">Import Game.log</button><span class="exp">*experimental</span></div>
+    </div>
+    <div class="panel">
       <h2>Move data to another computer</h2>
       <div class="row">
         <button type="button" id="exportBtn">Create backup text</button>
@@ -987,6 +993,20 @@
       </div>
     </div>
   </section>
+  <div id="gwop" class="fpop" hidden>
+  <div class="fpbox" role="alertdialog" aria-modal="true" aria-labelledby="gwTitle" aria-describedby="gwText" style="max-width:460px">
+    <div class="fptitle" id="gwTitle">Experimental feature</div>
+    <p id="gwText" style="margin:10px 0">Game.log import is experimental and is not 100% accurate. It reads container moves from the log, so it can miss items, count items you only moved, and get quantities wrong. Check the list before you add anything.</p>
+    <label style="display:flex;flex-direction:row;align-items:center;gap:8px;margin:10px 0;font-size:14px;color:var(--text,inherit)"><input type="checkbox" id="gwNo" style="width:18px;height:18px;min-height:0;padding:0;margin:0"> Do not show this again</label>
+    <div class="row"><button type="button" id="gwOk">I understand</button><button type="button" class="ghost" id="gwCancel">Cancel</button></div>
+  </div>
+</div>
+  <div id="gpop" class="fpop" hidden>
+  <div class="fpbox" role="dialog" aria-modal="true" aria-labelledby="gpTitle">
+    <div class="fphead"><div class="fptitle" id="gpTitle">Import from Game.log <span class="exp">*experimental</span></div><button type="button" class="ghost smallbtn" id="gpClose">Close</button></div>
+    <div id="gpBody"></div>
+  </div>
+</div>
   <div id="hpop" class="fpop" hidden>
   <div class="fpbox" role="dialog" aria-modal="true" aria-labelledby="hpTitle">
     <div class="fphead"><div class="fptitle" id="hpTitle">How to use</div><button type="button" class="ghost smallbtn" id="hpClose">Close</button></div>
@@ -1655,7 +1675,7 @@ function rankUps(ms, known, rep){
 }
 function sanitizeUi(o){
   o = o && typeof o === "object" && !Array.isArray(o) ? o : {};
-  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine) };
+  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine), gl: sanitizeGlUi(o.gl) };
 }
 // ---------- mining ----------
 var MINE_KINDS = { ship: "Ship mining", fps: "Hand mining", veh: "Ground vehicle", salv: "Salvage" };
@@ -1846,6 +1866,131 @@ function sanitizeMineUi(o){
   var recent = (Array.isArray(o.recent) ? o.recent : []).map(function(n){ return Math.round(Number(n)); }).filter(function(n){ return n > 0 && n < 1e7; }).slice(0, 8);
   return { rows: rows, recent: recent, goal: ["out", "profit", "fast", "bal"].indexOf(o.goal) >= 0 ? o.goal : "out", sys: norm(o.sys).slice(0, 24), one: o.one ? 1 : 0, over: cleanOver(o.over), pin: o.pin ? 1 : 0, log: (Array.isArray(o.log) ? o.log : []).slice(0, 40).map(function(e){ return e && Number(e.n) > 0 ? { n: Math.round(Number(e.n)), l: norm(e.l).slice(0, 60), c: Math.max(1, Math.min(99, Math.round(Number(e.c)) || 1)), t: norm(e.t).slice(0, 16) } : null; }).filter(Boolean) };
 }
+// ---------- Game.log import ----------
+var GL_NOISE = /(^body_|nomagicpocket|necksock|subitem|^none_|^hands?_|^fists?_)/i;
+// Things the user does not track: food, drink, medical, ammo and magazines, grenades, fire extinguishers, mission items.
+var GL_SKIP = /(^|_)(drink|food|ammo|consumable|carryable|keycard|medpen|medpack|oxypen|stim|bandage|gren|fire_extinguisher)(_|$)|_mag(_|$)|resource_healing/i;
+function glSkipClass(c){ return GL_SKIP.test(String(c || "")) || GL_NOISE.test(String(c || "")); }
+function glSkipCat(c){ return c === "Consumable / Medical"; }
+// One class or a bulk list written as [a] [b] [c]. closed is false when the game cut the line short.
+function glClasses(line){
+  var i = line.indexOf("ItemClass["); if (i < 0) return null;
+  var rest = line.slice(i + 10), out = [], p = 0;
+  if (rest.charAt(0) !== "["){ var j = rest.indexOf("]"); return j < 0 ? null : { list: [rest.slice(0, j)], closed: true }; }
+  while (rest.charAt(p) === "["){
+    var q = rest.indexOf("]", p); if (q < 0) break;
+    out.push(rest.slice(p + 1, q)); p = q + 1;
+    while (rest.charAt(p) === " ") p++;
+  }
+  return { list: out, closed: rest.charAt(p) === "]" };
+}
+var GL_KINDS = { loot: "Looted", buy: "Bought", retrieve: "Taken from storage", stash: "Put in storage", drop: "Dropped", stow: "Stowed" };
+var GL_ORDER = ["loot", "buy", "retrieve", "stash", "stow", "drop"];
+function glPretty(cls){
+  var s = String(cls || "").replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
+function glShop(s){
+  var p = String(s || "").replace(/^SCShop_/i, "").split("_").filter(Boolean);
+  return p.length ? p[p.length - 1] : "";
+}
+function glField(line, key){
+  var i = line.indexOf(key + "["); if (i < 0) return null;
+  var j = line.indexOf("]", i + key.length + 1); if (j < 0) return null;
+  return line.slice(i + key.length + 1, j);
+}
+function glSession(text){
+  var m = /^<(\d{4}-\d\d-\d\dT[\d:.]+Z)>/m.exec(String(text || "").slice(0, 4000));
+  return m ? m[1] : "";
+}
+// Reads Game.log text. Returns { start, end, events[], lines, skipped } with no names or ids kept.
+function parseGameLog(text){
+  text = String(text || "");
+  var lines = text.split(/\r?\n/), ev = [], skipped = 0, where = "", start = "", end = "";
+  var pidCount = {}, queried = {}, parsed = [];
+  var tre = /^<(\d{4}-\d\d-\d\dT[\d:.]+Z)>/;
+  for (var n = 0; n < lines.length; n++){
+    var l = lines[n], tm = tre.exec(l); if (!tm) continue;
+    if (!start) start = tm[1]; end = tm[1];
+    if (l.length < 40) continue;
+    if (l.indexOf("Add Inventory Management Move") > 0){
+      var ty = glField(l, "Type"), src = glField(l, "SourceInventory"), tgt = glField(l, "TargetInventory"), ic = glClasses(l);
+      if (ty == null || src == null || tgt == null || !ic){ if (ty && ty !== "QueryInventory") skipped++; continue; }
+      if (!ic.closed) skipped++;
+      var mm = /^(\d+):Location:/.exec(src) || /^(\d+):Location:/.exec(tgt);
+      if (mm) pidCount[mm[1]] = (pidCount[mm[1]] || 0) + 1;
+      if (ty === "QueryInventory"){
+        var cm = glField(l, "Caller");
+        if (cm && cm.indexOf("RequestInventoryData") >= 0 && /:Container:/.test(src)) queried[src] = 1;
+        continue;
+      }
+      for (var ci = 0; ci < ic.list.length; ci++){
+        if (!ic.list[ci]) continue;
+        parsed.push({ t: tm[1], ty: ty, s: src, g: tgt, c: ic.list[ci], w: where, loc: glField(l, "LocalAttached") || "" });
+      }
+    } else if (l.indexOf("SendShopBuyRequest") > 0){
+      var nm = glField(l, "itemName"), q = Number(glField(l, "quantity")), pr = Number(glField(l, "client_price"));
+      if (!nm){ skipped++; continue; }
+      if (glSkipClass(nm)) continue;
+      ev.push({ t: tm[1], k: "buy", c: nm, n: q > 0 ? Math.floor(q) : 1, p: pr > 0 ? pr : 0, w: glShop(glField(l, "shopName")) || where });
+    } else if (l.indexOf("Added notification \"Entered ") > 0){
+      var wm = /Added notification "Entered (.+?) Jurisdiction/.exec(l);
+      if (wm) where = wm[1].slice(0, 60);
+    }
+  }
+  var pid = "", best = 0;
+  Object.keys(pidCount).forEach(function(k){ if (pidCount[k] > best){ best = pidCount[k]; pid = k; } });
+  var mine = queried, isLoc = function(s){ return pid && s.indexOf(pid + ":Location:") === 0; }, isCon = function(s){ return /:Container:/.test(s); };
+  parsed.forEach(function(e){
+    if ((e.ty === "Move") && isCon(e.s) && isLoc(e.g)) mine[e.s] = 1;
+    if ((e.ty === "Move") && isLoc(e.s) && isCon(e.g)) mine[e.g] = 1;
+    if (e.ty === "Store" && isCon(e.s)) mine[e.s] = 1;
+  });
+  parsed.forEach(function(e){
+    if (glSkipClass(e.c)) return;
+    var k = "";
+    if (e.ty === "Move"){
+      if (isLoc(e.g) && !isLoc(e.s)) k = "stash";
+      else if (isLoc(e.s) && isCon(e.g)) k = "retrieve";
+      else if (isCon(e.s) && isCon(e.g) && !mine[e.s] && mine[e.g]) k = "loot";
+    } else if (e.ty === "Interaction" && /AttachItem|Inventory_LocalAttach/.test(e.loc)) k = "loot";
+    else if (e.ty === "Store") k = "stow";
+    else if (e.ty === "Drop") k = "drop";
+    if (k) ev.push({ t: e.t, k: k, c: e.c, n: 1, p: 0, w: e.w });
+  });
+  ev.sort(function(a, b){ return a.t < b.t ? -1 : a.t > b.t ? 1 : 0; });
+  return { start: start, end: end, events: ev, lines: lines.length, skipped: skipped };
+}
+// Groups events by kind and item class. after = ISO time; only newer events count.
+function glGroup(res, after){
+  var by = {}, out = [];
+  (res && res.events || []).forEach(function(e){
+    if (after && !(e.t > after)) return;
+    var key = e.k + "|" + String(e.c).toLowerCase(), g = by[key];
+    if (!g){ g = by[key] = { k: e.k, c: e.c, n: 0, p: 0, w: {}, t1: e.t, t2: e.t }; out.push(g); }
+    g.n += e.n; if (e.p) g.p = e.p; g.t2 = e.t;
+    if (e.w) g.w[e.w] = (g.w[e.w] || 0) + e.n;
+  });
+  out.forEach(function(g){
+    var best = "", bn = 0; Object.keys(g.w).forEach(function(k){ if (g.w[k] > bn){ bn = g.w[k]; best = k; } });
+    g.where = best; delete g.w;
+  });
+  out.sort(function(a, b){ return GL_ORDER.indexOf(a.k) - GL_ORDER.indexOf(b.k) || String(a.c).localeCompare(String(b.c)); });
+  return out;
+}
+// names: { class_name_lowercase: { n, c, s } } from the item database.
+function glResolve(g, names){
+  var hit = names && names[String(g.c).toLowerCase()];
+  if (hit) return { name: hit.n, cat: hit.c, sub: hit.s || "", known: true };
+  return { name: / /.test(g.c) ? g.c : glPretty(g.c), cat: "Other", sub: "", known: false };
+}
+function sanitizeGlUi(o){
+  var out = {}; o = o && typeof o === "object" ? o : {};
+  var ok = o.ok ? 1 : 0;
+  var s = o.s && typeof o.s === "object" ? o.s : {}, ks = Object.keys(s).filter(function(k){ return /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(k) && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(String(s[k])); }).sort().slice(-40);
+  ks.forEach(function(k){ out[k] = String(s[k]); });
+  return { s: out, ok: ok };
+}
 /*END LOGIC*/
 
 /*DATA*/
@@ -1933,7 +2078,7 @@ function normWikiItem(d){
   var k = classify(d.type, d.sub_type, d.classification, d.name);
   if (!k) return null;
   var o = { u: String(d.uuid).toLowerCase(), n: String(d.name), c: k.c, s: k.s || "", g: k.g || "", a: "" };
-  if (k.c === "Armor" && d.class_name) o.k = String(d.class_name).toLowerCase().slice(0, 120);
+  if (d.class_name) o.k = String(d.class_name).toLowerCase().slice(0, 120);
   if (k.c === "Ship component"){
     var z = Math.floor(Number(d.size));
     if (z >= 1 && z <= 20) o.z = z;
@@ -3570,6 +3715,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Backups.", "Saved daily, last 14 kept. Restore from the list."],
       ["Move to another computer.", "Create backup text, paste it on the other copy, press Merge into my list."],
       ["Export.", "Inventory and loot log as CSV."],
+      ["Import from Game.log.", "Also on the Inventory page. Choose the game's Game.log (StarCitizen\\LIVE, older ones in logbackups), or in the desktop app press Import latest session. Looted and bought items are ticked, everything else is not. Check the list, set a location, press Add. A session you already imported only shows newer events. Loot is a best guess, so review it."],
       ["Report a bug.", "Opens a prefilled GitHub issue. Nothing is sent until you submit it there."],
       ["Danger zone.", "Replace my list and Clear everything. A backup is saved first."]]],
     ["Credits", [
@@ -3601,6 +3747,137 @@ async function computeExactItems(cat, patchCode, progress){
   $("hpClose").onclick = howClose;
   $("hpop").addEventListener("mousedown", function(ev){ if (ev.target === $("hpop")) howClose(); });
   document.addEventListener("keydown", function(ev){ if (ev.key === "Escape" && howOpen()) howClose(); });
+
+  // ---------- Game.log import ----------
+  var glFiles = [], glOpener = null, glNameSrc = null, glNameMap = {};
+  function glNames(){
+    if (glNameSrc !== catalogue){
+      glNameSrc = catalogue; glNameMap = {};
+      ((catalogue && catalogue.items) || []).forEach(function(it){ if (it.k && !glNameMap[it.k]) glNameMap[it.k] = { n: it.n, c: it.c, s: it.s }; });
+    }
+    return glNameMap;
+  }
+  function glOpen(){ return !$("gpop").hidden; }
+  function glClose(){ $("gpop").hidden = true; document.body.classList.remove("modalopen"); if (glOpener && document.contains(glOpener)) glOpener.focus(); glOpener = null; }
+  function glUtc(t){ return t ? t.slice(0, 10) + " " + t.slice(11, 16) + " UTC" : ""; }
+  function glAddFile(name, text){
+    var res = parseGameLog(text);
+    var done = ui.gl.s[res.start] || "";
+    var groups = glGroup(res, done);
+    groups.forEach(function(g){ g.on = g.k === "loot" || g.k === "buy"; g.q = g.n; });
+    glFiles.push({ name: name, res: res, groups: groups, done: done });
+  }
+  function glRender(){
+    var B = $("gpBody"); B.textContent = "";
+    var names = glNames(), hasNames = Object.keys(names).length > 0;
+    var pick = h("input", { type: "file", id: "glFile", accept: ".log,.txt,text/plain", multiple: "multiple" });
+    pick.onchange = function(){
+      var fs = Array.prototype.slice.call(pick.files || []); if (!fs.length) return;
+      var left = fs.length;
+      fs.forEach(function(f){
+        f.text().then(function(t){ glAddFile(f.name, t); }).catch(function(){ toast("Couldn't read " + f.name + ".", true); }).then(function(){ if (--left === 0) glRender(); });
+      });
+    };
+    var row = h("div", { class: "row" }, h("label", { class: "filebtn" }, h("span", { text: "Choose Game.log files" }), pick));
+    if (NATIVE && NATIVE.logLatest){
+      var lb = h("button", { type: "button", text: "Import latest session" });
+      lb.onclick = function(){
+        lb.disabled = true;
+        NATIVE.logLatest().then(function(r){
+          lb.disabled = false;
+          if (!r || !r.text){ toast(r && r.error ? r.error : "Couldn't find Game.log.", true); return; }
+          glAddFile("Game.log", r.text); glRender();
+        }).catch(function(){ lb.disabled = false; toast("Couldn't read Game.log.", true); });
+      };
+      row.insertBefore(lb, row.firstChild);
+      if (NATIVE.logFolder) row.appendChild(h("button", { type: "button", class: "ghost", text: "Change log folder", onclick: function(){ NATIVE.logFolder().then(function(p){ if (p) toast("Log folder saved."); }); } }));
+    }
+    B.appendChild(row);
+    B.appendChild(h("div", { class: "note", text: "Game.log is in your Star Citizen folder: StarCitizen\\LIVE\\Game.log. Older sessions are in LIVE\\logbackups. The file is read on this computer and not uploaded." }));
+    if (!hasNames) B.appendChild(h("div", { class: "note err", text: "Item names will show as game codes until you press Update item database." }));
+    if (!glFiles.length){ B.appendChild(h("div", { class: "empty", text: "Choose a log file to see what it recorded." })); return; }
+    B.appendChild(h("div", { class: "note", text: "Loot is a best guess. Items taken from another container into yours count as looted. Check the list and untick anything wrong before adding." }));
+    var locIn = h("input", { id: "glLoc", list: "locList", maxlength: "80", placeholder: "Unsorted", value: ui.loc || "" });
+    B.appendChild(h("label", { class: "grow" }, "Put added items in location", locIn));
+    glFiles.forEach(function(f, fi){
+      var wrap = h("div", { class: "glfile" });
+      var head = h("div", { class: "row", style: "justify-content:space-between;align-items:center;margin-top:12px" },
+        h("b", { text: "Session " + glUtc(f.res.start) + (f.res.end ? " to " + f.res.end.slice(11, 16) : "") }),
+        h("button", { type: "button", class: "ghost smallbtn", text: "Remove", onclick: function(){ glFiles.splice(fi, 1); glRender(); } }));
+      wrap.appendChild(head);
+      var sub = f.res.lines.toLocaleString() + " lines" + (f.res.skipped ? ", " + f.res.skipped + " cut-off lines skipped" : "") + (f.done ? ". Already imported up to " + glUtc(f.done) + ", showing newer events only" : "");
+      wrap.appendChild(h("div", { class: "note", style: "margin:0 0 6px", text: sub }));
+      var hidden = 0;
+      f.groups.forEach(function(g){ g.hide = glSkipCat(glResolve(g, names).cat); if (g.hide){ g.on = false; hidden++; } });
+      if (hidden) wrap.appendChild(h("div", { class: "note", style: "margin:0 0 6px", text: hidden + " food, drink, medical, ammo or throwable item" + (hidden === 1 ? "" : "s") + " hidden." }));
+      if (!f.groups.length) wrap.appendChild(h("div", { class: "dim", text: "No item events in this log." }));
+      GL_ORDER.forEach(function(k){
+        var gs = f.groups.filter(function(g){ return g.k === k && !g.hide; }); if (!gs.length) return;
+        var allOn = gs.every(function(g){ return g.on; });
+        var tog = h("input", { type: "checkbox", "aria-label": "Select all " + GL_KINDS[k] });
+        tog.checked = allOn; tog.onchange = function(){ gs.forEach(function(g){ g.on = tog.checked; }); glRender(); };
+        wrap.appendChild(h("div", { class: "row glkind", style: "align-items:center;margin-top:10px" }, tog, h("b", { text: GL_KINDS[k] + " (" + gs.length + ")" })));
+        var rows = gs.map(function(g){
+          var r = glResolve(g, names), cb = h("input", { type: "checkbox", "aria-label": "Add " + r.name });
+          cb.checked = g.on; cb.onchange = function(){ g.on = cb.checked; glCount(); };
+          var q = h("input", { type: "number", min: "1", max: "999999", value: String(g.q), style: "width:70px", "aria-label": "Quantity of " + r.name });
+          q.oninput = function(){ g.q = Math.max(1, Math.floor(Number(q.value)) || 1); };
+          return [cb, h("span", { text: r.name + (r.known ? "" : " ?") }), q, g.where || ""];
+        });
+        wrap.appendChild(mtable(["Add", "Item", "Qty", "Where"], rows));
+      });
+      B.appendChild(wrap);
+    });
+    var go = h("button", { type: "button", id: "glGo", text: "Add ticked items" });
+    go.onclick = glApply;
+    B.appendChild(h("div", { class: "row", style: "margin-top:14px;align-items:center" }, go, h("span", { class: "note", id: "glCnt", style: "margin:0" })));
+    glCount();
+  }
+  function glCount(){
+    var n = 0; glFiles.forEach(function(f){ f.groups.forEach(function(g){ if (g.on && !g.hide) n++; }); });
+    var c = $("glCnt"); if (c) c.textContent = n + " item" + (n === 1 ? "" : "s") + " ticked";
+    var go = $("glGo"); if (go) go.disabled = n === 0;
+  }
+  function glApply(){
+    var names = glNames(), loc = norm($("glLoc").value) || "Unsorted", n = 0;
+    snapshot();
+    glFiles.forEach(function(f){
+      f.groups.forEach(function(g){
+        if (!g.on || g.hide) return;
+        var r = glResolve(g, names);
+        if (addItem(items, { name: r.name, cat: r.cat, sub: r.sub, qty: g.q, loc: loc, note: "Game.log " + GL_KINDS[g.k].toLowerCase() + (g.where ? ", " + g.where : "") })) n++;
+      });
+      if (f.res.start && f.res.end && (!ui.gl.s[f.res.start] || f.res.end > ui.gl.s[f.res.start])) ui.gl.s[f.res.start] = f.res.end;
+    });
+    ui.gl = sanitizeGlUi(ui.gl);
+    if (!n){ undoStack.pop(); syncUndo(); toast("Nothing was ticked."); return; }
+    commit("Imported " + n + " stack" + (n === 1 ? "" : "s") + " from Game.log");
+    glFiles = []; glClose();
+    toast("Added " + n + " stack" + (n === 1 ? "" : "s") + " from Game.log. Undo is available.");
+  }
+  var gwOpener = null;
+  function gwOpen(){ return !$("gwop").hidden; }
+  function gwClose(){ $("gwop").hidden = true; if (!glOpen()) document.body.classList.remove("modalopen"); }
+  function askGl(){
+    if (ui.gl.ok){ openGl(); return; }
+    gwOpener = document.activeElement; $("gwNo").checked = false;
+    $("gwop").hidden = false; document.body.classList.add("modalopen"); $("gwOk").focus();
+  }
+  $("gwOk").onclick = function(){
+    if ($("gwNo").checked){ ui.gl.ok = 1; save(); }
+    gwClose(); openGl(gwOpener);
+  };
+  $("gwCancel").onclick = function(){ gwClose(); if (gwOpener && document.contains(gwOpener)) gwOpener.focus(); };
+  $("gwop").addEventListener("mousedown", function(ev){ if (ev.target === $("gwop")) $("gwCancel").onclick(); });
+  document.addEventListener("keydown", function(ev){ if (ev.key === "Escape" && gwOpen()) $("gwCancel").onclick(); });
+  function openGl(op){
+    glOpener = op || document.activeElement; glFiles = [];
+    glRender(); $("gpop").hidden = false; document.body.classList.add("modalopen"); $("gpClose").focus();
+  }
+  $("glBtn").onclick = askGl; $("glBtn2").onclick = askGl;
+  $("gpClose").onclick = glClose;
+  $("gpop").addEventListener("mousedown", function(ev){ if (ev.target === $("gpop")) glClose(); });
+  document.addEventListener("keydown", function(ev){ if (ev.key === "Escape" && glOpen()) glClose(); });
 
   // ---------- mining ----------
   var mine = null, mineSigT = null, mineBusy = false, mineErr = "", mfMode = "craft", mfPick = "", mfSig = "", msNum = 0, msqStr = "";

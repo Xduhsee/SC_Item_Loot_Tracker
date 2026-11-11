@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, shell, Menu, dialog, globalShortcut } = req
 const path = require('path');
 const fs = require('fs');
 const { createStore } = require('./store');
+const gamelog = require('./gamelog');
 
 const HOTKEY = 'CommandOrControl+Shift+L';
 const SCAN_HOTKEY = 'CommandOrControl+Shift+S';
@@ -182,6 +183,30 @@ if (!app.requestSingleInstanceLock()) {
         return { ok: true, path: r.filePath };
       } catch (err) { return { ok: false, error: String((err && err.message) || err).slice(0, 200) }; }
     });
+
+    // Game.log import: find the log, read it, hand the text to the page. Nothing is written to the game folder.
+    const logPrefFile = () => path.join(store.paths.dir, 'logdir.json');
+    const loadLogDir = () => { try { return String(JSON.parse(fs.readFileSync(logPrefFile(), 'utf8')).dir || ''); } catch (err) { return ''; } };
+    const pickLogDir = async () => {
+      const r = await dialog.showOpenDialog(win, { title: 'Choose the StarCitizen\\LIVE folder (the one with Game.log)', properties: ['openDirectory'] });
+      if (r.canceled || !r.filePaths || !r.filePaths[0]) return '';
+      if (!gamelog.logIn(r.filePaths[0])) return '';
+      try { fs.writeFileSync(logPrefFile(), JSON.stringify({ dir: r.filePaths[0] })); } catch (err) { /* keep going */ }
+      return r.filePaths[0];
+    };
+    ipcMain.handle('log:latest', async (e) => {
+      try {
+        if (!fromApp(e)) return { error: 'Not allowed.' };
+        let f = gamelog.findLog(loadLogDir());
+        if (!f) {
+          const d = await pickLogDir();
+          f = d ? gamelog.findLog(d) : '';
+        }
+        if (!f) return { error: 'Game.log not found. Use Change log folder and pick the StarCitizen\\LIVE folder.' };
+        return gamelog.readLog(f);
+      } catch (err) { return { error: String((err && err.message) || err).slice(0, 200) }; }
+    });
+    ipcMain.handle('log:folder', async (e) => { try { return fromApp(e) ? await pickLogDir() : ''; } catch (err) { return ''; } });
 
     // Quick-add window: it sends an item here, and we hand it to the main window, which owns the list.
     ipcMain.handle('quick:add', (e, p) => {

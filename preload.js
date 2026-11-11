@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('scStore', {
   version: () => ipcRenderer.invoke('app:version'),
   openFolder: () => ipcRenderer.invoke('store:open'),
   saveFile: (name, text) => ipcRenderer.invoke('file:save', name, text),
+  // Game.log import
+  logLatest: () => ipcRenderer.invoke('log:latest'),
+  logFolder: () => ipcRenderer.invoke('log:folder'),
   // quick-add window
   quickAdd: (item) => ipcRenderer.invoke('quick:add', item),
   quickHide: () => ipcRenderer.send('quick:hide'),

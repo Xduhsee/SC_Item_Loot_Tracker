@@ -104,3 +104,11 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Items, blueprints, missions and mining locations: [Star Citizen Wiki API](https://api.star-citizen.wiki), made by the community. Their guidance is to credit them in public projects and not use the data commercially.
 - Shop prices, refinery bonuses and methods: [UEX](https://uexcorp.space). Crowdsourced, so it can be wrong or behind the live game.
 - Fan-made and free. Not affiliated with or endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen and Squadron 42 are their trademarks.
+
+## v1.17.0
+
+- **Import from Game.log (experimental).** Shows a warning the first time, with a "do not show again" box. Reads Star Citizen's log file and lists items you looted, bought, stored, took out or dropped. You tick what to add and pick a location. Looted and bought items start ticked, the rest start unticked. Nothing is added on its own.
+- Desktop app: **Import latest session** finds your Game.log (it remembers the folder, or asks once). A session you already imported only shows newer events.
+- Item names come from the item database. Run Update item database once to get real names. Until then items show as game codes.
+- The log is read on your computer and never uploaded. Handles and account numbers in it are not kept or shown.
+- Loot is a best guess from container moves. Stack sizes are not in the log, so quantities start at the number of moves and you can edit them.
