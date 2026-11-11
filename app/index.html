@@ -179,48 +179,109 @@
     .navwrap{margin:0 -16px 8px}
   }
 
-  /* inventory as a grouped table */
-  .loc{border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .loc h3{border:0;border-radius:0}
-  .item{grid-template-columns:28px minmax(0,1fr) 134px 170px 84px 84px;border:0;border-top:1px solid #16281d;padding:7px 12px}
+  /* tables */
+  .sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .tbar{align-items:center}
+  .tbar select,.tbar input{min-height:38px}
+  .tbar .grow{flex:1 1 220px}
+  .loc{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .loc h3{border:0;border-radius:0;background:var(--panel2);padding:9px 12px;font-size:13px;letter-spacing:.06em}
+  .loc h3 span{font-weight:400;letter-spacing:0}
+  .item,.colhead{grid-template-columns:28px minmax(0,1fr) 150px 104px 84px 84px 236px}
+  .item{border:0;border-top:1px solid #16281d;padding:10px 12px;background:transparent;gap:12px}
   .item:hover{background:#14211a}
   .item:has(.selbox:checked){background:#131d17}
-  .item .danger{opacity:.6}.item:hover .danger,.item:focus-within .danger,.item .danger.armed{opacity:1}
-  .colhead{display:grid;grid-template-columns:28px minmax(0,1fr) 134px 170px 84px 84px;gap:10px;padding:0 12px 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
-  .bulk{background:#1b1330;border-color:var(--violet)}
-  .bulk>b{color:#e9d5ff}
-  /* blueprints as a checklist, with a cards view */
+  .colhead{display:grid;gap:12px;padding:0 12px 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  .colhead .r,.item .valcell{text-align:right}
+  .item .sub{font-size:12px;color:var(--mute)}
+  .item .chipcol{display:flex;gap:6px;flex-wrap:wrap}
+  .item .valcell{font-weight:600;font-size:13px}
+  .item .stepper button{width:26px;min-height:26px;border:0;background:none;font-size:16px}
+  .item .stepper input{width:54px;min-height:30px;border:0;background:none;font-weight:700;padding:0}
+  .item .stepper button:last-child{color:var(--accent)}
+  .tagsel{appearance:none;-webkit-appearance:none;width:100%;min-height:26px;padding:3px 8px;border-radius:99px;border:0;text-align:center;text-align-last:center;font-size:12px;font-weight:700;cursor:pointer;background:#121c16;color:var(--mute)}
+  .tagsel.t-keep{background:#123a1c;color:#7dffa6}.tagsel.t-sell{background:#3a2a10;color:#ffb454}
+  .tagsel.t-trade{background:#10303f;color:#7fd4ff}.tagsel.t-scrap{background:#3a1616;color:#ff9b9b}
+  .item .acts{display:flex;gap:6px;justify-content:flex-end;align-items:center;opacity:0;transition:opacity .12s}
+  .item:hover .acts,.item:focus-within .acts,.item:has(.selbox:checked) .acts{opacity:1}
+  .acts button{background:none;border:1px solid #2f6a45;border-radius:6px;color:#b9d9c4;font-size:12px;font-weight:400;padding:4px 8px;min-height:0;text-decoration:none}
+  .acts button:hover:not(:disabled){background:#14211a;color:var(--accent)}
+  .acts .danger{color:#ff9b9b;border-color:#6a2a2a}.acts .danger.armed{background:var(--bad);color:#1a0b0b}
+  .item .moverow{grid-column:2 / -1}.item .moverow .wherewrap{width:280px}
+  .bulk{background:#1b1330;border-color:var(--violet);gap:10px}
+  .bulk>b{color:#fff}
+  #bulkClear{margin-left:auto;background:none;border:0;color:#d9a8ff;min-height:0}
+  /* blueprints */
+  .bprog{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--mute);margin:10px 0}
+  .bprog b{color:var(--text)}
+  .bprog .bar{flex:1 1 200px;max-width:320px;height:8px;border-radius:99px;background:var(--line);display:block}
+  .bprog .bar i{display:block;height:8px;min-width:8px;border-radius:99px;background:var(--violet)}
   #bList{border:1px solid var(--line);border-radius:10px;overflow:hidden}
   #bList:empty{border:0}
-  #bList .bp{border:0;border-top:1px solid #16281d}
-  #bList .bp:first-child{border-top:0}
-  #bList .bphead{grid-template-columns:28px minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:12px}
+  #bList .bhead,#bList .bphead{grid-template-columns:28px minmax(0,1.1fr) 110px minmax(0,1.6fr) 150px;gap:12px}
+  #bList .bhead{display:grid;padding:9px 12px;background:var(--panel2);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+  #bList .bp{border:0;border-top:1px solid #16281d;border-radius:0;background:transparent;padding:0}
+  #bList .bp.known{background:#0f1a13}
+  #bList .bphead{display:grid;align-items:center;padding:10px 12px}
+  #bList .bp:hover{background:#14211a}
   .bpname .name{font-weight:600}
-  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .bpcat{font-size:12px;color:#b9d9c4}
+  .mchips{display:flex;gap:6px;flex-wrap:wrap}
   .mchip{font-size:11px;padding:2px 8px;border-radius:99px}
   .mchip.ok{background:#123a1c;color:#7dffa6}.mchip.no{background:#3a2a10;color:#ffb454}
-  .bars,.bpact{display:flex}
   .bars{display:none;flex-direction:column;gap:8px;grid-column:1 / -1}
   .brow{display:grid;grid-template-columns:110px minmax(0,1fr) 84px;gap:10px;align-items:center;font-size:12px}
   .btrack{height:6px;border-radius:4px;background:var(--line);display:block}
   .bfill{display:block;height:6px;border-radius:4px}
-  .bpact{gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+  .bpact{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+  .bpact .findbtn{opacity:0}.bp:hover .findbtn,.bp:focus-within .findbtn{opacity:1}
+  .bpact .findbtn{border:1px solid #2f6a45;border-radius:8px;padding:5px 10px;font-size:12px;color:#b9d9c4;text-decoration:none}
+  .bpact .smallbtn{background:none;border:1px solid #2f6a45;border-radius:8px;color:#b9d9c4;font-size:12px;font-weight:400;padding:5px 10px;min-height:0}
+  #bList .ing{padding:0 12px 10px 52px}
   #bList.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border:0;overflow:visible}
+  #bList.cards .bhead{display:none}
   #bList.cards .bp{border:1px solid var(--line);border-radius:14px;background:#0a110d}
-  #bList.cards .bphead{grid-template-columns:28px minmax(0,1fr)}
-  #bList.cards .chips{display:none}
+  #bList.cards .bphead{grid-template-columns:28px minmax(0,1fr);padding:14px}
+  #bList.cards .bpcat,#bList.cards .mchips{display:none}
   #bList.cards .bars{display:flex}
   #bList.cards .bpact{grid-column:1 / -1;justify-content:flex-start;border-top:1px dashed var(--line);padding-top:10px}
+  #bList.cards .bpact .findbtn{opacity:1}
   #bList.cards .ing{display:none}
-  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-end}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
   .seg button{background:transparent;color:var(--mute);border-radius:0;font-weight:600;min-height:38px}
   .seg button[aria-pressed=true]{background:var(--violet-d);color:#fff}
+  /* craft list and sets */
+  #cList,#sList{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  #cList:empty,#sList:empty{border:0}
+  #cList .bp,#sList .bp{border:0;border-top:1px solid #16281d;border-radius:0;background:transparent;padding:0}
+  #cList .bp:first-child,#sList .bp:first-child,#bList .bp:first-child{border-top:0}
+  #cList .bp:hover,#sList .bp:hover{background:#14211a}
+  #cList .stepper button{width:26px;min-height:26px;border:0;background:none;font-size:16px}#cList .stepper input{width:54px;min-height:30px;border:0;background:none;font-weight:700;padding:0;text-align:center}#cList .stepper button:last-child{color:var(--accent)}
+  #cList .crow{padding:10px 12px}#sList .crow{padding:10px 12px 6px}
+  #sList .chips{padding:0 12px 10px 12px}
+  #cMats{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  #cMats:empty{border:0}
+  #cMats .mat{border:0;border-top:1px solid #16281d;background:transparent;grid-template-columns:minmax(0,1fr) 140px 70px;padding:9px 12px;align-items:center}
+  #cMats .mat:first-child{border-top:0}
+  .sub3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:16px 0 8px}
+  @media (max-width:980px){
+    .item,.colhead{grid-template-columns:28px minmax(0,1fr) 130px 100px 80px 80px}
+    .colhead span:last-child{display:none}
+    .item .acts{grid-column:2 / -1;justify-content:flex-start;opacity:1}
+    #bList .bhead,#bList .bphead{grid-template-columns:28px minmax(0,1fr) 100px minmax(0,1.3fr) auto}
+  }
   @media (max-width:700px){
     .colhead{display:none}
-    .item{grid-template-columns:auto 1fr auto;grid-template-areas:"c n n" "c s w" "c t d"}
+    .item{grid-template-columns:auto 1fr auto;grid-template-areas:"c n n" "c ch ch" "c s g" "c v v" "c a a" "m m m"}
+    .item .selbox{grid-area:c;align-self:start}.item .namecell{grid-area:n}.item .chipcol{grid-area:ch}
+    .item .stepper{grid-area:s}.item .tagsel{grid-area:g;width:84px}.item .valcell{grid-area:v;text-align:left}.item .valcell:empty{display:none}
+    .item .acts{grid-area:a;justify-content:flex-start}.item .moverow{grid-area:m}.item .moverow .wherewrap{width:100%}
+    #bList .bhead{display:none}
     #bList .bphead{grid-template-columns:28px minmax(0,1fr)}
-    #bList .chips,#bList .bpact{grid-column:1 / -1;justify-content:flex-start}
+    #bList .bpcat{display:none}
+    #bList .mchips,#bList .bpact{grid-column:1 / -1;justify-content:flex-start}
     #bList.cards{grid-template-columns:1fr}
+    #cMats .mat{grid-template-columns:minmax(0,1fr) auto auto}
   }
   @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 </style>
@@ -329,26 +390,26 @@
 
     <div class="panel">
       <h2>Inventory</h2>
-      <div class="row">
-        <label class="grow">Search
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
           <input id="qSearch" type="search" placeholder="Filter by name">
         </label>
-        <label>Category
+        <label><span class="sr">Category</span>
           <select id="qCat"></select>
         </label>
-        <label>Type
+        <label><span class="sr">Type</span>
           <select id="qSub"></select>
         </label>
-        <label>Location
+        <label><span class="sr">Location</span>
           <select id="qLoc"></select>
         </label>
-        <label>Size
+        <label><span class="sr">Size</span>
           <select id="qSize"></select>
         </label>
-        <label>Tag
+        <label><span class="sr">Tag</span>
           <select id="qTag"></select>
         </label>
-        <label>Sort by
+        <label><span class="sr">Sort by</span>
           <select id="qSort">
             <option value="name">Name</option>
             <option value="sizeDesc">Size (largest first)</option>
@@ -359,7 +420,7 @@
             <option value="value">Value (highest first)</option>
           </select>
         </label>
-        <button class="ghost" id="undoBtn" type="button" disabled>Undo last change</button>
+        <button class="ghost" id="undoBtn" type="button" disabled>Undo</button>
       </div>
       <div class="note" id="sizeNote" hidden>Press Update to load sizes and grades.</div>
       <div class="pricebar"><button class="ghost smallbtn" id="priceBtn" type="button">Refresh UEX prices</button><span class="note" id="priceNote"></span></div>
@@ -368,8 +429,8 @@
         <span class="ac"><input id="bulkLoc" placeholder="Move to location" maxlength="80" role="combobox" aria-autocomplete="list" aria-label="Move selected to location" style="width:100%"><div class="acbox" id="bulkBox" role="listbox" hidden></div></span>
         <button type="button" class="ghost" id="bulkMove">Move</button>
         <select id="bulkTag" aria-label="Set tag on selected"></select>
-        <button type="button" class="danger" id="bulkDel">Delete selected</button>
-        <button type="button" class="ghost" id="bulkClear">Clear selection</button>
+        <button type="button" class="danger" id="bulkDel">Delete</button>
+        <button type="button" id="bulkClear">Clear selection</button>
       </div>
       <div class="stats" id="stats"></div>
       <label class="selall"><input type="checkbox" id="selAll"> Select all shown</label>
@@ -381,17 +442,17 @@
   <section id="tab-bp" hidden>
     <div class="panel">
       <h2>Blueprints</h2>
-      <div class="row">
-        <label class="grow">Search
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
           <input id="bSearch" type="search" placeholder="Search blueprints by item name">
         </label>
-        <label>Category
+        <label><span class="sr">Category</span>
           <select id="bCat"></select>
         </label>
         <div class="seg" role="group" aria-label="View"><button type="button" id="bViewList" aria-pressed="true">List</button><button type="button" id="bViewCards" aria-pressed="false">Cards</button></div>
-        <label>Show
+        <label><span class="sr">Show</span>
           <select id="bStatus">
-            <option value="">All</option>
+            <option value="">Show: All</option>
             <option value="known">Known</option>
             <option value="unknown">Not known yet</option>
             <option value="craftable">Craftable with my materials</option>
@@ -399,7 +460,7 @@
           </select>
         </label>
       </div>
-      <div class="stats" id="bStats"></div>
+      <div class="bprog" id="bStats"></div>
       <div id="bList"></div>
       <div class="row" style="margin-top:10px"><button class="ghost" id="bMore" type="button" hidden>Show more</button></div>
     </div>
@@ -526,11 +587,11 @@
   <section id="tab-sets" hidden>
     <div class="panel">
       <h2>Armor sets</h2>
-      <div class="row">
-        <label class="grow">Search
+      <div class="row tbar">
+        <label class="grow"><span class="sr">Search</span>
           <input id="sSearch" type="search" placeholder="Search sets by name">
         </label>
-        <label>Show
+        <label><span class="sr">Show</span>
           <select id="sShow">
             <option value="building">Sets I&rsquo;m building</option>
             <option value="complete">Complete sets</option>
@@ -538,7 +599,6 @@
           </select>
         </label>
       </div>
-      <p class="note" id="sNote"></p>
       <div class="stats" id="sStats"></div>
       <div id="sList"></div>
       <div class="row" style="margin-top:10px"><button class="ghost" id="sMore" type="button" hidden>Show more</button></div>
@@ -1733,11 +1793,11 @@ async function computeExactItems(cat, patchCode, progress){
     }
     var groups = {};
     shown.forEach(function(i){ (groups[i.loc] = groups[i.loc] || []).push(i); });
-    var ch = h("div", { class: "colhead", "aria-hidden": "true" }); ["", "Item", "Qty", "Location", "Tag", ""].forEach(function(t){ ch.appendChild(h("span", { text: t })); }); list.appendChild(ch);
+    var ch = h("div", { class: "colhead", "aria-hidden": "true" }); [["", ""], ["Item", ""], ["Size and grade", ""], ["Qty", ""], ["Tag", ""], ["Value", "r"], ["", ""]].forEach(function(t){ ch.appendChild(h("span", { class: t[1], text: t[0] })); }); list.appendChild(ch);
     Object.keys(groups).sort(function(a, b){ return a.localeCompare(b); }).forEach(function(L){
       var g = groups[L].sort(function(a, b){ return cmpItems(a, b, sortBy); });
       var gv = 0; if (prices) g.forEach(function(i){ var pi = priceInfo(i); if (pi && pi.sell > 0) gv += pi.sell * i.qty; });
-      var box = h("div", { class: "loc" }, h("h3", null, L, h("span", { text: g.length + " stack" + (g.length === 1 ? "" : "s") + " · " + fmt(g.reduce(function(s, i){ return s + i.qty; }, 0)) + " items" + (gv > 0 ? " · " + fmt(Math.round(gv)) + " aUEC" : "") })));
+      var box = h("div", { class: "loc" }, h("h3", null, L, h("span", { text: g.length + " stack" + (g.length === 1 ? "" : "s") + (gv > 0 ? " · " + fmt(Math.round(gv)) + " aUEC" : "") })));
       g.forEach(function(i){ box.appendChild(rowFor(i)); });
       list.appendChild(box);
     });
@@ -1773,16 +1833,18 @@ async function computeExactItems(cat, patchCode, progress){
     TAGS.forEach(function(t){ tg.appendChild(h("option", { value: t, text: t })); });
     tg.value = i.tag || "";
     tg.onchange = function(){ snapshot(); bulkTag(items, [i.id], tg.value); commit(); };
-    var meta = h("div", { class: "meta" }, h("span", { class: "badge", text: [i.sub ? i.cat + " · " + i.sub : i.cat, sizeOf(i) ? "S" + sizeOf(i) : "", gradeOf(i) ? "Grade " + gradeOf(i) : "", weightOf(i)].filter(Boolean).join(" · ") }));
-    var val = valueOf(i);
+    var chips = h("div", { class: "chipcol" });
+    if (sizeOf(i)) chips.appendChild(h("span", { class: "badge", text: "Size " + sizeOf(i) }));
+    if (gradeOf(i)) chips.appendChild(h("span", { class: "badge", text: "Grade " + gradeOf(i) }));
+    if (weightOf(i)) chips.appendChild(h("span", { class: "badge", text: weightOf(i) }));
+    var valc = h("div", { class: "valcell" }), val = valueOf(i);
     if (val){
-      var vc = h("span", { class: "val", title: "Per item: " + fmt(val.lo) + " to " + fmt(val.hi) + " aUEC (" + (val.kind === "sell" ? "shops pay" : "shop price") + ")" });
-      if (val.kind === "sell") vc.appendChild(h("b", { text: "≈ " + fmt(Math.round(val.v)) + " aUEC" }));
-      else vc.appendChild(document.createTextNode("buy ≈ " + fmt(Math.round(val.v)) + " aUEC"));
-      meta.appendChild(vc);
+      var tot = Math.round(val.v);
+      valc.textContent = (val.kind === "sell" ? "" : "buy ") + fmt(tot);
+      valc.title = "Per item: " + fmt(val.lo) + " to " + fmt(val.hi) + " aUEC (" + (val.kind === "sell" ? "shops pay" : "shop price") + ")";
     }
-    meta.appendChild(h("button", { type: "button", class: "findbtn", text: "Find", title: "Where to get this, and which missions reward the blueprint", "aria-label": "Find " + i.name, onclick: function(){ openFinder(i.name, i.sub, uuidFor(i)); } }));
-    var cell = h("div", { class: "namecell" }, h("div", { class: "name", text: i.name }), meta);
+    var cell = h("div", { class: "namecell" }, h("div", { class: "name", text: i.name }), h("div", { class: "sub", text: i.sub ? i.cat + " · " + i.sub : i.cat }));
+    var openNote = function(){ editNoteId = i.id; renderInventory(); };
     if (editNoteId === i.id){
       var ni = h("input", { class: "noteinput", value: i.note || "", maxlength: "200", placeholder: "Add a note, then press Enter", "aria-label": "Note for " + i.name });
       var done = false;
@@ -1794,12 +1856,16 @@ async function computeExactItems(cat, patchCode, progress){
       ni.onkeydown = function(e){ if (e.key === "Enter"){ e.preventDefault(); finish(true); } else if (e.key === "Escape"){ e.preventDefault(); finish(false); } };
       ni.onblur = function(){ finish(true); };
       cell.appendChild(ni);
-    } else {
-      var openNote = function(){ editNoteId = i.id; renderInventory(); };
-      if (i.note) cell.appendChild(h("div", { class: "noteline", text: i.note, title: "Click to edit the note", role: "button", tabindex: "0", onclick: openNote, onkeydown: function(e){ if (e.key === "Enter"){ openNote(); } } }));
-      else cell.appendChild(h("button", { type: "button", class: "notebtn", text: "+ note", "aria-label": "Add a note to " + i.name, onclick: openNote }));
+    } else if (i.note){
+      cell.appendChild(h("div", { class: "noteline", text: i.note, title: "Click to edit the note", role: "button", tabindex: "0", onclick: openNote, onkeydown: function(e){ if (e.key === "Enter"){ openNote(); } } }));
     }
-    return h("div", { class: "item" }, cb, cell, h("div", { class: "stepper" }, minus, qi, plus), wrap, tg, d);
+    var acts = h("div", { class: "acts" },
+      h("button", { type: "button", class: "findbtn", text: "Find", title: "Where to get this, and which missions reward the blueprint", "aria-label": "Find " + i.name, onclick: function(){ openFinder(i.name, i.sub, uuidFor(i)); } }),
+      h("button", { type: "button", class: "notebtn", text: "Note", "aria-label": "Note for " + i.name, onclick: openNote }),
+      h("button", { type: "button", class: "movebtn", text: "Move", "aria-label": "Move " + i.name }), d);
+    var mv = h("div", { class: "moverow" }, wrap); mv.hidden = true;
+    acts.children[2].onclick = function(){ mv.hidden = !mv.hidden; if (!mv.hidden) w.focus(); };
+    return h("div", { class: "item" }, cb, cell, chips, h("div", { class: "stepper" }, minus, qi, plus), tg, valc, acts, mv);
   }
   var fillTagFilter = function(){
     var t = $("qTag"); t.textContent = "";
@@ -1896,8 +1962,12 @@ async function computeExactItems(cat, patchCode, progress){
     }).sort(function(a, b){ return a.n.localeCompare(b.n); });
     var kn = Object.keys(known).length;
     var st = $("bStats"); st.textContent = "";
-    [["Known", kn + " / " + fmt(bps.length)], ["Craftable now", fmt(bps.filter(function(b){ return craftStatus(b, owned).ok; }).length)], ["Showing", fmt(rows.length)]].forEach(function(p){ st.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
+    st.appendChild(h("span", null, "Known ", h("b", { text: kn + " / " + fmt(bps.length) })));
+    st.appendChild(h("span", { class: "bar" }, h("i", { style: "width:" + Math.max(0, Math.min(100, kn / bps.length * 100)) + "%" })));
+    st.appendChild(h("span", null, "Craftable now ", h("b", { text: fmt(bps.filter(function(b){ return craftStatus(b, owned).ok; }).length) })));
+    st.appendChild(h("span", null, "Showing ", h("b", { text: fmt(rows.length) })));
     if (!rows.length){ list.appendChild(h("div", { class: "empty", text: "No blueprints match those filters." })); $("bMore").hidden = true; return; }
+    var bh = h("div", { class: "bhead", "aria-hidden": "true" }); ["", "Blueprint", "Category", "Materials you have", ""].forEach(function(t){ bh.appendChild(h("div", { text: t })); }); list.appendChild(bh);
     rows.slice(0, bpShown).forEach(function(b){ list.appendChild(bpRow(b, owned)); });
     $("bMore").hidden = rows.length <= bpShown;
   }
@@ -1906,7 +1976,7 @@ async function computeExactItems(cat, patchCode, progress){
     var chk = h("input", { type: "checkbox", checked: !!known[b.u], "aria-label": "Known: " + b.n });
     chk.onchange = function(){ snapshot(); if (chk.checked) known[b.u] = b.n; else delete known[b.u]; commit(); };
     var ing = h("div", { class: "ing", hidden: true });
-    var chips = h("div", { class: "chips" }), bars = h("div", { class: "bars" });
+    var chips = h("div", { class: "mchips" }), bars = h("div", { class: "bars" });
     b.ing.forEach(function(g){
       var need = Number(g[2]) || 0, got = owned[nameKey(g[0])] || 0, ok = got + 1e-9 >= need, pct = need > 0 ? Math.max(4, Math.min(100, Math.round(got / need * 100))) : 100;
       var amt = fmt(got) + " / " + fmt(need) + (g[1] === "r" ? " SCU" : "");
@@ -1918,15 +1988,16 @@ async function computeExactItems(cat, patchCode, progress){
     var name = h("div", { class: "name", text: b.n, role: "button", tabindex: "0", title: "Show materials" });
     var toggle = function(){ ing.hidden = !ing.hidden; };
     name.onclick = toggle; name.onkeydown = function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); } };
-    var sub = [b.t ? b.t + " craft" : "", BPCAT[b.u] || "Other"].filter(Boolean).join(" · ");
+    var sub = b.t ? b.t + " craft" : "";
     var act = h("div", { class: "bpact" });
     if (b.d) act.appendChild(h("span", { class: "badge good", text: "default" }));
     act.appendChild(h("button", { type: "button", class: "findbtn", text: "Find", title: "Shops and mission rewards", "aria-label": "Find " + b.n, onclick: function(){ openFinder(b.n, "", b.o); } }));
-    act.appendChild(h("span", { class: "badge " + (cs.ok ? "good" : ""), text: cs.ok ? "craftable now" : cs.have + "/" + b.ing.length + " materials" }));
+    if (cs.ok) act.appendChild(h("span", { class: "badge good", text: "craftable now" }));
+    else if ($("bList").classList.contains("cards")) act.appendChild(h("span", { class: "badge warn", text: (b.ing.length - cs.have) + " short" }));
     var wb = h("button", { type: "button", class: "ghost smallbtn", text: wish[b.u] ? "+1 (in list: " + wish[b.u] + ")" : "+ Craft list", title: "Add to the Craft list" });
     wb.onclick = function(){ wish[b.u] = Math.min(99, (wish[b.u] || 0) + 1); save(); wb.textContent = "+1 (in list: " + wish[b.u] + ")"; };
     act.appendChild(wb);
-    return h("div", { class: "bp" }, h("div", { class: "bphead" }, chk, h("div", { class: "bpname" }, name, h("div", { class: "dim", style: "font-size:12px", text: sub })), chips, bars, act), ing);
+    return h("div", { class: "bp" + (known[b.u] ? " known" : "") }, h("div", { class: "bphead" }, chk, h("div", { class: "bpname" }, name, h("div", { class: "dim", style: "font-size:12px", text: sub })), h("div", { class: "bpcat", text: BPCAT[b.u] || "Other" }), chips, bars, act), ing);
   }
   function applyBView(){
     $("bList").classList.toggle("cards", !!ui.bview);
@@ -1985,10 +2056,9 @@ async function computeExactItems(cat, patchCode, progress){
     var L = $("sList"); L.textContent = ""; var st = $("sStats"); st.textContent = "";
     var hasK = catalogue && catalogue.items.some(function(it){ return it.c === "Armor" && it.k; });
     $("sMore").hidden = true;
-    if (!catalogue){ $("sNote").textContent = ""; L.appendChild(needDb("Download the item database to load the armor sets.")); return; }
-    if (!hasK){ $("sNote").textContent = ""; L.appendChild(needDb("Update the item database again to load armor sets.")); return; }
+    if (!catalogue){ L.appendChild(needDb("Download the item database to load the armor sets.")); return; }
+    if (!hasK){ L.appendChild(needDb("Update the item database again to load armor sets.")); return; }
     if (!SETS) SETS = buildSets(catalogue.items);
-    $("sNote").textContent = "Grouped by game item names, so odd sets may not group perfectly.";
     var q = nameKey($("sSearch").value), mode = $("sShow").value;
     var rows = SETS.map(function(set){ return { set: set, own: ownedPieces(set, items) }; }).filter(function(r){
       if (q && nameKey(r.set.name).indexOf(q) < 0) return false;
