@@ -89,6 +89,15 @@ FINDER tab
     dates shown. Loot drop locations are not available from any source, so
     the Finder says so instead of guessing.
 
+  NEW LAYOUT (1.8)
+  - The tabs are now grouped: Home, Stuff (inventory, blueprints, craft
+    list, armor sets), Find (finder, planner), Track (sessions, patch
+    changes, history) and Data. Alt+1 to Alt+5 switch section, and / jumps
+    to the search box.
+  - Home has a quick-add box that reuses the last location and place you
+    entered, a session timer, the best missions to run next, and your
+    recent loot. "Compact" in the top right tightens the rows.
+
   PLANNER (new in 1.6)
   - Open the Planner tab and press "Load mission data" once (about a minute).
     It ranks missions by how many blueprints you have NOT ticked as known
