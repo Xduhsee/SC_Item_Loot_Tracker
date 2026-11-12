@@ -1,7 +1,7 @@
 {
   "name": "sc-loot-tracker",
   "productName": "SC Loot Tracker",
-  "version": "1.17.1",
+  "version": "1.18.0",
   "description": "Fan-made Star Citizen loot, blueprint and materials tracker. Not affiliated with CIG.",
   "main": "main.js",
   "author": "SC Loot Tracker",
@@ -23,6 +23,7 @@
       "preload.js",
       "store.js",
       "gamelog.js",
+      "overlay.js",
       "app/**/*",
       "build/icon.png",
       "build/icon.ico"

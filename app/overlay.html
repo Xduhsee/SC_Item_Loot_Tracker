@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quick add overlay</title>
+<style>
+  :root{color-scheme:dark;--panel:rgba(15,26,19,.94);--line:#24402f;--text:#e6f5e9;--mute:#9fbfa9;--acc:#34e04a;--ink:#03140a;--field:#0b140e;--btn:#122019;--bad:#ff8a8a;--good:#7dffa6;--sel:#143a1c}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:transparent;overflow:hidden;font:14px/1.4 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);user-select:none}
+  button{font:inherit;color:inherit;cursor:pointer}
+  input{font:inherit;color:var(--text);user-select:text}
+  .box{position:fixed;inset:0;display:flex;flex-direction:column;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  .box.adj{border:2px dashed var(--acc)}
+  .bar{margin:-6px -6px 8px;min-height:30px;display:flex;align-items:center;justify-content:center;background:#143a1c;border:1px dashed var(--acc);border-radius:8px;color:var(--acc);font-size:12px;font-weight:600;cursor:move;touch-action:none}
+  .bar[hidden],[hidden]{display:none!important}
+  .top{display:flex;align-items:center;justify-content:space-between}
+  .ttl{font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--acc)}
+  .pill{min-height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--btn);color:var(--mute);font-size:12px;font-weight:600}
+  .pill[aria-pressed=true]{border-color:var(--acc);background:var(--sel);color:var(--acc);font-weight:700}
+  .tabs{display:flex;gap:6px;margin-top:10px}
+  .tabs button{flex:1;min-height:36px;border:1px solid var(--line);border-radius:8px;background:var(--btn);color:var(--mute);font-size:13px;font-weight:600}
+  .tabs button[aria-selected=true]{border:0;background:var(--acc);color:var(--ink);font-weight:700}
+  .body{flex:1;min-height:0;overflow:auto;padding:0 2px 2px;margin:0 -2px}
+  .f{margin-top:10px}.f label{display:block;font-size:12px;color:var(--mute);margin-bottom:4px}
+  .inp{width:100%;min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);font-size:14px}
+  .inp:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 2px rgba(52,224,74,.25)}
+  .list{margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--field);overflow:hidden}
+  .opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;font-size:13px;cursor:pointer}
+  .opt small{color:var(--mute);font-size:11px;white-space:nowrap}
+  .opt.on,.opt:hover{background:var(--sel);font-weight:600}
+  .two{display:flex;gap:10px;align-items:flex-end}.grow{flex:1;min-width:0}
+  .locwrap{position:relative}.locwrap .inp{padding-right:34px}
+  .chev{position:absolute;right:0;top:0;bottom:0;width:34px;border:0;background:none;display:flex;align-items:center;justify-content:center}
+  .amt{display:flex;align-items:center;gap:6px}
+  .sq{min-width:36px;min-height:38px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--btn);font-size:15px;font-weight:600}
+  .amt .inp{width:56px;text-align:center;font-weight:700;padding:0 4px;-moz-appearance:textfield}
+  .amt .inp::-webkit-outer-spin-button,.amt .inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .primary{width:100%;min-height:42px;margin-top:12px;border:0;border-radius:8px;background:var(--acc);color:var(--ink);font-size:14px;font-weight:700}
+  .primary:disabled{opacity:.5;cursor:default}
+  .st{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;min-height:30px}
+  #msg{font-size:12px;color:var(--good)}#msg.err{color:var(--bad)}
+  .ghost{min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:none;font-size:12px}
+  .hint{margin-top:8px;font-size:11px;color:var(--mute)}
+  kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;font:inherit;font-size:11px;background:var(--field);color:var(--text)}
+  .big{min-height:46px;font-size:22px;font-weight:700;letter-spacing:.04em}
+  #sRecent{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  #sRecent button{border:1px solid var(--line);background:none;color:#b9d9c4;border-radius:99px;padding:3px 10px;font-size:12px}
+  .card{border:1px solid var(--line);border-radius:10px;background:var(--field);padding:10px 12px;margin-top:8px}
+  .cbig{font-size:16px;font-weight:700}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#123a1c;color:var(--good);margin-left:6px;vertical-align:middle}
+  .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:13px;border-top:1px dashed var(--line)}
+  .row:first-of-type{border-top:0}.dim{color:var(--mute);text-align:right}
+  .h{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:8px 0 2px}
+  #sMsg{color:var(--mute);font-size:13px;margin-top:8px}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  #size{font-size:12px;color:var(--acc);font-weight:600;white-space:nowrap}
+  .foot .primary{width:auto;min-width:90px;margin-top:8px}
+  #grip{position:absolute;right:3px;bottom:3px;width:22px;height:22px;cursor:nwse-resize;touch-action:none}
+</style>
+</head>
+<body>
+<div id="box" class="box">
+  <div id="bar" class="bar" hidden>Drag here to move</div>
+  <div class="top"><div class="ttl">QUICK ADD</div><button type="button" id="adjBtn" class="pill" aria-pressed="false">Adjust</button></div>
+  <div class="tabs" role="tablist" aria-label="Overlay tool">
+    <button type="button" id="tScan" role="tab" aria-selected="false">Scan</button>
+    <button type="button" id="tAdd" role="tab" aria-selected="true">Add item</button>
+  </div>
+  <div class="body">
+    <section id="pAdd" aria-label="Add item">
+      <div class="f"><label for="qName">Item</label><input id="qName" class="inp" autocomplete="off" maxlength="120" placeholder="Click here, then type" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qBox"></div>
+      <div id="qBox" class="list" role="listbox" hidden></div>
+      <div class="two">
+        <div class="f grow"><label for="qLoc">Location</label>
+          <div class="locwrap"><input id="qLoc" class="inp" autocomplete="off" maxlength="80" placeholder="Carrying" aria-controls="lBox"><button type="button" id="qLocBtn" class="chev" aria-label="Show saved locations"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9fbfa9" stroke-width="1.6"><path d="M2 4l4 4 4-4"/></svg></button></div></div>
+        <div class="f"><label for="qQty">Amount</label>
+          <div class="amt"><button type="button" id="qMinus" class="sq" aria-label="Fewer">-</button><input id="qQty" class="inp" type="number" min="0.01" step="any" value="1"><button type="button" id="qPlus" class="sq" aria-label="More">+</button></div></div>
+      </div>
+      <div id="lBox" class="list" role="listbox" hidden></div>
+      <button type="button" id="qAdd" class="primary">Add to inventory</button>
+      <div class="st"><span id="msg" role="status"></span><button type="button" id="qUndo" class="ghost" hidden>Undo</button></div>
+    </section>
+    <section id="pScan" aria-label="Scan decoder" hidden>
+      <div class="f"><label for="sIn">Scan number</label><input id="sIn" class="inp big" type="text" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="Click here, then type"></div>
+      <div id="sRecent"></div>
+      <div id="sOut"></div>
+    </section>
+  </div>
+  <div class="hint">Click the search box to type. Click the game to give focus back. Hold <kbd>F</kbd> to use the mouse.</div>
+  <div id="adjFoot" class="foot" hidden><span id="size"></span><button type="button" id="done" class="primary">Done</button></div>
+  <svg id="grip" aria-label="Drag to resize" role="img" viewBox="0 0 18 18" fill="none" stroke="#34e04a" stroke-width="2" hidden><path d="M16 6L6 16M16 11l-5 5"/></svg>
+</div>
+<script>
+(function(){
+  var S = window.scStore, $ = function(id){ return document.getElementById(id); };
+  function nk(s){ return String(s == null ? "" : s).trim().replace(/\s+/g, " ").toLowerCase().replace(/["'“”‘’]/g, ""); }
+  function fmt(n){ return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function say(t, bad){ $("msg").textContent = t; $("msg").className = bad ? "err" : ""; }
+
+  // ---------- mouse: ignore it until the pointer is over the box ----------
+  var adj = false, capturing = false;
+  function capture(on){ if (adj || capturing === on) return; capturing = on; if (S && S.ovCapture) S.ovCapture(on); }
+  document.addEventListener("mousemove", function(){ capture(true); }, true);
+  document.documentElement.addEventListener("mouseleave", function(){ if (!drag) capture(false); });
+
+  // ---------- keyboard: only take focus from the game when a text box is clicked ----------
+  var kbd = false, relTimer = null;
+  function isText(e){ return e && e.tagName === "INPUT"; }
+  function giveFocus(input){
+    clearTimeout(relTimer);
+    if (kbd){ return; }
+    kbd = true;
+    if (S && S.ovFocus) S.ovFocus(true).then(function(){ input.focus(); }); else input.focus();
+  }
+  function releaseFocus(){
+    clearTimeout(relTimer);
+    relTimer = setTimeout(function(){
+      if (isText(document.activeElement) && document.hasFocus()) return;
+      if (kbd){ kbd = false; if (S && S.ovFocus) S.ovFocus(false); }
+    }, 80);
+  }
+  document.addEventListener("pointerdown", function(e){ if (isText(e.target)) giveFocus(e.target); }, true);
+  document.addEventListener("focusout", releaseFocus);
+
+  // ---------- tabs ----------
+  var tab = "add";
+  function setTab(t, tell){
+    tab = t === "scan" ? "scan" : "add";
+    $("pAdd").hidden = tab !== "add"; $("pScan").hidden = tab !== "scan";
+    $("tAdd").setAttribute("aria-selected", tab === "add" ? "true" : "false"); $("tScan").setAttribute("aria-selected", tab === "scan" ? "true" : "false");
+    if (tell && S && S.ovTab) S.ovTab(tab);
+    if (tab === "scan") loadMine();
+  }
+  $("tAdd").onclick = function(){ setTab("add", true); };
+  $("tScan").onclick = function(){ setTab("scan", true); };
+
+  // ---------- add item ----------
+  var ITEMS = [], LOCS = [], lastLoc = "", picked = null, lastTag = "", lastText = "";
+  function loadCatalogue(){
+    if (!S || !S.loadCatalogue) return;
+    S.loadCatalogue().then(function(c){
+      var seen = {}; ITEMS = [];
+      ((c && c.items) || []).forEach(function(it){
+        if (!it || !it.n) return;
+        var k = nk(it.n) + "|" + it.c + "|" + (it.s || ""); if (seen[k]) return; seen[k] = 1;
+        ITEMS.push({ n: String(it.n), l: nk(it.n), c: String(it.c || "Other"), s: String(it.s || "") });
+      });
+    }).catch(function(){});
+  }
+  function loadLocs(){
+    var cnt = {}, names = {};
+    try { var d = S.loadSync(); (d.items || []).forEach(function(i){ var k = nk(i.loc); if (!k) return; cnt[k] = (cnt[k] || 0) + 1; names[k] = i.loc; }); } catch (e){}
+    LOCS = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).map(function(k){ return names[k]; });
+    if (!LOCS.length) LOCS = ["Carrying", "Ship inventory", "Hangar"];
+    if (!lastLoc) lastLoc = LOCS[0];
+    if (!$("qLoc").value) $("qLoc").value = lastLoc;
+  }
+  function list(box, rows, sel, onPick){
+    box.textContent = "";
+    rows.forEach(function(o, i){
+      var d = el("div", "opt" + (i === sel ? " on" : "")); d.setAttribute("role", "option");
+      d.appendChild(el("span", "", o.label)); if (o.hint) d.appendChild(el("small", "", o.hint));
+      d.addEventListener("mousedown", function(ev){ ev.preventDefault(); onPick(o); });
+      box.appendChild(d);
+    });
+    box.hidden = !rows.length;
+  }
+  var nameRows = [], nameSel = -1;
+  function drawNames(){ list($("qBox"), nameRows, nameSel, pickName); $("qName").setAttribute("aria-expanded", nameRows.length ? "true" : "false"); }
+  function matchNames(){
+    picked = null;
+    var toks = nk($("qName").value).split(" ").filter(Boolean), res = [];
+    if (toks.length){
+      for (var i = 0; i < ITEMS.length && res.length < 400; i++){
+        var e = ITEMS[i], ok = true;
+        for (var t = 0; t < toks.length; t++) if (e.l.indexOf(toks[t]) < 0){ ok = false; break; }
+        if (ok) res.push(e);
+      }
+      res.sort(function(a, b){ return (a.l.indexOf(toks[0]) === 0 ? 0 : 1) - (b.l.indexOf(toks[0]) === 0 ? 0 : 1) || a.n.length - b.n.length; });
+    }
+    nameRows = res.slice(0, 4).map(function(e){ return { label: e.n, hint: e.s || e.c, data: e }; });
+    nameSel = nameRows.length ? 0 : -1; drawNames();
+  }
+  function pickName(o){ picked = o.data; $("qName").value = o.label; nameRows = []; nameSel = -1; drawNames(); }
+  $("qName").addEventListener("input", matchNames);
+  $("qName").addEventListener("keydown", function(e){
+    if (e.key === "ArrowDown" && nameRows.length){ e.preventDefault(); nameSel = (nameSel + 1) % nameRows.length; drawNames(); }
+    else if (e.key === "ArrowUp" && nameRows.length){ e.preventDefault(); nameSel = (nameSel - 1 + nameRows.length) % nameRows.length; drawNames(); }
+    else if (e.key === "Enter"){ e.preventDefault(); if (nameRows.length && nameSel >= 0) pickName(nameRows[nameSel]); else submit(); }
+  });
+  var locRows = [];
+  function drawLocs(){ list($("lBox"), locRows, -1, function(o){ $("qLoc").value = o.label; lastLoc = o.label; locRows = []; drawLocs(); }); }
+  function showLocs(all){
+    var t = all ? "" : nk($("qLoc").value);
+    locRows = LOCS.filter(function(l){ return !t || nk(l).indexOf(t) >= 0; }).slice(0, 6).map(function(l){ return { label: l }; });
+    drawLocs();
+  }
+  $("qLocBtn").addEventListener("mousedown", function(ev){ ev.preventDefault(); if (locRows.length) { locRows = []; drawLocs(); } else showLocs(true); });
+  $("qLoc").addEventListener("input", function(){ showLocs(false); });
+  $("qLoc").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); locRows = []; drawLocs(); submit(); } });
+  $("qLoc").addEventListener("blur", function(){ setTimeout(function(){ locRows = []; drawLocs(); }, 120); });
+  $("qName").addEventListener("blur", function(){ setTimeout(function(){ nameRows = []; drawNames(); }, 120); });
+  function qty(){ var v = Number($("qQty").value); return v > 0 ? v : 1; }
+  $("qMinus").onclick = function(){ var v = qty(); $("qQty").value = v > 1 ? v - 1 : v; };
+  $("qPlus").onclick = function(){ $("qQty").value = qty() + 1; };
+  function submit(){
+    var name = $("qName").value.trim().replace(/\s+/g, " "), n = Number($("qQty").value), loc = $("qLoc").value.trim() || lastLoc || "Carrying";
+    if (!name || !(n > 0)){ say("Enter an item and an amount above zero.", true); return; }
+    var e = picked && nk(picked.n) === nk(name) ? picked : null;
+    if (!e) for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].l === nk(name)){ e = ITEMS[i]; break; }
+    var tag = "ov" + Date.now();
+    var item = { name: name, cat: e ? e.c : "Other", sub: e ? e.s : "", qty: n, loc: loc, src: "", sys: "", tag: tag };
+    S.quickAdd(item).then(function(ok){
+      if (!ok){ say("Could not reach the main window.", true); return; }
+      lastLoc = loc; $("qLoc").value = loc; lastTag = tag; lastText = name + " x" + fmt(n);
+      say("Added " + lastText); $("qUndo").hidden = false;
+      $("qName").value = ""; $("qQty").value = 1; picked = null; nameRows = []; drawNames(); locRows = []; drawLocs();
+      if (kbd) $("qName").focus();
+    }).catch(function(){ say("Could not reach the main window.", true); });
+  }
+  $("qAdd").onclick = submit;
+  $("qUndo").onclick = function(){ if (!lastTag || !S || !S.ovUndo) return; $("qUndo").hidden = true; S.ovUndo(lastTag); lastTag = ""; };
+  if (S && S.onOvUndo) S.onOvUndo(function(ok){ say(ok ? "Undid " + lastText : "Could not undo. Use Undo in the main window.", !ok); });
+
+  // ---------- scan decoder ----------
+  var KINDS = { ship: "Ship mining", fps: "Hand mining", veh: "Ground vehicle", salv: "Salvage" }, KORDER = { ship: 0, fps: 1, veh: 2, salv: 3 };
+  var mine = null, table = {}, recent = [], loading = false;
+  function ok2(k){ return String(k == null ? "" : k).replace(/\s*\((ore|raw)\)\s*$/i, "").trim().replace(/\s+/g, " ").toLowerCase(); }
+  function sMsg(t){ var o = $("sOut"); o.textContent = ""; var d = el("div", "", t); d.id = "sMsg"; o.appendChild(d); }
+  function loadMine(){
+    if (mine || loading) return;
+    if (!S || !S.loadBlob){ sMsg("This window only works inside the desktop app."); return; }
+    loading = true;
+    S.loadBlob("mine").then(function(m){
+      loading = false;
+      if (!m || !Array.isArray(m.locs)){ mine = null; sMsg("No mining data yet. Open the Mining tab in the main window and press Download mining data."); return; }
+      mine = m; table = {}; var seen = {};
+      m.locs.forEach(function(L){ (L.g || []).forEach(function(g){ (g.r || []).forEach(function(x){
+        var key = g.k + "|" + ok2(x.l) + "|" + x.sg; if (seen[key]) return; seen[key] = 1; (table[x.sg] = table[x.sg] || []).push({ k: g.k, l: x.l, sg: x.sg });
+      }); }); });
+      if ($("sIn").value) decode(); else sMsg("Type the number from your scanner.");
+    }).catch(function(){ loading = false; sMsg("Could not read the mining data."); });
+  }
+  function decode(){
+    var n = Math.round(Number($("sIn").value.replace(/[\s,]/g, "")));
+    if (!(n > 0)){ sMsg("Type the number from your scanner."); return; }
+    if (!mine){ loadMine(); return; }
+    recent = [n].concat(recent.filter(function(x){ return x !== n; })).slice(0, 6); drawRecent();
+    var exact = [];
+    Object.keys(table).forEach(function(s){ var b = Number(s), k = Math.round(n / b); if (k >= 1 && k <= 30 && b * k === n) table[s].forEach(function(e){ exact.push({ k: e.k, l: e.l, sg: b, count: k }); }); });
+    exact.sort(function(a, b){ return a.count - b.count || (KORDER[a.k] || 0) - (KORDER[b.k] || 0) || a.l.localeCompare(b.l); });
+    var o = $("sOut"); o.textContent = "";
+    if (!exact.length){ sMsg("No exact match for " + fmt(n) + "."); return; }
+    var best = exact[0], c = el("div", "card"), t = el("div", "cbig", best.l + (best.count > 1 ? " × " + best.count : ""));
+    t.appendChild(el("span", "badge", KINDS[best.k] || best.k)); c.appendChild(t);
+    var r = el("div", "row"); r.appendChild(el("span", "", "Signature")); r.appendChild(el("span", "dim", fmt(best.sg) + " each × " + best.count + " = " + fmt(n))); c.appendChild(r);
+    var key = ok2(best.l), p = (mine.prices && mine.prices[key]) || (mine.sell && mine.sell[key]);
+    if (p){ var r2 = el("div", "row"); r2.appendChild(el("span", "", "Sells for")); r2.appendChild(el("span", "dim", fmt(p) + " aUEC per SCU")); c.appendChild(r2); }
+    var where = [];
+    mine.locs.forEach(function(L){ var sc = 0; (L.g || []).forEach(function(g){ if (g.k !== best.k) return; (g.r || []).forEach(function(x){ if (ok2(x.l) === key) sc = Math.max(sc, g.p * x.pc / 100); }); }); if (sc > 0) where.push({ n: L.n, s: L.s, sc: sc }); });
+    where.sort(function(a, b){ return b.sc - a.sc; });
+    if (where.length){ c.appendChild(el("div", "h", "Best places")); where.slice(0, 3).forEach(function(w){ var rr = el("div", "row"); rr.appendChild(el("span", "", w.n)); rr.appendChild(el("span", "dim", w.s)); c.appendChild(rr); }); }
+    o.appendChild(c);
+    if (exact.length > 1){ var c2 = el("div", "card"); c2.appendChild(el("div", "h", "Could also be")); exact.slice(1, 5).forEach(function(x){ var rr = el("div", "row"); rr.appendChild(el("span", "", x.l + " × " + x.count)); rr.appendChild(el("span", "dim", KINDS[x.k] || x.k)); c2.appendChild(rr); }); o.appendChild(c2); }
+  }
+  function drawRecent(){
+    var b = $("sRecent"); b.textContent = "";
+    recent.forEach(function(n){ var x = el("button", "", fmt(n)); x.type = "button"; x.onclick = function(){ $("sIn").value = n; decode(); }; b.appendChild(x); });
+    if (recent.length){ var c = el("button", "", "Clear"); c.type = "button"; c.onclick = function(){ recent = []; $("sIn").value = ""; $("sOut").textContent = ""; drawRecent(); }; b.appendChild(c); }
+  }
+  $("sIn").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); decode(); } });
+
+  // ---------- adjust: move and resize ----------
+  var drag = null, cfg = null;
+  function readCfg(){ if (S && S.ovCfg) return S.ovCfg().then(function(c){ cfg = c; return c; }); return Promise.resolve(null); }
+  function size(){ $("size").textContent = Math.round(window.innerWidth) + " x " + Math.round(window.innerHeight); }
+  function setAdjust(on, tell){
+    adj = !!on; $("box").classList.toggle("adj", adj);
+    $("bar").hidden = $("adjFoot").hidden = !adj; if (adj) $("grip").removeAttribute("hidden"); else $("grip").setAttribute("hidden", "");
+    $("adjBtn").textContent = adj ? "Adjust: on" : "Adjust"; $("adjBtn").setAttribute("aria-pressed", adj ? "true" : "false");
+    if (tell && S && S.ovAdjust) S.ovAdjust(adj);
+    if (adj){ capturing = true; size(); readCfg(); } else { capturing = false; drag = null; }
+  }
+  $("adjBtn").onclick = function(){ setAdjust(!adj, true); };
+  $("done").onclick = function(){ setAdjust(false, true); };
+  function startDrag(kind){
+    return function(e){
+      if (!adj || !cfg) return;
+      e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId);
+      drag = { kind: kind, sx: e.screenX, sy: e.screenY, b: { x: cfg.x, y: cfg.y, w: cfg.w, h: cfg.h } };
+    };
+  }
+  function moveDrag(e){
+    if (!drag) return;
+    var dx = e.screenX - drag.sx, dy = e.screenY - drag.sy, b = drag.b;
+    if (S && S.ovBounds) S.ovBounds(drag.kind === "move" ? { x: b.x + dx, y: b.y + dy, w: b.w, h: b.h } : { x: b.x, y: b.y, w: b.w + dx, h: b.h + dy });
+  }
+  function endDrag(){ if (!drag) return; drag = null; setTimeout(readCfg, 60); }
+  [["bar", "move"], ["grip", "size"]].forEach(function(p){
+    var n = $(p[0]); n.addEventListener("pointerdown", startDrag(p[1])); n.addEventListener("pointermove", moveDrag);
+    n.addEventListener("pointerup", endDrag); n.addEventListener("pointercancel", endDrag);
+  });
+  window.addEventListener("resize", size);
+
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){ if (kbd && document.activeElement) document.activeElement.blur(); else if (adj) setAdjust(false, true); }
+  });
+
+  // ---------- startup ----------
+  function shown(t){ setAdjust(false, false); setTab(t || tab, false); loadLocs(); say(""); $("qUndo").hidden = true; lastTag = ""; capturing = false; }
+  if (S){
+    loadCatalogue();
+    if (S.ovCfg) S.ovCfg().then(function(c){ cfg = c; setTab(c && c.tab, false); loadLocs(); });
+    if (S.onOvShown) S.onOvShown(shown);
+    if (S.onCatalogueChanged) S.onCatalogueChanged(loadCatalogue);
+  } else say("This window only works inside the desktop app.", true);
+})();
+</script>
+</body>
+</html>

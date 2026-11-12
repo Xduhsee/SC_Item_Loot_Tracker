@@ -27,6 +27,23 @@ contextBridge.exposeInMainWorld('scStore', {
   scanHide: () => ipcRenderer.send('scan:hide'),
   scanPin: (on) => ipcRenderer.send('scan:pin', !!on),
   onScanShown: (cb) => ipcRenderer.on('scan:shown', () => cb()),
+  // in-game overlay: used by the main window
+  overlayToggle: () => ipcRenderer.invoke('overlay:toggle'),
+  overlayState: () => ipcRenderer.invoke('overlay:state'),
+  onOverlayUndo: (cb) => ipcRenderer.on('overlay:undo', (_e, tag) => cb(tag)),
+  overlayUndoReply: (ok) => ipcRenderer.send('overlay:undo-reply', !!ok),
+  onOverlayState: (cb) => ipcRenderer.on('overlay:state', (_e, on) => cb(!!on)),
+  // in-game overlay: used by the overlay page
+  ovCapture: (on) => ipcRenderer.send('ov:capture', !!on),
+  ovFocus: (on) => ipcRenderer.invoke('ov:focus', !!on),
+  ovCfg: () => ipcRenderer.invoke('ov:cfg'),
+  ovBounds: (b) => ipcRenderer.send('ov:bounds', b),
+  ovAdjust: (on) => ipcRenderer.send('ov:adjust', !!on),
+  ovTab: (t) => ipcRenderer.send('ov:tab', t),
+  ovUndo: (tag) => ipcRenderer.send('ov:undo', tag),
+  onOvUndo: (cb) => ipcRenderer.on('ov:undo-result', (_e, ok) => cb(!!ok)),
+  ovHide: () => ipcRenderer.send('ov:hide'),
+  onOvShown: (cb) => ipcRenderer.on('ov:shown', (_e, tab) => cb(tab)),
   notifyCatalogue: () => ipcRenderer.send('cat:changed'),
   onCatalogueChanged: (cb) => ipcRenderer.on('cat:changed', () => cb())
 });

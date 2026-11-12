@@ -118,3 +118,11 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 - Recent scan numbers are now single pills with the x inside.
 - The "N new" badges in list rows are centered instead of stretched.
+
+## v1.18.0
+
+- **In-game overlay (desktop app).** A small always-on-top box with **Scan** and **Add item** tabs. Add item has the item search, location and amount, plus Undo for the last add.
+- Turn it on from the Overlay button in the header, the Data page, the Tools menu, or **Ctrl+Shift+O**.
+- Hold **F** in game to get the mouse, then click the box. Clicking a text box takes keyboard focus; click the game to give it back.
+- **Adjust** lets you move the box (drag the top bar) and resize it (drag the corner). The position is remembered, and it is pulled back on screen if a monitor goes away.
+- Works with Star Citizen in Borderless or Windowed mode. Exclusive Fullscreen hides it.

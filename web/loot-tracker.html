@@ -963,6 +963,11 @@
       <div class="row"><h2 class="grow" style="margin:0">Backups</h2><span class="note" style="margin:0">Restoring saves a copy of your current data first.</span></div>
       <div id="bkList" class="bktbl"></div>
     </div>
+    <div class="panel" id="ovPanel" hidden>
+      <h2>In-game overlay</h2>
+      <p class="note" style="margin-top:0">A small box that stays on top of the game so you can add items without alt-tabbing. Works in Borderless or Windowed mode, not exclusive Fullscreen. Hold <b>F</b> in game to get the mouse, then click the box. Hotkey: <b>Ctrl+Shift+O</b>.</p>
+      <div class="row"><button type="button" id="ovBtn" aria-pressed="false">Show overlay</button></div>
+    </div>
     <div class="panel">
       <h2>Import from Game.log</h2>
       <p class="note" style="margin-top:0">Reads the game's log file and lists items you looted, bought or moved. You tick what to add. Nothing is added on its own.</p>
@@ -3721,6 +3726,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Move to another computer.", "Create backup text, paste it on the other copy, press Merge into my list."],
       ["Export.", "Inventory and loot log as CSV."],
       ["Import from Game.log.", "Also on the Inventory page. Choose the game's Game.log (StarCitizen\\LIVE, older ones in logbackups), or in the desktop app press Import latest session. Looted and bought items are ticked, everything else is not. Check the list, set a location, press Add. A session you already imported only shows newer events. Loot is a best guess, so review it."],
+      ["In-game overlay.", "Desktop app only. A small always-on-top box with a Scan decoder and an Add item form. Turn it on from the Data page, the Tools menu, or Ctrl+Shift+O. Hold F in game to free the mouse, then click it. Press Adjust to move or resize it. It needs Borderless or Windowed mode."],
       ["Report a bug.", "Opens a prefilled GitHub issue. Nothing is sent until you submit it there."],
       ["Danger zone.", "Replace my list and Clear everything. A backup is saved first."]]],
     ["Credits", [
@@ -4425,11 +4431,28 @@ async function computeExactItems(cat, patchCode, progress){
   }
   fillSelect($("fCat"), CATS); fillSelect($("qCat"), CATS, "All categories"); fillSelect($("bCat"), CATS, "All categories");
   fillTagFilter();
+  var quickMark = null;
+  if (NATIVE && NATIVE.onOverlayUndo) NATIVE.onOverlayUndo(function(tag){
+    var ok = !!(quickMark && tag && quickMark.tag === tag && undoStack.length === quickMark.depth && !$("undoBtn").disabled);
+    if (ok){ $("undoBtn").click(); quickMark = null; }
+    if (NATIVE.overlayUndoReply) NATIVE.overlayUndoReply(ok);
+  });
+  if (NATIVE && NATIVE.overlayToggle){
+    $("ovPanel").hidden = false;
+    var ovHdr = h("button", { type: "button", class: "ghost", id: "ovHdr", "aria-pressed": "false", title: "In-game overlay (Ctrl+Shift+O)", text: "Overlay", onclick: function(){ NATIVE.overlayToggle(); } });
+    $("howBtn").parentNode.insertBefore(ovHdr, $("howBtn"));
+    $("howBtn").parentNode.insertBefore(document.createTextNode(" "), $("howBtn"));
+    $("ovBtn").onclick = function(){ NATIVE.overlayToggle(); };
+    var ovSet = function(on){ var v = on ? "true" : "false"; ovHdr.setAttribute("aria-pressed", v); $("ovBtn").setAttribute("aria-pressed", v); $("ovBtn").textContent = on ? "Hide overlay" : "Show overlay"; };
+    if (NATIVE.onOverlayState) NATIVE.onOverlayState(function(on){ ovSet(!!on); });
+    if (NATIVE.overlayState) NATIVE.overlayState().then(function(on){ ovSet(!!on); }).catch(function(){});
+  }
   if (NATIVE && NATIVE.onQuickAdd) NATIVE.onQuickAdd(function(p){
     snapshot();
     if (!p || !addItem(items, { name: p.name, cat: p.cat, sub: p.sub, qty: p.qty, loc: p.loc })){ undoStack.pop(); syncUndo(); return; }
     if (p.src || p.sys) logLoot({ name: p.name, cat: p.cat, sub: p.sub, qty: cleanQty(p.qty, p.cat), y: p.sys, w: p.src });
-    commit(); say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
+    commit(); quickMark = p.tag ? { tag: String(p.tag), depth: undoStack.length } : null;
+    say($("msg"), "Quick add: logged " + fmt(cleanQty(p.qty, p.cat)) + " × " + norm(p.name) + ".");
   });
   load();
   (function(){ var mv = items.filter(function(i){ return i.cat === "Material"; }); if (!mv.length) return; mv.forEach(function(i){ addMat(mats, { n: i.name, q: 0, s: i.qty, l: i.loc }); }); items = items.filter(function(i){ return i.cat !== "Material"; }); save(); histBase = snapItems(items); })();
