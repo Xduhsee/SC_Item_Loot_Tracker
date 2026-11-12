@@ -113,3 +113,8 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - The log is read on your computer and never uploaded. Handles and account numbers in it are not kept or shown.
 - Loot is a best guess from container moves. Stack sizes are not in the log, so quantities start at the number of moves and you can edit them.
 - Scan decoder: remove a recent number with its x, or press Clear recent. The pop-out scan window has a Clear button too.
+
+## v1.17.1
+
+- Recent scan numbers are now single pills with the x inside.
+- The "N new" badges in list rows are centered instead of stretched.
