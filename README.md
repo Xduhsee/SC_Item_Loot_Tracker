@@ -131,9 +131,10 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 - **Session timer fixed.** It now counts up live in hours:minutes:seconds, on the Session page and on Home. It only updated every 15 seconds in whole minutes before, so it looked stuck.
 - **Missions this session.** While a session runs, add missions with a count, tick them off when finished, or step the done count up and down. A progress summary shows missions done and units done. Saved sessions keep it, and the sessions CSV has two new columns.
-- **Refresh on launch.** UEX prices always refresh; mission and mining data refresh if you have downloaded them before. Only data over 6 hours old is touched, failures keep what you already have, and there is a tick box on the Data page to turn it off.
 
 ## v1.19.1
 
 - **My standing now uses each faction's own ranks.** It used the Contractor ladder for everyone. Bounty Hunters Guild, Civilian Defense Force, the security companies, the hauling companies, Recco Battaglia and Wikelo now show their own rank names, and the mission data's own standing names override them when it has them. Factions whose ranks are not published yet keep the generic ladder with a note saying so.
 - **Add to session** button on Mission Board cards and Planner rows. It starts a Missions session if none is running, and adding the same mission again raises its count.
+
+- **No automatic downloads.** The app never downloads anything until you press the green **Update item database** button. That button now does everything: items and blueprints, UEX prices, mining data and mission data. Each also keeps its own Refresh button.

@@ -454,7 +454,7 @@
       </div>
     </div>
     <div class="upd">
-      <button id="updBtn" type="button">Update item database</button> <button id="howBtn" type="button" class="ghost" title="Short guide to each section">How to use</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
+      <button id="updBtn" type="button" title="Updates items, blueprints, UEX prices, mining data and mission data">Update item database</button> <button id="howBtn" type="button" class="ghost" title="Short guide to each section">How to use</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
           </div>
   </header>
 
@@ -496,7 +496,7 @@
 
   <!-- HOME -->
   <section id="tab-home">
-    <div id="hStart" class="banner info" hidden><b>Start here.</b> Press <b>Update item database</b> (top right). It downloads item and blueprint names once, about 60 MB. Then add what you find with Quick add. <a href="#" id="hStartHow">How to use</a></div>
+    <div id="hStart" class="banner info" hidden><b>Start here.</b> Press <b>Update item database</b> (top right). It downloads item and blueprint names, prices, mining and mission data, about 60 MB plus missions. Then add what you find with Quick add. <a href="#" id="hStartHow">How to use</a></div>
     <div class="panel hero">
       <h2>Quick add</h2>
       <form id="hForm" class="row" autocomplete="off">
@@ -957,7 +957,7 @@
       <div class="panel">
         <h2>Item database</h2>
         <div class="src" id="srcInfo"></div>
-        <p class="note">Update downloads the item and blueprint lists from the Star Citizen Wiki and UEX (about 60 MB the first time). Nothing you track is sent anywhere.</p>
+        <p class="note">The green Update button downloads everything: the item and blueprint lists, UEX prices, mining data and mission data, from the Star Citizen Wiki and UEX (about 60 MB the first time, and the mission data alone is about 1,800 requests). Nothing is downloaded until you press it, and nothing you track is sent anywhere.</p>
       </div>
       <div class="panel">
         <h2>Storage</h2>
@@ -975,12 +975,6 @@
     <div class="panel" id="bkPanel" hidden>
       <div class="row"><h2 class="grow" style="margin:0">Backups</h2><span class="note" style="margin:0">Restoring saves a copy of your current data first.</span></div>
       <div id="bkList" class="bktbl"></div>
-    </div>
-    <div class="panel">
-      <h2>Refresh on launch</h2>
-      <label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="autoRef"> Refresh mission data, mining data and UEX prices when the app starts</label>
-      <p class="note" style="margin:6px 0 0">Runs quietly in the background, and only if the data is more than 6 hours old. Mission and mining data are only refreshed once you have downloaded them the first time. Prices always refresh.</p>
-      <div class="note" id="autoNote" style="margin:4px 0 0"></div>
     </div>
     <div class="panel" id="ovPanel" hidden>
       <h2>In-game overlay</h2>
@@ -1765,7 +1759,7 @@ function rankUps(ms, known, rep, lenOf){
 }
 function sanitizeUi(o){
   o = o && typeof o === "object" && !Array.isArray(o) ? o : {};
-  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine), gl: sanitizeGlUi(o.gl), auto: o.auto === 0 ? 0 : 1 };
+  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine), gl: sanitizeGlUi(o.gl) };
 }
 // ---------- mining ----------
 var MINE_KINDS = { ship: "Ship mining", fps: "Hand mining", veh: "Ground vehicle", salv: "Salvage" };
@@ -3449,7 +3443,14 @@ async function computeExactItems(cat, patchCode, progress){
       var d = (cat.diffs || {})[cat.patch], n = d ? d.items.length : 0;
       renderChips();
       var w = (cat.warnings || []).length ? " " + cat.warnings.join(" ") : "";
-      showNotice("Updated to " + cat.patch + ": " + fmt(cat.items.length) + " items, " + fmt((cat.bps || []).length) + " blueprints." + (n ? " " + fmt(n) + " new since your last update." : "") + w, !!(cat.warnings || []).length);
+      var msg = "Updated to " + cat.patch + ": " + fmt(cat.items.length) + " items, " + fmt((cat.bps || []).length) + " blueprints." + (n ? " " + fmt(n) + " new since your last update." : "") + w, bad = !!(cat.warnings || []).length;
+      // Everything else the app downloads, one after the other. A failure here never undoes the item update.
+      var fails = [];
+      progress("Refreshing UEX prices", 0.02); await refreshPrices();
+      if ($("priceNote").className.indexOf("err") >= 0) fails.push("prices");
+      await loadMine(); if (mineErr) fails.push("mining data");
+      await loadPlan(); if (planErr) fails.push("mission data");
+      showNotice(msg + (fails.length ? " Could not refresh " + fails.join(", ") + ". Use their own Refresh buttons to try again." : " Prices, mining data and mission data are up to date too."), bad || !!fails.length);
     } catch (e){ showNotice("Update failed: " + (e && e.message ? e.message : e) + ". Check your connection and try again.", true); }
     setBusy(false);
   }
@@ -3827,7 +3828,7 @@ async function computeExactItems(cat, patchCode, progress){
   // ---------- how to use ----------
   var HOWTO = [
     ["Start", [
-      ["Update item database.", "Press the green button top right. One-time download, about 60 MB. It gives you item names and blueprints."],
+      ["Update item database.", "Press the green button top right. It downloads everything in one go: item names and blueprints, UEX prices, mining data and mission data. The first time is about 60 MB plus the missions. Press it again after a patch. Nothing updates unless you press it."],
       ["Add what you find.", "Use Quick add on Home. Everything is saved on this computer."],
       ["Shortcuts.", "Alt+1 to 7 switch sections. / jumps to search. Desktop app: Ctrl+Shift+L opens Quick add, Ctrl+Shift+S opens the scan decoder."]]],
     ["Home", [
@@ -3841,7 +3842,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Craft list.", "Materials needed against what you have. Copy shopping list copies what you are short on."],
       ["Armor sets.", "Which pieces of each set you own."]]],
     ["Missions", [
-      ["First.", "Load mission data once. It is about 1,800 missions."],
+      ["First.", "Press the green Update button, or Load mission data here. It is about 1,800 missions."],
       ["Mission board.", "Missions by giver with reward, time, rep and blueprints."],
       ["My standing.", "Set your rank with each faction once. The Mission board then shows what you can accept."],
       ["Blueprint planner.", "Missions ranked by new blueprints you do not have."]]],
@@ -3849,7 +3850,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Finder.", "Type an item or blueprint. Shows shops and prices, missions that reward it, and what it scraps into."],
       ["Loot by location.", "Where your finds came from. Fill in Looted in and Place or site when you add loot."]]],
     ["Mining / Salvaging", [
-      ["First.", "Press Download mining data on any page. Needed once, then refresh when a patch lands."],
+      ["First.", "Press the green Update button, or Download mining data on any page. Refresh when a patch lands."],
       ["Scan decoder.", "Type the scanner number. It shows what it is and how many rocks: base number times rock count."],
       ["Find ore.", "By what your Craft list needs, by material, or by signature. Shows the best places."],
       ["Salvage.", "Ship salvage sites, what is there and their signatures. Wrecks from player fights are not listed."],
@@ -3867,7 +3868,6 @@ async function computeExactItems(cat, patchCode, progress){
       ["Report a bug.", "Opens a prefilled GitHub issue. Nothing is sent until you submit it there."],
       ["Danger zone.", "Replace my list and Clear everything. A backup is saved first."]]],
     ["Credits", [
-      ["Refresh on launch.", "On the Data page. When the app starts it quietly refreshes UEX prices, and mission and mining data you have already downloaded, if they are over 6 hours old. Untick it to turn that off."],
       ["Game data.", "Items, blueprints, missions and mining locations come from the Star Citizen Wiki API (api.star-citizen.wiki), made by the community."],
       ["Prices and refining.", "Shop prices, refinery bonuses and methods come from UEX (uexcorp.space). Crowdsourced, so it can be wrong or behind the live game."],
       ["Fan-made.", "Free and non-commercial. Not affiliated with or endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen and Squadron 42 are their trademarks."]]]
@@ -4601,26 +4601,7 @@ async function computeExactItems(cat, patchCode, progress){
   idbGet("prices").then(function(pr){
     if (pr && pr.v === 1 && pr.byU && pr.byN){ prices = pr; render(); }
   });
-  var autoReady = Promise.all([
-    idbGet("cat").catch(function(){}), idbGet("prices").catch(function(){}), idbGet("mine").catch(function(){}), loadPlanCache()
-  ]);
-  // Quiet refresh at launch: UEX prices, mining data, mission data. Data older than 6 hours only; failures keep what is already saved.
-  async function autoRefresh(){
-    var STALE = 6 * 3600 * 1000, did = [];
-    try {
-      await autoReady; if (updating) return;
-      var pAge = prices ? Date.now() - Date.parse(prices.fetchedAt || 0) : Infinity;
-      if (!(pAge < STALE)){ var had = prices; await refreshPrices(); if (prices !== had) did.push("prices"); }
-      var mAge = mine ? Date.now() - Date.parse(mine.t || 0) : null;
-      if (mAge !== null && !(mAge < STALE) && !updating){ var hm = mine; await loadMine(); if (mine && mine !== hm) did.push("mining"); mineErr = ""; renderMineAll(); }
-      var lAge = planData ? Date.now() - Number(planData.t || 0) : null;
-      if (lAge !== null && !(lAge < STALE) && !updating){ var hp = planData; await loadPlan(); if (planData !== hp) did.push("missions"); planErr = ""; renderPlanner(); }
-    } catch (e){}
-    $("autoNote").textContent = did.length ? "Refreshed at launch: " + did.join(", ") + "." : "Nothing needed refreshing at launch.";
-    if (curTab === "mscan" || curTab === "mfind" || curTab === "msalv" || curTab === "mref") renderMineAll();
-  }
-  $("autoRef").checked = !!ui.auto; $("autoRef").onchange = function(){ ui.auto = $("autoRef").checked ? 1 : 0; save(); };
-  if (ui.auto) setTimeout(autoRefresh, 1500);
+  loadPlanCache();
   (function(){
     if (ui.cat && Array.prototype.some.call($("fCat").options, function(o){ return o.value === ui.cat; })) $("fCat").value = ui.cat;
     if (ui.loc) $("fLoc").value = ui.loc; if (ui.sys) $("fSys").value = ui.sys; if (ui.src) $("fSrc").value = ui.src;
