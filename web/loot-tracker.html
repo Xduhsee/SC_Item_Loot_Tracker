@@ -856,6 +856,19 @@
       </details>
       <div id="ssMsg" class="msg"></div>
     </div>
+    <div class="panel" id="ssMis" hidden>
+      <h2>Missions this session</h2>
+      <div class="row">
+        <label class="grow">Mission <input id="smName" type="text" maxlength="80" list="smList" placeholder="Type a name or pick from mission data" autocomplete="off"></label>
+        <label>How many <input id="smQty" type="number" min="1" max="9999" step="1" value="1" style="width:90px"></label>
+        <button type="button" id="smAdd">Add mission</button>
+      </div>
+      <datalist id="smList"></datalist>
+      <div class="note" style="margin:6px 0 0">How many = how many times you need to do it, or units to deliver. Tick a mission when it is finished, or step the count up as you go.</div>
+      <div id="smSum" class="stats" style="margin-top:10px"></div>
+      <div id="smBar" style="height:8px;border-radius:4px;background:var(--line);margin:8px 0" aria-hidden="true"><div id="smFill" style="height:8px;border-radius:4px;width:0;background:var(--accent,#34e04a)"></div></div>
+      <div id="smRows"></div>
+    </div>
     <div class="panel">
       <div class="row"><h2 style="margin:0" class="grow">What pays</h2>
         <label>Range <select id="ssRange"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="0">All time</option></select></label>
@@ -962,6 +975,12 @@
     <div class="panel" id="bkPanel" hidden>
       <div class="row"><h2 class="grow" style="margin:0">Backups</h2><span class="note" style="margin:0">Restoring saves a copy of your current data first.</span></div>
       <div id="bkList" class="bktbl"></div>
+    </div>
+    <div class="panel">
+      <h2>Refresh on launch</h2>
+      <label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="autoRef"> Refresh mission data, mining data and UEX prices when the app starts</label>
+      <p class="note" style="margin:6px 0 0">Runs quietly in the background, and only if the data is more than 6 hours old. Mission and mining data are only refreshed once you have downloaded them the first time. Prices always refresh.</p>
+      <div class="note" id="autoNote" style="margin:4px 0 0"></div>
     </div>
     <div class="panel" id="ovPanel" hidden>
       <h2>In-game overlay</h2>
@@ -1590,13 +1609,29 @@ function dedupePlanList(list){
 // ---------- sessions and standing ----------
 var ACTIVITIES = ["Mining", "Salvage", "Hauling", "Trading", "Bounty hunting", "Missions", "Piracy", "Exploration", "Ground loot", "Other"];
 var SESS_MAX = 3000, RANKS = ["Neutral", "Jr. Contractor", "Contractor", "Sr. Contractor", "Veteran Contractor", "Head Contractor", "Elite Contractor"];
+function sanitizeMs(list){
+  var out = [];
+  (Array.isArray(list) ? list : []).forEach(function(x){
+    if (!x || typeof x !== "object" || out.length >= 40) return;
+    var n = norm(x.n).slice(0, 80), q = Math.round(Number(x.q)), d = Math.round(Number(x.d)), c = x.c ? 1 : 0;
+    if (!n || !(q >= 1)) return; q = Math.min(q, 9999); d = isFinite(d) ? Math.max(0, Math.min(q, d)) : 0; if (c) d = q; else if (d >= q) c = 1;
+    out.push({ n: n, q: q, d: d, c: c });
+  });
+  return out;
+}
+function msTotals(ms){
+  var t = { n: 0, done: 0, q: 0, d: 0 };
+  (Array.isArray(ms) ? ms : []).forEach(function(m){ t.n++; if (m.c) t.done++; t.q += m.q; t.d += m.d; });
+  t.pct = t.q > 0 ? Math.round(t.d / t.q * 100) : 0; return t;
+}
 function sanitizeSess(list){
   var out = [];
   (Array.isArray(list) ? list : []).forEach(function(x){
     if (!x || typeof x !== "object") return;
     var t = String(x.t || ""), a = norm(x.a).slice(0, 40), m = Math.round(Number(x.m)), e = Math.round(Number(x.e));
     if (isNaN(Date.parse(t)) || !a || !(m >= 1 && m <= 1440) || !isFinite(e) || Math.abs(e) > 1e10) return;
-    out.push({ t: t, a: a, m: m, e: e, n: norm(x.n).slice(0, 120) });
+    var rec = { t: t, a: a, m: m, e: e, n: norm(x.n).slice(0, 120) }, ms = sanitizeMs(x.ms); if (ms.length) rec.ms = ms;
+    out.push(rec);
   });
   out.sort(function(p, q){ return Date.parse(p.t) - Date.parse(q.t); });
   return out.slice(-SESS_MAX);
@@ -1619,8 +1654,8 @@ function sessStats(list, days, now){
 }
 function fmtDur(m){ m = Math.round(m); return m >= 60 ? Math.floor(m / 60) + "h" + (m % 60 ? " " + (m % 60) + "m" : "") : m + "m"; }
 function toSessCSV(list){
-  var rows = [["Started", "Activity", "Minutes", "aUEC earned", "aUEC per hour", "Note"]];
-  list.forEach(function(x){ rows.push([x.t, x.a, x.m, x.e, Math.round(x.e / x.m * 60), x.n]); });
+  var rows = [["Started", "Activity", "Minutes", "aUEC earned", "aUEC per hour", "Note", "Missions done", "Missions listed"]];
+  list.forEach(function(x){ var t = msTotals(x.ms); rows.push([x.t, x.a, x.m, x.e, Math.round(x.e / x.m * 60), x.n, t.done, t.n]); });
   return rows.map(function(r){ return r.map(function(c, i){ return csvCell(c, i === 1 || i === 5); }).join(","); }).join("\r\n") + "\r\n";
 }
 function sanitizeRep(o){
@@ -1634,7 +1669,8 @@ function sanitizeRep(o){
 }
 function sanitizeRun(r){
   if (!r || typeof r !== "object" || isNaN(Date.parse(r.t))) return null;
-  var a = norm(r.a).slice(0, 40); return a ? { t: String(r.t), a: a } : null;
+  var a = norm(r.a).slice(0, 40); if (!a) return null;
+  var o = { t: String(r.t), a: a }, ms = sanitizeMs(r.ms); if (ms.length) o.ms = ms; return o;
 }
 function factionOf(m){ return m.f || m.g || ""; }
 function canAccept(m, rep){ var r = rep[factionOf(m)]; return r == null ? null : m.r <= r; }
@@ -1685,7 +1721,7 @@ function rankUps(ms, known, rep){
 }
 function sanitizeUi(o){
   o = o && typeof o === "object" && !Array.isArray(o) ? o : {};
-  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine), gl: sanitizeGlUi(o.gl) };
+  return { cat: norm(o.cat).slice(0, 40), loc: norm(o.loc).slice(0, 80), sys: sysName(o.sys), src: norm(o.src).slice(0, 80), compact: o.compact ? 1 : 0, bview: o.bview ? 1 : 0, minq: cleanQual(o.minq), mine: sanitizeMineUi(o.mine), gl: sanitizeGlUi(o.gl), auto: o.auto === 0 ? 0 : 1 };
 }
 // ---------- mining ----------
 var MINE_KINDS = { ship: "Ship mining", fps: "Hand mining", veh: "Ground vehicle", salv: "Salvage" };
@@ -3623,14 +3659,49 @@ async function computeExactItems(cat, patchCode, progress){
   fillActs($("ssAct")); fillActs($("ssAct2"));
   $("ssDate").value = new Date().toISOString().slice(0, 10);
   function ssSay(t, bad){ say($("ssMsg"), t, bad); }
+  function clockStr(){
+    var sec = Math.max(0, Math.floor((Date.now() - Date.parse(run.t)) / 1000)), hh = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60), ss = sec % 60;
+    return hh + ":" + (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
   function updClock(){
     if (!run){ $("ssClock").textContent = ""; return; }
-    $("ssClock").textContent = run.a + " · running " + fmtDur(Math.max(0, (Date.now() - Date.parse(run.t)) / 60000)) + " (started " + new Date(run.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + ")";
+    $("ssClock").textContent = run.a + " \u00b7 running " + clockStr() + " (started " + new Date(run.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + ")";
   }
+  function tickClocks(){
+    if (!run) return; updClock();
+    var hc = document.getElementById("hClock"); if (hc) hc.textContent = clockStr();
+  }
+  setInterval(tickClocks, 1000);
+  function smSave(){ save(); renderMs(); }
+  function renderMs(){
+    var P = $("ssMis"); P.hidden = !run; if (!run) return;
+    var ms = run.ms || [], t = msTotals(ms), R = $("smRows"), S = $("smSum"); R.textContent = ""; S.textContent = "";
+    [["Missions done", t.done + " of " + t.n], ["Progress", fmt(t.d) + " of " + fmt(t.q) + " (" + t.pct + "%)"]].forEach(function(p){ S.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
+    $("smFill").style.width = t.pct + "%";
+    if (!ms.length) R.appendChild(emptyState("No missions added yet."));
+    ms.forEach(function(m, i){
+      var cb = h("input", { type: "checkbox", "aria-label": "Mission completed: " + m.n }); cb.checked = !!m.c;
+      cb.onchange = function(){ m.c = cb.checked ? 1 : 0; if (m.c) m.d = m.q; else if (m.d >= m.q) m.d = Math.max(0, m.q - 1); smSave(); };
+      var step = function(dx){ return function(){ m.d = Math.max(0, Math.min(m.q, m.d + dx)); m.c = m.d >= m.q ? 1 : 0; smSave(); }; };
+      var num = h("input", { type: "number", min: "0", max: String(m.q), step: "1", "aria-label": "Done for " + m.n, style: "width:70px" }); num.value = m.d;
+      num.onchange = function(){ var v = Math.round(Number(num.value)); m.d = isFinite(v) ? Math.max(0, Math.min(m.q, v)) : m.d; m.c = m.d >= m.q ? 1 : 0; smSave(); };
+      var rm = h("button", { type: "button", class: "danger smallbtn", text: "Remove", "aria-label": "Remove " + m.n, onclick: function(){ run.ms.splice(i, 1); smSave(); } });
+      R.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("label", { class: "row", style: "gap:8px;margin:0" }, cb, h("span", { class: "name", text: m.n, style: m.c ? "text-decoration:line-through;opacity:.7" : "" })),
+        h("span", { class: "row", style: "gap:6px;margin:0" }, h("button", { type: "button", class: "ghost smallbtn", text: "\u2212", "aria-label": "One fewer done", onclick: step(-1) }), num, h("span", { class: "dim", text: "/ " + m.q }), h("button", { type: "button", class: "ghost smallbtn", text: "+", "aria-label": "One more done", onclick: step(1) })), rm)));
+    });
+    var dl = $("smList"); if (planData && planData.ms && !dl.childNodes.length){ var seen = {}; planData.ms.forEach(function(x){ var n = x && x.t; if (n && !seen[n] && Object.keys(seen).length < 2500){ seen[n] = 1; dl.appendChild(h("option", { value: n })); } }); }
+  }
+  $("smAdd").onclick = function(){
+    if (!run) return; var n = norm($("smName").value).slice(0, 80), q = Math.round(Number($("smQty").value));
+    if (!n){ ssSay("Type a mission name.", true); return; } if (!(q >= 1)) q = 1; q = Math.min(q, 9999);
+    run.ms = run.ms || []; if (run.ms.length >= 40){ ssSay("That is the most missions one session can hold (40).", true); return; }
+    run.ms.push({ n: n, q: q, d: 0, c: 0 }); $("smName").value = ""; $("smQty").value = 1; ssSay(""); smSave(); $("smName").focus();
+  };
+  $("smName").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); $("smAdd").click(); } });
   function renderSessions(){
     $("ssStart").hidden = !!run; $("ssEnd").hidden = !run || !$("ssStop").hidden; $("ssAct").disabled = !!run;
     if (run) $("ssAct").value = run.a;
-    updClock(); clearInterval(ssTick); ssTick = run ? setInterval(updClock, 15000) : 0;
+    updClock(); renderMs();
     var st = sessStats(sess, Number($("ssRange").value), Date.now()), S = $("ssStats"), B = $("ssBars"); S.textContent = ""; B.textContent = "";
     [["Sessions", fmt(st.count)], ["Time", fmtDur(st.minutes)], ["Earned", fmt(st.total) + " aUEC"], ["Average", fmt(st.perHour) + " aUEC/hour"]].forEach(function(p){ S.appendChild(h("span", null, p[0] + ": ", h("b", { text: p[1] }))); });
     if (!st.rows.length) B.appendChild(emptyState("No sessions in this range."));
@@ -3656,7 +3727,7 @@ async function computeExactItems(cat, patchCode, progress){
       L.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("span", { class: "name", text: x.a }),
         h("span", { class: "dim", text: new Date(x.t).toLocaleDateString() + " · " + fmtDur(x.m) }),
         h("span", { class: "badge " + (x.e < 0 ? "warn" : "good"), text: fmt(x.e) + " aUEC" }),
-        x.n ? h("span", { class: "dim", text: x.n }) : h("span"), del)));
+        (function(){ var t = msTotals(x.ms), bits = []; if (t.n) bits.push(t.done + "/" + t.n + " missions done (" + t.pct + "%)"); if (x.n) bits.push(x.n); return bits.length ? h("span", { class: "dim", text: bits.join(" \u00b7 ") }) : h("span"); })(), del)));
     });
     $("ssMore").hidden = rows.length <= ssShown;
   }
@@ -3671,7 +3742,7 @@ async function computeExactItems(cat, patchCode, progress){
     var m = Math.round(Number($("ssMin").value)), e = Math.round(Number($("ssEarn").value));
     if (!(m >= 1 && m <= 1440)){ ssSay("Minutes must be between 1 and 1440.", true); return; }
     if ($("ssEarn").value === "" || !isFinite(e)){ ssSay("Enter the aUEC you earned (0 is fine).", true); return; }
-    addSess({ t: run.t, a: run.a, m: m, e: e, n: $("ssNote").value }); run = null; save(); $("ssStop").hidden = true; ssSay("Session saved."); renderSessions();
+    addSess({ t: run.t, a: run.a, m: m, e: e, n: $("ssNote").value, ms: run.ms }); run = null; save(); $("ssStop").hidden = true; ssSay("Session saved."); renderSessions();
   };
   $("ssDrop").onclick = function(){ run = null; save(); $("ssStop").hidden = true; ssSay("Session discarded."); renderSessions(); };
   $("ssAdd").onclick = function(){
@@ -3730,6 +3801,7 @@ async function computeExactItems(cat, patchCode, progress){
       ["Report a bug.", "Opens a prefilled GitHub issue. Nothing is sent until you submit it there."],
       ["Danger zone.", "Replace my list and Clear everything. A backup is saved first."]]],
     ["Credits", [
+      ["Refresh on launch.", "On the Data page. When the app starts it quietly refreshes UEX prices, and mission and mining data you have already downloaded, if they are over 6 hours old. Untick it to turn that off."],
       ["Game data.", "Items, blueprints, missions and mining locations come from the Star Citizen Wiki API (api.star-citizen.wiki), made by the community."],
       ["Prices and refining.", "Shop prices, refinery bonuses and methods come from UEX (uexcorp.space). Crowdsourced, so it can be wrong or behind the live game."],
       ["Fan-made.", "Free and non-commercial. Not affiliated with or endorsed by Cloud Imperium Games or Roberts Space Industries. Star Citizen and Squadron 42 are their trademarks."]]]
@@ -4304,7 +4376,7 @@ async function computeExactItems(cat, patchCode, progress){
     // session
     var S = $("hSess"); S.textContent = "";
     if (run){
-      S.appendChild(h("div", null, h("b", { text: run.a }), " · running " + fmtDur(Math.max(0, (Date.now() - Date.parse(run.t)) / 60000))));
+      S.appendChild(h("div", null, h("b", { text: run.a }), " · running ", h("span", { id: "hClock", text: clockStr() }), (function(){ var t = msTotals(run.ms); return t.n ? " \u00b7 " + t.done + "/" + t.n + " missions done" : ""; })()));
       S.appendChild(h("div", { style: "margin-top:8px" }, h("button", { type: "button", text: "End session", onclick: function(){ showTab("sess"); $("ssEnd").click(); } })));
     } else {
       var sel = h("select", { "aria-label": "Activity" }); ACTIVITIES.forEach(function(a){ sel.appendChild(h("option", { value: a, text: a })); });
@@ -4463,7 +4535,26 @@ async function computeExactItems(cat, patchCode, progress){
   idbGet("prices").then(function(pr){
     if (pr && pr.v === 1 && pr.byU && pr.byN){ prices = pr; render(); }
   });
-  loadPlanCache();
+  var autoReady = Promise.all([
+    idbGet("cat").catch(function(){}), idbGet("prices").catch(function(){}), idbGet("mine").catch(function(){}), loadPlanCache()
+  ]);
+  // Quiet refresh at launch: UEX prices, mining data, mission data. Data older than 6 hours only; failures keep what is already saved.
+  async function autoRefresh(){
+    var STALE = 6 * 3600 * 1000, did = [];
+    try {
+      await autoReady; if (updating) return;
+      var pAge = prices ? Date.now() - Date.parse(prices.fetchedAt || 0) : Infinity;
+      if (!(pAge < STALE)){ var had = prices; await refreshPrices(); if (prices !== had) did.push("prices"); }
+      var mAge = mine ? Date.now() - Date.parse(mine.t || 0) : null;
+      if (mAge !== null && !(mAge < STALE) && !updating){ var hm = mine; await loadMine(); if (mine && mine !== hm) did.push("mining"); mineErr = ""; renderMineAll(); }
+      var lAge = planData ? Date.now() - Number(planData.t || 0) : null;
+      if (lAge !== null && !(lAge < STALE) && !updating){ var hp = planData; await loadPlan(); if (planData !== hp) did.push("missions"); planErr = ""; renderPlanner(); }
+    } catch (e){}
+    $("autoNote").textContent = did.length ? "Refreshed at launch: " + did.join(", ") + "." : "Nothing needed refreshing at launch.";
+    if (curTab === "mscan" || curTab === "mfind" || curTab === "msalv" || curTab === "mref") renderMineAll();
+  }
+  $("autoRef").checked = !!ui.auto; $("autoRef").onchange = function(){ ui.auto = $("autoRef").checked ? 1 : 0; save(); };
+  if (ui.auto) setTimeout(autoRefresh, 1500);
   (function(){
     if (ui.cat && Array.prototype.some.call($("fCat").options, function(o){ return o.value === ui.cat; })) $("fCat").value = ui.cat;
     if (ui.loc) $("fLoc").value = ui.loc; if (ui.sys) $("fSys").value = ui.sys; if (ui.src) $("fSrc").value = ui.src;

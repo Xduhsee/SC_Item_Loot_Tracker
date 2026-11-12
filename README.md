@@ -126,3 +126,9 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - Hold **F** in game to get the mouse, then click the box. Clicking a text box takes keyboard focus; click the game to give it back.
 - **Adjust** lets you move the box (drag the top bar) and resize it (drag the corner). The position is remembered, and it is pulled back on screen if a monitor goes away.
 - Works with Star Citizen in Borderless or Windowed mode. Exclusive Fullscreen hides it.
+
+## v1.19.0
+
+- **Session timer fixed.** It now counts up live in hours:minutes:seconds, on the Session page and on Home. It only updated every 15 seconds in whole minutes before, so it looked stuck.
+- **Missions this session.** While a session runs, add missions with a count, tick them off when finished, or step the done count up and down. A progress summary shows missions done and units done. Saved sessions keep it, and the sessions CSV has two new columns.
+- **Refresh on launch.** UEX prices always refresh; mission and mining data refresh if you have downloaded them before. Only data over 6 hours old is touched, failures keep what you already have, and there is a tick box on the Data page to turn it off.
