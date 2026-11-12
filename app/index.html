@@ -1624,6 +1624,50 @@ function msTotals(ms){
   (Array.isArray(ms) ? ms : []).forEach(function(m){ t.n++; if (m.c) t.done++; t.q += m.q; t.d += m.d; });
   t.pct = t.q > 0 ? Math.round(t.d / t.q * 100) : 0; return t;
 }
+// ---------- rank ladders ----------
+// Not every faction uses the Contractor ladder. Names below are from the game's published ladders; the mission data's own
+// standing names (min_standing_name) override them when present. Anything unknown stays on the generic ladder, flagged as such.
+var LADDER_SECURITY = ["Applicant", "Security Trainee", "Jr. Security Contractor", "Security Contractor", "Sr. Security Contractor", "Lead Security Contractor", "Elite Security Contractor"];
+var LADDER_HAULING = ["Trainee", "Rookie", "Junior", "Member", "Experienced", "Senior", "Master"];
+var LADDER_BHG = ["Applicant", "Probationary Guild Member", "Junior Guild Member", "Guild Member", "Senior Guild Member", "Veteran Guild Member", "Guild Steward"];
+var LADDER_CDF = ["Applicant", "First Responder Trainee", "First Responder", "Veteran First Responder"];
+var LADDER_RECCO = ["Prospective Associate", "Associate", "Trusted Associate", "Prestige 1", "Prestige 2", "Prestige 3"];
+var LADDER_WIKELO = ["New Customer", "Very Good Customer", "Very Best Customer"];
+var LADDER_CONTRACTOR_APPLICANT = ["Applicant", "Jr. Contractor", "Contractor", "Sr. Contractor", "Veteran Contractor", "Head Contractor", "Elite Contractor"];
+var LADDER_BY_FACTION = {
+  "bounty hunters guild": LADDER_BHG, "civilian defense force": LADDER_CDF, "recco battaglia": LADDER_RECCO,
+  "crusader security": LADDER_SECURITY, "hurston security": LADDER_SECURITY, "mt protection services": LADDER_SECURITY, "northrock service group": LADDER_SECURITY,
+  "blacjac security": LADDER_SECURITY, "foxwell enforcement": LADDER_SECURITY, "eckhart security": LADDER_SECURITY,
+  "covalex shipping": LADDER_HAULING, "red wind linehaul": LADDER_HAULING, "ling family hauling": LADDER_HAULING, "unified distribution management": LADDER_HAULING,
+  "adagio holdings": LADDER_CONTRACTOR_APPLICANT
+};
+function ladderKeyOf(f){ return String(f == null ? "" : f).toLowerCase().replace(/["'\u201c\u201d\u2018\u2019]/g, "").replace(/\s+/g, " ").trim(); }
+function staticLadder(f){
+  var k = ladderKeyOf(f); if (!k) return null;
+  if (LADDER_BY_FACTION[k]) return LADDER_BY_FACTION[k];
+  if (k.indexOf("wikelo") === 0) return LADDER_WIKELO;
+  return null;
+}
+// Standing names the mission data itself uses, by faction and rank index.
+function ladderNamesFromMissions(ms){
+  var out = {};
+  (Array.isArray(ms) ? ms : []).forEach(function(m){
+    if (!m || !m.st || m.rl === 0) return;
+    var nm = norm(m.st); if (!nm || /[_~|]/.test(nm) || nm.length > 40 || !isFinite(m.r) || m.r < 0 || m.r > 9) return;
+    var f = ladderKeyOf(m.f || m.g); if (!f) return; var e = out[f] || (out[f] = {}); (e[m.r] = e[m.r] || {})[nm] = (e[m.r][nm] || 0) + 1;
+  });
+  var res = {};
+  Object.keys(out).forEach(function(f){ res[f] = {}; Object.keys(out[f]).forEach(function(r){ var best = null, bc = 0; Object.keys(out[f][r]).forEach(function(n){ if (out[f][r][n] > bc){ bc = out[f][r][n]; best = n; } }); res[f][r] = best; }); });
+  return res;
+}
+// -> { names: [...], from: "static" | "data" | "generic" }
+function ladderFor(f, dyn){
+  var st = staticLadder(f), d = dyn && dyn[ladderKeyOf(f)], keys = d ? Object.keys(d).map(Number) : [], names, from;
+  if (st) names = st.slice(); else if (keys.length){ names = []; for (var i = 0; i < RANKS.length; i++) names.push("Rank " + i); } else names = RANKS.slice();
+  from = st ? "static" : keys.length ? "data" : "generic";
+  keys.forEach(function(r){ if (d[r] == null) return; while (names.length <= r) names.push("Rank " + names.length); names[r] = d[r]; if (st) from = "data"; });
+  return { names: names.slice(0, 8), from: from };
+}
 function sanitizeSess(list){
   var out = [];
   (Array.isArray(list) ? list : []).forEach(function(x){
@@ -1663,7 +1707,7 @@ function sanitizeRep(o){
   if (!o || typeof o !== "object" || Array.isArray(o)) return out;
   Object.keys(o).forEach(function(k){
     var r = Number(o[k]), key = norm(k).slice(0, 60);
-    if (key && n < 120 && Math.floor(r) === r && r >= 0 && r < RANKS.length){ out[key] = r; n++; }
+    if (key && n < 120 && Math.floor(r) === r && r >= 0 && r < 8){ out[key] = r; n++; }
   });
   return out;
 }
@@ -1708,10 +1752,10 @@ function groupBoard(rows){
   return order.map(function(k){ return by[k]; });
 }
 
-function rankUps(ms, known, rep){
+function rankUps(ms, known, rep, lenOf){
   var by = {};
   (Array.isArray(ms) ? ms : []).forEach(function(m){
-    var f = factionOf(m), r = rep[f]; if (!f || r == null || r >= RANKS.length - 1 || m.r !== r + 1) return;
+    var f = factionOf(m), r = rep[f]; if (!f || r == null || r >= (lenOf ? lenOf(f) : RANKS.length) - 1 || m.r !== r + 1) return;
     var e = by[f] || (by[f] = { f: f, from: r, to: r + 1, miss: 0, seen: {} }), added = false;
     (m.p || []).forEach(function(p){ p.i.forEach(function(x){ if (!known[x[0]] && !e.seen[x[0]]){ e.seen[x[0]] = 1; added = true; } }); });
     if (added) e.miss++;
@@ -3523,12 +3567,15 @@ async function computeExactItems(cat, patchCode, progress){
       if (m.g) badges.appendChild(h("span", { class: "badge", text: m.g }));
       if (m.sc) badges.appendChild(h("span", { class: "badge", text: m.sc }));
       var ok = canAccept(m, rep);
-      badges.appendChild(h("span", { class: "badge " + (ok === false ? "warn" : ok ? "good" : ""), text: (ok === false ? "needs " : "rank ") + RANKS[Math.min(m.r, RANKS.length - 1)], title: ok === null ? "Set your standing with " + factionOf(m) + " to check this" : "" }));
+      badges.appendChild(h("span", { class: "badge " + (ok === false ? "warn" : ok ? "good" : ""), text: (ok === false ? "needs " : "rank ") + rankName(factionOf(m), m.r), title: ok === null ? "Set your standing with " + factionOf(m) + " to check this" : "" }));
       if (m.il) badges.appendChild(h("span", { class: "badge warn", text: "illegal" }));
       if (m.cb) badges.appendChild(h("span", { class: "badge warn", text: "combat" }));
       m.sy.forEach(function(y){ badges.appendChild(h("span", { class: "badge", text: y })); });
       var score = h("span", { class: "scorecell" }, h("b", { text: s.unknown + " new of " + s.total }), h("span", { class: "dim", text: "about " + (Math.round(s.exp * 100) / 100) + " per run" }));
-      out.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("span", { class: "dim", text: "#" + (ix + 1) }), name, badges, score), det));
+      var addS = h("button", { type: "button", class: "ghost smallbtn", text: "Add to session", "aria-label": "Add " + m.t + " to session", onclick: function(){
+        var res = addRunMission(m.t, 1); toast(res.ok ? (res.started ? "Session started and " : "") + (res.again ? "added another " : "added ") + m.t + (res.started ? "" : " to your session") : res.msg, !res.ok);
+      } });
+      out.appendChild(h("div", { class: "bp" }, h("div", { class: "bphead" }, h("span", { class: "dim", text: "#" + (ix + 1) }), name, badges, score, addS), det));
     });
     $("plMore").hidden = rows.length <= planShown;
   }
@@ -3536,6 +3583,9 @@ async function computeExactItems(cat, patchCode, progress){
   $("plMore").onclick = function(){ planShown += 60; renderPlanner(); };
   $("plLoad").onclick = loadPlan;
 
+  var ladDyn = null, ladSrc = null;
+  function ladderOf(f){ if (ladSrc !== planData){ ladSrc = planData; ladDyn = planData ? ladderNamesFromMissions(planData.ms) : null; } return ladderFor(f, ladDyn); }
+  function rankName(f, i){ var n = ladderOf(f).names; return n[Math.max(0, Math.min(Number(i) || 0, n.length - 1))]; }
   // ---------- missions board ----------
   var mbShown = 30, mbAct = "";
   function emptyState(title, line, btn, fn){
@@ -3576,12 +3626,16 @@ async function computeExactItems(cat, patchCode, progress){
     if (m.cb && a !== "Combat") top.appendChild(h("span", { class: "mtag warn", text: "Combat" }));
     var req = h("div", { class: "mreq" }, h("div", { class: "rl", text: "What you need to do" }));
     reqRows(m).forEach(function(q){ req.appendChild(h("div", { class: "rq" }, h("span", { text: q[0] }), h("b", { text: q[1] }))); });
-    var need = m.r > 0 ? RANKS[Math.min(m.r, RANKS.length - 1)] : "Open", cls = r.ok === false ? "no" : r.ok || m.r === 0 ? "ok" : "";
+    var need = m.r > 0 ? rankName(factionOf(m), m.r) : "Open", cls = r.ok === false ? "no" : r.ok || m.r === 0 ? "ok" : "";
     function stat(k, v, c){ return h("div", null, h("small", { text: k }), h("b", { class: c || "", text: v })); }
     var stats = h("div", { class: "mstats" }, stat("Reward", rewardTxt(m)), stat("Time", m.tm ? m.tm + " min" : "Not listed"), stat("Rep", rp), stat("Needs", need, cls));
     var left = s.pools ? s.unknown + " new of " + s.total + " blueprint" + (s.total === 1 ? "" : "s") : "No blueprint reward";
     var right = r.ok === false ? (m.r - (rep[factionOf(m)] == null ? 0 : rep[factionOf(m)])) + " rank" + (m.r - (rep[factionOf(m)] || 0) === 1 ? "" : "s") + " to go" : r.ok ? "You can accept this" : m.r > 0 ? "Set your standing" : "Open to everyone";
     var foot = h("div", { class: "mfoot" }, h("span", { class: s.pools ? "" : "mute", text: left }), h("span", { class: r.ok === false ? "mute" : r.ok ? "ok" : "mute", text: right }));
+    var addBtn = h("button", { type: "button", class: "ghost smallbtn", text: "Add to session", title: "Track this mission in your current session", "aria-label": "Add " + m.t + " to session", onclick: function(e){
+      e.stopPropagation(); var res = addRunMission(m.t, 1); toast(res.ok ? (res.started ? "Session started and " : "") + (res.again ? "added another " : "added ") + m.t + (res.started ? "" : " to your session") : res.msg, !res.ok);
+    } });
+    foot.appendChild(addBtn);
     return h("div", { class: "mcard" + (locked ? " lock" : ""), title: m.rp && m.rp.length > 1 ? "Rep: " + m.rp.map(function(x){ return x[0] + " +" + fmt(x[1]); }).join(", ") : "" },
       top, h("div", { class: "mtitle", text: m.t }), h("div", { class: "msub", text: m.g || factionOf(m) }), req, stats, foot);
   }
@@ -3606,11 +3660,11 @@ async function computeExactItems(cat, patchCode, progress){
     groups.forEach(function(g){
       if (shown >= mbShown){ hidden = true; return; }
       var st = rep[g.f], total = g.open.length + g.locked.length;
-      out.appendChild(h("div", { class: "mgh" }, h("b", { text: g.f }), h("span", { class: "dim", text: "Your standing: " + (st == null ? "Not set" : RANKS[st]) }), h("span", { class: "sp" }), h("span", { class: "dim", text: total + " mission" + (total === 1 ? "" : "s") })));
+      out.appendChild(h("div", { class: "mgh" }, h("b", { text: g.f }), h("span", { class: "dim", text: "Your standing: " + (st == null ? "Not set" : rankName(g.f, st)) }), h("span", { class: "sp" }), h("span", { class: "dim", text: total + " mission" + (total === 1 ? "" : "s") })));
       [[g.open, false], [g.locked, true]].forEach(function(part){
         var list = part[0]; if (!list.length) return;
         var minR = part[1] ? Math.min.apply(null, list.map(function(x){ return x.m.r; })) : 0;
-        out.appendChild(h("div", { class: "mrk" + (part[1] ? " lock" : ""), text: part[1] ? "Locked until " + RANKS[Math.min(minR, RANKS.length - 1)] : "Open to you now" }));
+        out.appendChild(h("div", { class: "mrk" + (part[1] ? " lock" : ""), text: part[1] ? "Locked until " + rankName(g.f, minR) : "Open to you now" }));
         var grid = h("div", { class: "mgrid" });
         list.forEach(function(r){ if (shown >= mbShown){ hidden = true; return; } grid.appendChild(missionCard(r, part[1])); shown++; });
         out.appendChild(grid);
@@ -3633,21 +3687,23 @@ async function computeExactItems(cat, patchCode, progress){
     planData.ms.forEach(function(m){ var f = factionOf(m); if (facs[f] && m.rl !== 0 && canAccept(m, rep) !== false) facs[f].open++; });
     var setN = Object.keys(rep).filter(function(k){ return facs[k]; }).length;
     $("stInfo").textContent = "Set your rank with each faction once. The board uses it to show what you can accept. " + setN + " of " + Object.keys(facs).length + " set.";
-    var list = rankUps(planData.ms, known, rep).slice(0, 5);
+    var list = rankUps(planData.ms, known, rep, function(f){ return ladderOf(f).names.length; }).slice(0, 5);
     if (list.length){
       ups.appendChild(h("div", { class: "mrk", text: "Rank-ups worth it" }));
-      list.forEach(function(u){ ups.appendChild(h("div", { style: "padding:3px 2px" }, h("b", { text: u.f }), " at " + RANKS[u.to] + ": " + u.miss + " mission" + (u.miss === 1 ? "" : "s") + ", " + u.bps + " new blueprint" + (u.bps === 1 ? "" : "s"))); });
+      list.forEach(function(u){ ups.appendChild(h("div", { style: "padding:3px 2px" }, h("b", { text: u.f }), " at " + rankName(u.f, u.to) + ": " + u.miss + " mission" + (u.miss === 1 ? "" : "s") + ", " + u.bps + " new blueprint" + (u.bps === 1 ? "" : "s"))); });
     } else if (setN) ups.appendChild(h("div", { class: "dim", text: "No new blueprints at the next rank." }));
     if (!names.length){ out.appendChild(emptyState("No factions match", "Try clearing the search or a filter.")); return; }
     names.forEach(function(f){
       var e = facs[f], cur = rep[f] == null ? -1 : rep[f];
       var sel = h("select", { "aria-label": "Rank with " + f }, h("option", { value: "", text: "Not set" }));
-      RANKS.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
+      var L = ladderOf(f), names = L.names;
+      names.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
       sel.value = cur < 0 ? "" : String(cur);
       sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); save(); renderStandTab(); };
       var lad = h("div", { class: "ladder" });
-      RANKS.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: r.replace(" Contractor", "").replace("Contractor", "Contr.") }))); });
-      out.appendChild(h("div", { class: "fcardx" }, h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("div", { class: "mtitle", text: f }), h("span", { class: "badge " + (cur < 0 ? "warn" : "good"), text: cur < 0 ? "Not set" : RANKS[cur] })), lad,
+      names.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: names.length > 7 || L.from === "generic" ? r.replace(" Contractor", "").replace("Contractor", "Contr.") : r }))); });
+      out.appendChild(h("div", { class: "fcardx" }, h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("div", { class: "mtitle", text: f }), h("span", { class: "badge " + (cur < 0 ? "warn" : "good"), text: cur < 0 ? "Not set" : names[Math.min(cur, names.length - 1)] })), lad,
+        L.from === "generic" ? h("div", { class: "note", style: "margin:4px 0 0", text: "Rank names for this faction are not published yet, so the generic ladder is shown. The order is right; the names may differ in game." }) : null,
         h("div", { class: "mfoot" }, h("span", { text: e.n + (e.n === 1 ? " mission" : " missions") + " \u00b7 " + e.open + " open to you" }), sel)));
     });
   }
@@ -3691,11 +3747,21 @@ async function computeExactItems(cat, patchCode, progress){
     });
     var dl = $("smList"); if (planData && planData.ms && !dl.childNodes.length){ var seen = {}; planData.ms.forEach(function(x){ var n = x && x.t; if (n && !seen[n] && Object.keys(seen).length < 2500){ seen[n] = 1; dl.appendChild(h("option", { value: n })); } }); }
   }
+  // Adds a mission to the running session (starting one if needed). Adding the same mission again raises its count.
+  function addRunMission(name, qty){
+    var n = norm(name).slice(0, 80), q = Math.round(Number(qty)); if (!n) return { ok: false, msg: "Type a mission name." };
+    if (!(q >= 1)) q = 1; q = Math.min(q, 9999);
+    var started = false; if (!run){ run = { t: new Date().toISOString(), a: "Missions" }; started = true; }
+    run.ms = run.ms || []; var key = n.toLowerCase(), ex = null;
+    run.ms.forEach(function(m){ if (!ex && m.n.toLowerCase() === key) ex = m; });
+    if (ex){ ex.q = Math.min(9999, ex.q + q); ex.c = ex.d >= ex.q ? 1 : 0; }
+    else { if (run.ms.length >= 40){ if (started) run = null; return { ok: false, msg: "That is the most missions one session can hold (40)." }; } run.ms.push({ n: n, q: q, d: 0, c: 0 }); }
+    save(); if (!$("ssMis").hidden || started || curTab === "sess") renderSessions(); else renderMs();
+    return { ok: true, started: started, again: !!ex, n: n };
+  }
   $("smAdd").onclick = function(){
-    if (!run) return; var n = norm($("smName").value).slice(0, 80), q = Math.round(Number($("smQty").value));
-    if (!n){ ssSay("Type a mission name.", true); return; } if (!(q >= 1)) q = 1; q = Math.min(q, 9999);
-    run.ms = run.ms || []; if (run.ms.length >= 40){ ssSay("That is the most missions one session can hold (40).", true); return; }
-    run.ms.push({ n: n, q: q, d: 0, c: 0 }); $("smName").value = ""; $("smQty").value = 1; ssSay(""); smSave(); $("smName").focus();
+    var r = addRunMission($("smName").value, $("smQty").value);
+    if (!r.ok){ ssSay(r.msg, true); return; } $("smName").value = ""; $("smQty").value = 1; ssSay(""); $("smName").focus();
   };
   $("smName").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); $("smAdd").click(); } });
   function renderSessions(){
