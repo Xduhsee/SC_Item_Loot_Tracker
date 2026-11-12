@@ -138,3 +138,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 - **Add to session** button on Mission Board cards and Planner rows. It starts a Missions session if none is running, and adding the same mission again raises its count.
 
 - **No automatic downloads.** The app never downloads anything until you press the green **Update item database** button. That button now does everything: items and blueprints, UEX prices, mining data and mission data. Each also keeps its own Refresh button.
+
+## Next release (not yet out)
+
+- The green button is now called **Update Database**, and every place that mentions it uses the new name.

@@ -454,7 +454,7 @@
       </div>
     </div>
     <div class="upd">
-      <button id="updBtn" type="button" title="Updates items, blueprints, UEX prices, mining data and mission data">Update item database</button> <button id="howBtn" type="button" class="ghost" title="Short guide to each section">How to use</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
+      <button id="updBtn" type="button" title="Updates items, blueprints, UEX prices, mining data and mission data">Update Database</button> <button id="howBtn" type="button" class="ghost" title="Short guide to each section">How to use</button> <button id="compactBtn" type="button" class="ghost" aria-pressed="false" title="Tighter rows">Compact</button>
           </div>
   </header>
 
@@ -496,7 +496,7 @@
 
   <!-- HOME -->
   <section id="tab-home">
-    <div id="hStart" class="banner info" hidden><b>Start here.</b> Press <b>Update item database</b> (top right). It downloads item and blueprint names, prices, mining and mission data, about 60 MB plus missions. Then add what you find with Quick add. <a href="#" id="hStartHow">How to use</a></div>
+    <div id="hStart" class="banner info" hidden><b>Start here.</b> Press <b>Update Database</b> (top right). It downloads item and blueprint names, prices, mining and mission data, about 60 MB plus missions. Then add what you find with Quick add. <a href="#" id="hStartHow">How to use</a></div>
     <div class="panel hero">
       <h2>Quick add</h2>
       <form id="hForm" class="row" autocomplete="off">
@@ -2364,7 +2364,7 @@ async function computeExactItems(cat, patchCode, progress){
   }
   function say(el, text, bad){ el.textContent = text; el.className = "msg" + (bad ? " err" : ""); if (text) toast(text, bad); }
   function emptyAct(text, label, fn){ return h("div", { class: "empty" }, h("div", { text: text }), h("button", { type: "button", class: "ghost", style: "margin-top:10px", text: label, onclick: fn })); }
-  function needDb(text){ return emptyAct(text, "Update item database now", function(){ $("updBtn").click(); }); }
+  function needDb(text){ return emptyAct(text, "Update Database now", function(){ $("updBtn").click(); }); }
   function toast(text, bad){
     var box = $("toasts"); if (!box) return;
     while (box.children.length >= 3) box.removeChild(box.firstChild);
@@ -3096,7 +3096,7 @@ async function computeExactItems(cat, patchCode, progress){
     var hasK = catalogue && catalogue.items.some(function(it){ return it.c === "Armor" && it.k; });
     $("sMore").hidden = true;
     if (!catalogue){ L.appendChild(needDb("Download the item database to load the armor sets.")); return; }
-    if (!hasK){ L.appendChild(needDb("Update the item database again to load armor sets.")); return; }
+    if (!hasK){ L.appendChild(needDb("Press Update Database again to load armor sets.")); return; }
     if (!SETS) SETS = buildSets(catalogue.items);
     var q = nameKey($("sSearch").value), mode = $("sShow").value;
     var rows = SETS.map(function(set){ return { set: set, own: ownedPieces(set, items) }; }).filter(function(r){
@@ -3312,7 +3312,7 @@ async function computeExactItems(cat, patchCode, progress){
     put("shops", s1.el);
     // blueprint
     var s2 = fcard("Blueprint and missions (Star Citizen Wiki)");
-    if (!catalogue) s2.body.appendChild(h("div", { class: "dim", text: "Update the item database to load blueprint data." }));
+    if (!catalogue) s2.body.appendChild(h("div", { class: "dim", text: "Press Update Database to load blueprint data." }));
     else if (!bp) s2.body.appendChild(h("div", { class: "dim", text: "No blueprint found for this item, so it can't be crafted." }));
     else {
       s2.body.appendChild(h("div", { text: "Craftable" + (bp.t ? " · " + bp.t : "") + (known[bp.u] ? " · you know this blueprint" : "") }));
@@ -3828,7 +3828,7 @@ async function computeExactItems(cat, patchCode, progress){
   // ---------- how to use ----------
   var HOWTO = [
     ["Start", [
-      ["Update item database.", "Press the green button top right. It downloads everything in one go: item names and blueprints, UEX prices, mining data and mission data. The first time is about 60 MB plus the missions. Press it again after a patch. Nothing updates unless you press it."],
+      ["Update Database.", "Press the green button top right. It downloads everything in one go: item names and blueprints, UEX prices, mining data and mission data. The first time is about 60 MB plus the missions. Press it again after a patch. Nothing updates unless you press it."],
       ["Add what you find.", "Use Quick add on Home. Everything is saved on this computer."],
       ["Shortcuts.", "Alt+1 to 7 switch sections. / jumps to search. Desktop app: Ctrl+Shift+L opens Quick add, Ctrl+Shift+S opens the scan decoder."]]],
     ["Home", [
@@ -3943,7 +3943,7 @@ async function computeExactItems(cat, patchCode, progress){
     }
     B.appendChild(row);
     B.appendChild(h("div", { class: "note", text: "Game.log is in your Star Citizen folder: StarCitizen\\LIVE\\Game.log. Older sessions are in LIVE\\logbackups. The file is read on this computer and not uploaded." }));
-    if (!hasNames) B.appendChild(h("div", { class: "note err", text: "Item names will show as game codes until you press Update item database." }));
+    if (!hasNames) B.appendChild(h("div", { class: "note err", text: "Item names will show as game codes until you press Update Database." }));
     if (!glFiles.length){ B.appendChild(h("div", { class: "empty", text: "Choose a log file to see what it recorded." })); return; }
     B.appendChild(h("div", { class: "note", text: "Loot is a best guess. Items taken from another container into yours count as looted. Check the list and untick anything wrong before adding." }));
     var locIn = h("input", { id: "glLoc", list: "locList", maxlength: "80", placeholder: "Unsorted", value: ui.loc || "" });
