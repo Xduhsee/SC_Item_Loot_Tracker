@@ -1145,7 +1145,7 @@ function parseBackup(text){
   if (!items.length && !Object.keys(known).length && hasList) throw new Error("No valid items found");
   if (!items.length && !Object.keys(known).length && !Array.isArray(list)) throw new Error("No valid items found");
   return { items: items, known: known, wish: Array.isArray(data) ? {} : sanitizeWish(data && data.wish), loot: Array.isArray(data) ? [] : sanitizeLoot(data && data.loot),
-    sess: Array.isArray(data) ? [] : sanitizeSess(data && data.sess), rep: Array.isArray(data) ? {} : sanitizeRep(data && data.rep), mats: Array.isArray(data) ? [] : sanitizeMats(data && data.mats) };
+    sess: Array.isArray(data) ? [] : sanitizeSess(data && data.sess), rep: Array.isArray(data) ? {} : sanitizeRep(data && data.rep), repx: Array.isArray(data) ? {} : sanitizeRepx(data && data.repx), mats: Array.isArray(data) ? [] : sanitizeMats(data && data.mats) };
 }
 function mergeInto(items, incoming){ incoming.forEach(function(r){ addItem(items, r); }); }
 function ownedByName(items, mats, minQ){
@@ -1630,13 +1630,15 @@ var LADDER_BHG = ["Applicant", "Probationary Guild Member", "Junior Guild Member
 var LADDER_CDF = ["Applicant", "First Responder Trainee", "First Responder", "Veteran First Responder"];
 var LADDER_RECCO = ["Prospective Associate", "Associate", "Trusted Associate", "Prestige 1", "Prestige 2", "Prestige 3"];
 var LADDER_WIKELO = ["New Customer", "Very Good Customer", "Very Best Customer"];
-var LADDER_CONTRACTOR_APPLICANT = ["Applicant", "Jr. Contractor", "Contractor", "Sr. Contractor", "Veteran Contractor", "Head Contractor", "Elite Contractor"];
+var LADDER_TRACKER = ["Applicant", "Tracker Trainee", "Associate Tracker", "Tracker", "Advanced Tracker", "Senior Tracker", "Master Tracker"];
+// Checked against the in-game Rep screens (Nov 2026). "Not Eligible" is the state below the first rank and is not a rank here.
+// RANKS (Neutral ... Elite Contractor) is the ladder these factions use in game.
 var LADDER_BY_FACTION = {
   "bounty hunters guild": LADDER_BHG, "civilian defense force": LADDER_CDF, "recco battaglia": LADDER_RECCO,
-  "crusader security": LADDER_SECURITY, "hurston security": LADDER_SECURITY, "mt protection services": LADDER_SECURITY, "northrock service group": LADDER_SECURITY,
-  "blacjac security": LADDER_SECURITY, "foxwell enforcement": LADDER_SECURITY, "eckhart security": LADDER_SECURITY,
-  "covalex shipping": LADDER_HAULING, "red wind linehaul": LADDER_HAULING, "ling family hauling": LADDER_HAULING, "unified distribution management": LADDER_HAULING,
-  "adagio holdings": LADDER_CONTRACTOR_APPLICANT
+  "eckhart security": LADDER_SECURITY, "northrock service group": LADDER_TRACKER,
+  "covalex": LADDER_HAULING, "covalex shipping": LADDER_HAULING, "red wind linehaul": LADDER_HAULING,
+  "adagio holdings": RANKS, "citizens for prosperity": RANKS, "foxwell enforcement": RANKS, "headhunters": RANKS,
+  "intersec defense solutions": RANKS, "shubin interstellar": RANKS, "united wayfarers club": RANKS
 };
 function ladderKeyOf(f){ return String(f == null ? "" : f).toLowerCase().replace(/["'\u201c\u201d\u2018\u2019]/g, "").replace(/\s+/g, " ").trim(); }
 function staticLadder(f){
@@ -1658,7 +1660,7 @@ function ladderNamesFromMissions(ms){
   return res;
 }
 // -> { names: [...], from: "static" | "data" | "generic" }
-var LADDER_FAMILIES = [RANKS, LADDER_CONTRACTOR_APPLICANT, LADDER_SECURITY, LADDER_HAULING, LADDER_BHG, LADDER_CDF, LADDER_RECCO, LADDER_WIKELO];
+var LADDER_FAMILIES = [RANKS, LADDER_SECURITY, LADDER_HAULING, LADDER_BHG, LADDER_CDF, LADDER_RECCO, LADDER_WIKELO, LADDER_TRACKER];
 // A faction whose mission data names only some ranks: if those names sit at the same places in a known ladder, use that ladder to fill the gaps.
 function familyFor(d, keys){
   var best = null, bs = 0;
@@ -1719,6 +1721,39 @@ function sanitizeRep(o){
     if (key && n < 120 && Math.floor(r) === r && r >= 0 && r < 8){ out[key] = r; n++; }
   });
   return out;
+}
+// Progress inside the current rank: p = percent of the rank's bar filled (0-99), n = rep needed to fill that rank's bar (0 = unknown).
+function sanitizeRepx(o){
+  var out = {}, n = 0;
+  if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+  Object.keys(o).forEach(function(k){
+    var v = o[k], key = norm(k).slice(0, 60); if (!key || !v || typeof v !== "object" || n >= 120) return;
+    var p = Math.round(Number(v.p)), need = Math.round(Number(v.n)); p = isFinite(p) ? Math.max(0, Math.min(99, p)) : 0; need = isFinite(need) && need > 0 ? Math.min(need, 1e7) : 0;
+    if (p || need){ out[key] = { p: p, n: need }; n++; }
+  });
+  return out;
+}
+// Rep per mission for a faction, from missions you can already accept (rank <= yours). Returns { n, med, max } or null.
+function repPerMission(ms, f, cur){
+  var vals = [];
+  (Array.isArray(ms) ? ms : []).forEach(function(m){
+    if (!m || m.rl === 0 || factionOf(m) !== f || m.r > cur) return;
+    var best = 0; (m.rp || []).forEach(function(x){ if (x[0] === f && x[1] > best) best = x[1]; }); if (!best && m.rp && m.rp[0] && m.rp[0][1] > 0) best = m.rp[0][1];
+    if (best > 0) vals.push(best);
+  });
+  if (!vals.length) return null; vals.sort(function(a, b){ return a - b; });
+  return { n: vals.length, med: vals[Math.floor((vals.length - 1) / 2)], max: vals[vals.length - 1] };
+}
+// Missions left to fill the current rank. need = rep to fill the bar, pct = % already filled.
+function missionsToNext(need, pct, per){
+  if (!(need > 0) || !per) return null;
+  var left = need * (1 - Math.max(0, Math.min(99, pct || 0)) / 100);
+  return { left: Math.round(left), typical: Math.max(1, Math.ceil(left / per.med)), fewest: Math.max(1, Math.ceil(left / per.max)) };
+}
+// Rep needed to fill a bar, worked out from one mission: it gave `gain` rep and moved the bar from `a`% to `b`%.
+function needFromBar(gain, a, b){
+  gain = Number(gain); a = Number(a); b = Number(b); var d = b - a;
+  return gain > 0 && isFinite(d) && d > 0 && a >= 0 && b <= 100 ? Math.round(gain / (d / 100)) : 0;
 }
 function sanitizeRun(r){
   if (!r || typeof r !== "object" || isNaN(Date.parse(r.t))) return null;
@@ -2357,7 +2392,7 @@ async function computeExactItems(cat, patchCode, progress){
   var items = [], known = {}, undoStack = [], storageOK = true, updating = false;
   var catalogue = null, INDEX = [], BYU = {}, BPCAT = {}, SIZEBY = {}, WEIGHTBY = {}, HAS_SIZES = false;
   var armedId = null, armedTimer = null, bpShown = 60;
-  var wish = {}, mats = [], lootlog = [], sess = [], rep = {}, run = null, ui = sanitizeUi(null), hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
+  var wish = {}, mats = [], lootlog = [], sess = [], rep = {}, repx = {}, run = null, ui = sanitizeUi(null), hist = [], histBase = {}, sel = {}, lastShown = [], editNoteId = null, prices = null, pricing = false, SETS = null, setsShown = 40, ENT = {};
   var sessionStart = new Date().toISOString();
   var $ = function(id){ return document.getElementById(id); };
 
@@ -2408,7 +2443,7 @@ async function computeExactItems(cat, patchCode, progress){
       try {
         var d = NATIVE.loadSync();
         items = sanitize(d.items || []); known = sanitizeKnown(d.known || []);
-        if (d.extra){ mats = sanitizeMats(d.extra.mats); wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); sess = sanitizeSess(d.extra.sess); rep = sanitizeRep(d.extra.rep); run = sanitizeRun(d.extra.run); ui = sanitizeUi(d.extra.ui); }
+        if (d.extra){ mats = sanitizeMats(d.extra.mats); wish = sanitizeWish(d.extra.wish); hist = sanitizeHist(d.extra.hist); lootlog = sanitizeLoot(d.extra.loot); sess = sanitizeSess(d.extra.sess); rep = sanitizeRep(d.extra.rep); repx = sanitizeRepx(d.extra.repx); run = sanitizeRun(d.extra.run); ui = sanitizeUi(d.extra.ui); }
         if (d.restoredFrom){ $("storageWarn").textContent = "Your data file was damaged, so it was restored from the backup " + d.restoredFrom + ". The damaged file was kept next to it in the data folder."; $("storageWarn").hidden = false; }
       } catch (e){ storageOK = false; $("storageWarn").textContent = "Could not read the saved data file."; $("storageWarn").hidden = false; }
       histBase = snapItems(items);
@@ -2417,7 +2452,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       var raw = localStorage.getItem(STORE_KEY); if (raw) items = sanitize(JSON.parse(raw));
       var kr = localStorage.getItem(KNOWN_KEY); if (kr) known = sanitizeKnown(JSON.parse(kr));
-      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); mats = sanitizeMats(xd.mats); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); sess = sanitizeSess(xd.sess); rep = sanitizeRep(xd.rep); run = sanitizeRun(xd.run); ui = sanitizeUi(xd.ui); }
+      var xr = localStorage.getItem(EXTRA_KEY); if (xr){ var xd = JSON.parse(xr); mats = sanitizeMats(xd.mats); wish = sanitizeWish(xd.wish); hist = sanitizeHist(xd.hist); lootlog = sanitizeLoot(xd.loot); sess = sanitizeSess(xd.sess); rep = sanitizeRep(xd.rep); repx = sanitizeRepx(xd.repx); run = sanitizeRun(xd.run); ui = sanitizeUi(xd.ui); }
     } catch (e){}
     histBase = snapItems(items);
     try { localStorage.setItem(STORE_KEY + "-t", "1"); localStorage.removeItem(STORE_KEY + "-t"); } catch (e){ storageOK = false; }
@@ -2426,7 +2461,7 @@ async function computeExactItems(cat, patchCode, progress){
   function save(){
     if (NATIVE){
       var ok = false;
-      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { mats: mats, wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run, ui: ui } }); } catch (e){}
+      try { ok = NATIVE.save({ items: items, known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), extra: { mats: mats, wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, repx: repx, run: run, ui: ui } }); } catch (e){}
       if (!ok){ $("storageWarn").textContent = "Could not write to the data file. Your latest change is NOT saved. Check disk space and folder permissions."; }
       $("storageWarn").hidden = !!ok && storageOK;
       return;
@@ -2434,7 +2469,7 @@ async function computeExactItems(cat, patchCode, progress){
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
       localStorage.setItem(KNOWN_KEY, JSON.stringify(Object.keys(known).map(function(u){ return { u: u, n: known[u] }; })));
-      localStorage.setItem(EXTRA_KEY, JSON.stringify({ mats: mats, wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, run: run, ui: ui }));
+      localStorage.setItem(EXTRA_KEY, JSON.stringify({ mats: mats, wish: wish, hist: hist, loot: lootlog, sess: sess, rep: rep, repx: repx, run: run, ui: ui }));
     } catch (e){ storageOK = false; $("storageWarn").hidden = false; }
   }
   var idbMem = {};
@@ -3696,6 +3731,33 @@ async function computeExactItems(cat, patchCode, progress){
   $("mbLoad").onclick = function(){ loadPlan(); };
 
   // ---------- my standing ----------
+  // Progress inside the current rank, and a rough count of missions to the next one.
+  function standProgress(f, cur, names){
+    var x = repx[f] || { p: 0, n: 0 }, per = repPerMission(planData && planData.ms, f, cur), est = missionsToNext(x.n, x.p, per);
+    function put(p, n){ if (p || n) repx[f] = { p: p, n: n }; else delete repx[f]; save(); renderStandTab(); }
+    var val = h("b", { text: x.p + "%" }), sl = h("input", { type: "range", min: "0", max: "99", step: "1", value: String(x.p), "aria-label": "How full the " + names[cur] + " bar is for " + f, style: "flex:1;min-width:120px" });
+    sl.oninput = function(){ val.textContent = sl.value + "%"; };
+    sl.onchange = function(){ put(Number(sl.value), x.n); };
+    var need = h("input", { type: "number", min: "0", step: "1", value: x.n ? String(x.n) : "", placeholder: "unknown", "aria-label": "Rep needed to fill the " + names[cur] + " bar for " + f, style: "width:96px" });
+    need.onchange = function(){ var v = Math.round(Number(need.value)); put(x.p, isFinite(v) && v > 0 ? v : 0); };
+    var line;
+    if (est) line = h("div", { class: "note", style: "margin:0" }, h("b", { text: "About " + est.typical + " mission" + (est.typical === 1 ? "" : "s") }), " to " + names[cur + 1] + " (" + fmt(est.left) + " rep left; as few as " + est.fewest + " with the best-paying ones). Based on " + per.n + " mission" + (per.n === 1 ? "" : "s") + " you can accept, typically +" + fmt(per.med) + " rep.");
+    else if (!x.n) line = h("div", { class: "note", style: "margin:0", text: "Enter how much rep fills this bar, or use Calibrate below, to see a mission estimate." });
+    else line = h("div", { class: "note", style: "margin:0", text: "No rep amounts listed for the missions you can accept here yet, so there is no estimate." });
+    var b4 = h("input", { type: "number", min: "0", max: "99", step: "1", placeholder: "from %", "aria-label": "Bar percent before the mission", style: "width:76px" });
+    var af = h("input", { type: "number", min: "1", max: "100", step: "1", placeholder: "to %", "aria-label": "Bar percent after the mission", style: "width:76px" });
+    var gn = h("input", { type: "number", min: "1", step: "1", placeholder: per ? "rep (" + fmt(per.med) + ")" : "rep gained", "aria-label": "Rep the mission gave", style: "width:110px" });
+    var cm = h("div", { class: "note", style: "margin:0" });
+    var go = h("button", { type: "button", class: "ghost smallbtn", text: "Use", onclick: function(){
+      var v = needFromBar(gn.value || (per ? per.med : 0), b4.value, af.value);
+      if (!v){ cm.textContent = "Enter the bar before and after one mission (for example 20 and 35), and the rep it gave."; return; }
+      put(Number(af.value) >= 100 ? 0 : Math.round(Number(af.value)), v); } });
+    var cal = h("details", null, h("summary", { class: "note", style: "cursor:pointer;margin:0", text: "Calibrate from one mission" }),
+      h("div", { class: "note", style: "margin:4px 0" }, "Do one mission, note how far the bar moved and how much rep it gave (the Mission board shows each mission's rep). This works out how much rep fills the bar. Leave rep empty to use the typical amount."),
+      h("div", { class: "row", style: "gap:6px;align-items:center" }, b4, af, gn, go), cm);
+    return h("div", { style: "display:flex;flex-direction:column;gap:6px" },
+      h("div", { class: "row", style: "gap:8px;align-items:center" }, h("span", { class: "dim", text: "Bar" }), sl, val, h("span", { class: "dim", text: "Rep to fill" }), need), line, cal);
+  }
   function renderStandTab(){
     var out = $("stOut"), ups = $("stUps"); out.textContent = ""; ups.textContent = "";
     if (!planData){ out.appendChild(emptyState("Mission data is not loaded", "Load it once and every faction shows up here.", "Load mission data", loadPlan)); return; }
@@ -3718,10 +3780,11 @@ async function computeExactItems(cat, patchCode, progress){
       var L = ladderOf(f), names = L.names;
       names.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
       sel.value = cur < 0 ? "" : String(cur);
-      sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); save(); renderStandTab(); };
+      sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); if (repx[f]){ repx[f].p = 0; if (!repx[f].n) delete repx[f]; } save(); renderStandTab(); };
       var lad = h("div", { class: "ladder" + (names.length >= 7 && names.some(function(n){ return n.length >= 12 && n.indexOf(" ") < 0 || /^[A-Za-z]{12,}/.test(n); }) ? " tight" : "") });
       names.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: r }))); });
       out.appendChild(h("div", { class: "fcardx" }, h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("div", { class: "mtitle", text: f }), h("span", { class: "badge " + (cur < 0 ? "warn" : "good"), text: cur < 0 ? "Not set" : names[Math.min(cur, names.length - 1)] })), lad,
+        cur >= 0 && cur < names.length - 1 ? standProgress(f, cur, names) : null,
         L.from === "generic" ? h("div", { class: "note", style: "margin:4px 0 0", text: "Rank names for this faction are not published yet, so the generic ladder is shown. The order is right; the names may differ in game." }) : null,
         h("div", { class: "mfoot" }, h("button", { type: "button", class: "linkbtn", title: "Show these missions on the Mission board" + (cur >= 0 ? ", filtered to what you can accept" : ""), "aria-label": "Show " + e.n + " " + f + " missions on the Mission board", text: e.n + (e.n === 1 ? " mission" : " missions") + " \u00b7 " + e.open + " open to you \u203a",
           onclick: function(){ mbFac = f; mbAct = ""; mbShown = 30; $("mbSearch").value = ""; $("mbSys").value = ""; $("mbIll").checked = false; $("mbBp").checked = false; $("mbAcc").checked = cur >= 0; showTab("mis"); renderBoard(); } }), sel)));
@@ -4512,7 +4575,7 @@ async function computeExactItems(cat, patchCode, progress){
   $("exportBtn").onclick = function(){
     $("io").value = JSON.stringify({ app: "sc-loot-tracker", version: 3,
       items: items.map(function(i){ return { name: i.name, cat: i.cat, sub: i.sub, qty: i.qty, loc: i.loc, tag: i.tag || "", note: i.note || "" }; }),
-      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog, sess: sess, rep: rep, mats: mats }, null, 1);
+      known: Object.keys(known).map(function(u){ return { u: u, n: known[u] }; }), wish: wish, loot: lootlog, sess: sess, rep: rep, repx: repx, mats: mats }, null, 1);
     say($("ioMsg"), "Backup created: " + items.length + " stacks, " + Object.keys(known).length + " known blueprints.");
   };
   $("copyBtn").onclick = function(){
@@ -4532,8 +4595,8 @@ async function computeExactItems(cat, patchCode, progress){
     var inc;
     try { inc = parseBackup($("io").value); } catch (e){ say($("ioMsg"), "That doesn't look like a valid backup: " + e.message, true); return; }
     snapshot();
-    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; if (inc.sess.length) sess = inc.sess; if (Object.keys(inc.rep).length) rep = inc.rep; if (inc.mats.length) mats = inc.mats; }
-    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); sess = mergeSess(sess, inc.sess); Object.keys(inc.rep).forEach(function(k){ rep[k] = inc.rep[k]; }); mats = mergeMats(mats, inc.mats); }
+    if (mode === "replace"){ items = inc.items; known = inc.known; if (Object.keys(inc.wish).length) wish = inc.wish; if (inc.loot.length) lootlog = inc.loot; if (inc.sess.length) sess = inc.sess; if (Object.keys(inc.rep).length){ rep = inc.rep; repx = inc.repx || {}; } if (inc.mats.length) mats = inc.mats; }
+    else { mergeInto(items, inc.items); Object.keys(inc.known).forEach(function(u){ known[u] = inc.known[u]; }); Object.keys(inc.wish).forEach(function(u){ wish[u] = Math.max(wish[u] || 0, inc.wish[u]); }); lootlog = mergeLoot(lootlog, inc.loot); sess = mergeSess(sess, inc.sess); Object.keys(inc.rep).forEach(function(k){ rep[k] = inc.rep[k]; if (inc.repx && inc.repx[k]) repx[k] = inc.repx[k]; }); mats = mergeMats(mats, inc.mats); }
     if (mode === "replace") commit("Replaced the list from a backup (" + inc.items.length + " stacks)"); else commit();
     say($("ioMsg"), (mode === "replace" ? "Replaced with " : "Merged ") + inc.items.length + " stacks and " + Object.keys(inc.known).length + " blueprints. Use Undo if that wasn't intended.");
   }
