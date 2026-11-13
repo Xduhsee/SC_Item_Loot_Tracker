@@ -142,3 +142,5 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 ## Next release (not yet out)
 
 - The green button is now called **Update Database**, and every place that mentions it uses the new name.
+- **My standing:** the "N missions · N open to you" line on each faction card is now a link. It opens the Mission board filtered to that faction, and to what you can accept when you have set your rank. A "Showing only <faction>" chip on the board removes the filter.
+- **Rank names:** factions whose mission data names only some ranks now borrow the matching known ladder to fill the gaps (for example ArcCorp's missing top rank), instead of showing "Rank 6". Rank labels are no longer abbreviated to "Contr." and "Jr.", and placeholder entries such as "<= PLACEHOLDER =>" are hidden.

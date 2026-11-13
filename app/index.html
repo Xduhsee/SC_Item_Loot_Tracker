@@ -170,6 +170,8 @@
   .groups{border-bottom:1px solid var(--line);overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}
   .groups button{white-space:nowrap;font-size:15px;padding:11px 18px}
   .groups button[aria-selected=true]{color:#e9ffe3;border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(57,255,20,.5)}
+  .linkbtn{background:none;border:0;padding:6px 0;min-height:32px;color:inherit;font:inherit;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .linkbtn:hover{color:#fff}
   .subtabs{gap:6px;padding:8px 0;border-bottom:0;overflow-x:auto;flex-wrap:nowrap}
   .subtabs button{border:1px solid var(--line);border-radius:99px;padding:5px 14px;min-height:32px;font-size:13px;white-space:nowrap}
   .subtabs button[aria-selected=true]{color:#fff;background:var(--violet-d);border-color:var(--violet);box-shadow:0 0 10px rgba(180,76,255,.35)}
@@ -432,7 +434,7 @@
   .mstats .ok,.mfoot .ok{color:#5be07a}.mstats .no,.mfoot .no{color:#ff9b9b}
   .mfoot{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid #16281d;padding-top:8px;font-size:13px;color:#b9d9c4;flex-wrap:wrap}
   .fcardx{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
-  .ladder{display:flex;gap:4px}.ladder div{flex:1;min-width:0;font-size:11px;color:var(--mute)}
+  .ladder{display:flex;gap:3px}.ladder div{flex:1;min-width:0;font-size:10.5px;letter-spacing:-.1px;color:var(--mute);overflow-wrap:anywhere}.ladder span{display:block}.ladder.tight div{font-size:9.5px;letter-spacing:-.2px}
   .ladder i{display:block;height:6px;border-radius:99px;background:#16281d;margin-bottom:4px}.ladder .on i{background:var(--accent2)}.ladder .cur{color:var(--text);font-weight:700}
   @media (max-width:760px){.mgrid{grid-template-columns:1fr}.mstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media (hover:none){.item .acts,.bpact .findbtn{opacity:1}}
@@ -772,6 +774,7 @@
         </label>
         <button type="button" class="ghost" id="mbLoad">Load mission data</button>
       </div>
+      <div class="row" id="mbFacBar" style="gap:8px;margin:4px 0" hidden></div>
       <div class="pills" id="mbActs" role="group" aria-label="Activity"></div>
       <div class="row tbar">
         <label class="chk"><input id="mbIll" type="checkbox"> Hide illegal</label>
@@ -1655,9 +1658,21 @@ function ladderNamesFromMissions(ms){
   return res;
 }
 // -> { names: [...], from: "static" | "data" | "generic" }
+var LADDER_FAMILIES = [RANKS, LADDER_CONTRACTOR_APPLICANT, LADDER_SECURITY, LADDER_HAULING, LADDER_BHG, LADDER_CDF, LADDER_RECCO, LADDER_WIKELO];
+// A faction whose mission data names only some ranks: if those names sit at the same places in a known ladder, use that ladder to fill the gaps.
+function familyFor(d, keys){
+  var best = null, bs = 0;
+  LADDER_FAMILIES.forEach(function(L){
+    var hit = 0, bad = 0; keys.forEach(function(r){ if (d[r] == null) return; if (L[r] === d[r]) hit++; else bad++; });
+    if (!bad && hit > bs){ bs = hit; best = L; }
+  });
+  return best;
+}
 function ladderFor(f, dyn){
   var st = staticLadder(f), d = dyn && dyn[ladderKeyOf(f)], keys = d ? Object.keys(d).map(Number) : [], names, from;
-  if (st) names = st.slice(); else if (keys.length){ names = []; for (var i = 0; i < RANKS.length; i++) names.push("Rank " + i); } else names = RANKS.slice();
+  if (st) names = st.slice();
+  else if (keys.length){ var fam = familyFor(d, keys); if (fam) names = fam.slice(); else { names = []; for (var i = 0; i < RANKS.length; i++) names.push("Rank " + i); } }
+  else names = RANKS.slice();
   from = st ? "static" : keys.length ? "data" : "generic";
   keys.forEach(function(r){ if (d[r] == null) return; while (names.length <= r) names.push("Rank " + names.length); names[r] = d[r]; if (st) from = "data"; });
   return { names: names.slice(0, 8), from: from };
@@ -1718,6 +1733,7 @@ function boardRows(ms, known, rep, f){
   (Array.isArray(ms) ? ms : []).forEach(function(m){
     if (!m || m.rl === 0) return;
     if (f.noIllegal && m.il) return;
+    if (f.fac && factionOf(m) !== f.fac) return;
     if (f.sys && m.sy.indexOf(f.sys) < 0) return;
     if (q && (m.t + " " + m.g + " " + m.f).toLowerCase().indexOf(q) < 0) return;
     var s = scoreMission(m, known || {}); if (f.onlyBp && !s.pools) return;
@@ -3588,7 +3604,7 @@ async function computeExactItems(cat, patchCode, progress){
   function ladderOf(f){ if (ladSrc !== planData){ ladSrc = planData; ladDyn = planData ? ladderNamesFromMissions(planData.ms) : null; } return ladderFor(f, ladDyn); }
   function rankName(f, i){ var n = ladderOf(f).names; return n[Math.max(0, Math.min(Number(i) || 0, n.length - 1))]; }
   // ---------- missions board ----------
-  var mbShown = 30, mbAct = "";
+  var mbShown = 30, mbAct = "", mbFac = "";
   function emptyState(title, line, btn, fn){
     var kids = [h("div", { class: "etitle", text: title })]; if (line) kids.push(h("div", { class: "note", text: line }));
     if (btn){ var b = h("button", { type: "button", text: btn }); b.onclick = fn; kids.push(b); }
@@ -3649,14 +3665,16 @@ async function computeExactItems(cat, patchCode, progress){
       if (!planErr) out.appendChild(emptyState("Mission data is not loaded", "It is a one-time download of about 1,800 missions.", "Load mission data", loadPlan));
       $("mbMore").hidden = true; return;
     }
-    var f = { q: $("mbSearch").value, sys: $("mbSys").value, sort: $("mbSort").value, noIllegal: $("mbIll").checked, onlyBp: $("mbBp").checked, onlyAccept: $("mbAcc").checked, act: mbAct };
+    var fb = $("mbFacBar"); fb.textContent = ""; fb.hidden = !mbFac;
+    if (mbFac){ fb.appendChild(h("span", { class: "dim", text: "Showing only " })); fb.appendChild(h("button", { type: "button", class: "pill on", text: mbFac + " \u00d7", "aria-label": "Remove the " + mbFac + " filter", onclick: function(){ mbFac = ""; mbShown = 30; renderBoard(); } })); }
+    var f = { fac: mbFac, q: $("mbSearch").value, sys: $("mbSys").value, sort: $("mbSort").value, noIllegal: $("mbIll").checked, onlyBp: $("mbBp").checked, onlyAccept: $("mbAcc").checked, act: mbAct };
     var res = boardRows(planData.ms, known, rep, f), rows = res.rows;
     [["All", ""]].concat(ACTS.map(function(x){ return [x, x]; })).forEach(function(p){
       var b = h("button", { type: "button", class: "pill" + (mbAct === p[1] ? " on" : ""), text: p[0] + " " + fmt(res.counts[p[0]] || 0), "aria-pressed": mbAct === p[1] ? "true" : "false" });
       b.onclick = function(){ mbAct = p[1]; mbShown = 30; renderBoard(); };
       acts.appendChild(b);
     });
-    if (!rows.length){ out.appendChild(emptyState("No missions match", "Try turning off a filter above.", "Clear filters", function(){ $("mbSearch").value = ""; $("mbSys").value = ""; $("mbIll").checked = false; $("mbBp").checked = false; $("mbAcc").checked = false; mbAct = ""; renderBoard(); })); $("mbMore").hidden = true; return; }
+    if (!rows.length){ out.appendChild(emptyState("No missions match", "Try turning off a filter above.", "Clear filters", function(){ mbFac = ""; $("mbSearch").value = ""; $("mbSys").value = ""; $("mbIll").checked = false; $("mbBp").checked = false; $("mbAcc").checked = false; mbAct = ""; renderBoard(); })); $("mbMore").hidden = true; return; }
     var groups = groupBoard(rows), shown = 0, hidden = false;
     groups.forEach(function(g){
       if (shown >= mbShown){ hidden = true; return; }
@@ -3682,7 +3700,7 @@ async function computeExactItems(cat, patchCode, progress){
     var out = $("stOut"), ups = $("stUps"); out.textContent = ""; ups.textContent = "";
     if (!planData){ out.appendChild(emptyState("Mission data is not loaded", "Load it once and every faction shows up here.", "Load mission data", loadPlan)); return; }
     var facs = {};
-    planData.ms.forEach(function(m){ if (m.rl === 0) return; var f = factionOf(m); if (!f) return; var e = facs[f] || (facs[f] = { f: f, n: 0, bp: 0, open: 0 }); e.n++; if (m.p && m.p.length) e.bp++; });
+    planData.ms.forEach(function(m){ if (m.rl === 0) return; var f = factionOf(m); if (!f || /^<=|=>$|placeholder|uninitiali[sz]ed/i.test(f)) return; var e = facs[f] || (facs[f] = { f: f, n: 0, bp: 0, open: 0 }); e.n++; if (m.p && m.p.length) e.bp++; });
     var q = nameKey($("stSearch").value), names = Object.keys(facs).sort().filter(function(k){
       if (q && nameKey(k).indexOf(q) < 0) return false; if ($("stSet").checked && rep[k] == null) return false; if ($("stBp").checked && !facs[k].bp) return false; return true; });
     planData.ms.forEach(function(m){ var f = factionOf(m); if (facs[f] && m.rl !== 0 && canAccept(m, rep) !== false) facs[f].open++; });
@@ -3701,11 +3719,12 @@ async function computeExactItems(cat, patchCode, progress){
       names.forEach(function(r, i){ sel.appendChild(h("option", { value: String(i), text: r })); });
       sel.value = cur < 0 ? "" : String(cur);
       sel.onchange = function(){ if (sel.value === "") delete rep[f]; else rep[f] = Number(sel.value); save(); renderStandTab(); };
-      var lad = h("div", { class: "ladder" });
-      names.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: names.length > 7 || L.from === "generic" ? r.replace(" Contractor", "").replace("Contractor", "Contr.") : r }))); });
+      var lad = h("div", { class: "ladder" + (names.length >= 7 && names.some(function(n){ return n.length >= 12 && n.indexOf(" ") < 0 || /^[A-Za-z]{12,}/.test(n); }) ? " tight" : "") });
+      names.forEach(function(r, i){ lad.appendChild(h("div", { class: (i <= cur ? "on " : "") + (i === cur ? "cur" : "") }, h("i"), h("span", { text: r }))); });
       out.appendChild(h("div", { class: "fcardx" }, h("div", { class: "row", style: "justify-content:space-between;align-items:center" }, h("div", { class: "mtitle", text: f }), h("span", { class: "badge " + (cur < 0 ? "warn" : "good"), text: cur < 0 ? "Not set" : names[Math.min(cur, names.length - 1)] })), lad,
         L.from === "generic" ? h("div", { class: "note", style: "margin:4px 0 0", text: "Rank names for this faction are not published yet, so the generic ladder is shown. The order is right; the names may differ in game." }) : null,
-        h("div", { class: "mfoot" }, h("span", { text: e.n + (e.n === 1 ? " mission" : " missions") + " \u00b7 " + e.open + " open to you" }), sel)));
+        h("div", { class: "mfoot" }, h("button", { type: "button", class: "linkbtn", title: "Show these missions on the Mission board" + (cur >= 0 ? ", filtered to what you can accept" : ""), "aria-label": "Show " + e.n + " " + f + " missions on the Mission board", text: e.n + (e.n === 1 ? " mission" : " missions") + " \u00b7 " + e.open + " open to you \u203a",
+          onclick: function(){ mbFac = f; mbAct = ""; mbShown = 30; $("mbSearch").value = ""; $("mbSys").value = ""; $("mbIll").checked = false; $("mbBp").checked = false; $("mbAcc").checked = cur >= 0; showTab("mis"); renderBoard(); } }), sel)));
     });
   }
   ["stSearch", "stSet", "stBp"].forEach(function(id){ $(id).addEventListener("input", renderStandTab); });
