@@ -139,7 +139,7 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 - **No automatic downloads.** The app never downloads anything until you press the green **Update item database** button. That button now does everything: items and blueprints, UEX prices, mining data and mission data. Each also keeps its own Refresh button.
 
-## Next release (not yet out)
+## v1.20.0
 
 - The green button is now called **Update Database**, and every place that mentions it uses the new name.
 - **My standing:** the "N missions · N open to you" line on each faction card is now a link. It opens the Mission board filtered to that faction, and to what you can accept when you have set your rank. A "Showing only <faction>" chip on the board removes the filter.
