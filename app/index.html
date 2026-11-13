@@ -1622,8 +1622,8 @@ function msTotals(ms){
   t.pct = t.q > 0 ? Math.round(t.d / t.q * 100) : 0; return t;
 }
 // ---------- rank ladders ----------
-// Not every faction uses the Contractor ladder. Names below are from the game's published ladders; the mission data's own
-// standing names (min_standing_name) override them when present. Anything unknown stays on the generic ladder, flagged as such.
+// Not every faction uses the Contractor ladder. Factions in LADDER_BY_FACTION use names checked in the game and are never overridden;
+// for any other faction the mission data's own standing names (min_standing_name) are used. Anything unknown stays on the generic ladder, flagged as such.
 var LADDER_SECURITY = ["Applicant", "Security Trainee", "Jr. Security Contractor", "Security Contractor", "Sr. Security Contractor", "Lead Security Contractor", "Elite Security Contractor"];
 var LADDER_HAULING = ["Trainee", "Rookie", "Junior", "Member", "Experienced", "Senior", "Master"];
 var LADDER_BHG = ["Applicant", "Probationary Guild Member", "Junior Guild Member", "Guild Member", "Senior Guild Member", "Veteran Guild Member", "Guild Steward"];
@@ -1676,7 +1676,8 @@ function ladderFor(f, dyn){
   else if (keys.length){ var fam = familyFor(d, keys); if (fam) names = fam.slice(); else { names = []; for (var i = 0; i < RANKS.length; i++) names.push("Rank " + i); } }
   else names = RANKS.slice();
   from = st ? "static" : keys.length ? "data" : "generic";
-  keys.forEach(function(r){ if (d[r] == null) return; while (names.length <= r) names.push("Rank " + names.length); names[r] = d[r]; if (st) from = "data"; });
+  // A ladder checked against the game's own Rep screen is final. The mission data's names are generic and would overwrite it.
+  if (!st) keys.forEach(function(r){ if (d[r] == null) return; while (names.length <= r) names.push("Rank " + names.length); names[r] = d[r]; });
   return { names: names.slice(0, 8), from: from };
 }
 function sanitizeSess(list){
