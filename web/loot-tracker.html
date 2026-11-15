@@ -1864,7 +1864,7 @@ function sanitizeMine(m){
   var prices = {}; if (m.prices && typeof m.prices === "object") Object.keys(m.prices).slice(0, 400).forEach(function(k){ var p = Number(m.prices[k]); if (p >= 0 && isFinite(p)) prices[norm(k).slice(0, 40)] = p; });
   var sell = {}; if (m.sell && typeof m.sell === "object") Object.keys(m.sell).slice(0, 400).forEach(function(k){ var p = Number(m.sell[k]); if (p >= 0 && isFinite(p)) sell[norm(k).slice(0, 40)] = p; });
   var methods = (Array.isArray(m.methods) ? m.methods : []).slice(0, 30).map(function(x){ return x && norm(x.name) ? { name: norm(x.name).slice(0, 40), rating_yield: Number(x.rating_yield) || 2, rating_cost: Number(x.rating_cost) || 2, rating_speed: Number(x.rating_speed) || 2 } : null; }).filter(Boolean);
-  return { v: 1, t: norm(m.t).slice(0, 30), locs: locs, yields: yields, prices: prices, sell: sell, methods: methods };
+  return { v: 1, t: norm(m.t).slice(0, 30), ver: norm(m.ver).slice(0, 40), lv: norm(m.lv).slice(0, 40), locs: locs, yields: yields, prices: prices, sell: sell, methods: methods };
 }
 function sigTable(locs){
   var by = {}, seen = {};
@@ -4149,7 +4149,7 @@ async function computeExactItems(cat, patchCode, progress){
   function mineBar(id){
     var el = $(id); if (!el) return; el.textContent = "";
     var b = h("button", { type: "button", class: "ghost smallbtn", text: mine ? "Refresh mining data" : "Download mining data", disabled: mineBusy || null, onclick: loadMine });
-    var txt = mineBusy ? "Downloading…" : mine ? "Mining data from " + String(mine.t).slice(0, 10) + " · " + fmt(mine.locs.length) + " locations (Star Citizen Wiki) · refinery and prices (UEX)" : "Mining data is not downloaded yet.";
+    var txt = mineBusy ? "Downloading…" : mine ? "Mining data from " + String(mine.t).slice(0, 10) + " · " + fmt(mine.locs.length) + " locations (Star Citizen Wiki" + (mine.ver && mine.lv && mine.ver !== mine.lv ? ", game version " + baseVer(mine.ver) + ": the wiki has not published " + baseVer(mine.lv) + " mining data yet, so Refresh again later" : "") + ") · refinery and prices (UEX)" : "Mining data is not downloaded yet.";
     el.appendChild(h("span", { class: "note" + (mineErr ? " err" : ""), text: mineErr || txt })); el.appendChild(b);
   }
   function mineGate(out){
@@ -4162,10 +4162,19 @@ async function computeExactItems(cat, patchCode, progress){
     mineBusy = true; mineErr = ""; renderMineAll();
     try {
       progress("Finding mining locations", 0);
-      var list = await fetchPaged(WIKI + "locations", "filter[has_resources]=1", function(a){ return a.filter(function(x){ return x && x.uuid; }).map(function(x){ return x.uuid; }); }, function(d, l){ progress("Finding mining locations", 0.05 * d / l); });
+      // The wiki fills in mining data some days after a new game version appears. Use the newest version that has it.
+      var vers = []; try { vers = (await fetchVersions()).filter(function(v){ return !v.channel || v.channel === "live"; }).slice(0, 6); } catch (e){}
+      var cands = vers.length ? vers.map(function(v){ return v.code; }) : [""], list = [], ver = "";
+      for (var vi = 0; vi < cands.length; vi++){
+        var vq = cands[vi] ? "&version=" + encodeURIComponent(cands[vi]) : "";
+        var got = await fetchPaged(WIKI + "locations", "filter[has_resources]=1" + vq, function(a){ return a.filter(function(x){ return x && x.uuid; }).map(function(x){ return x.uuid; }); }, function(d, l){ progress("Finding mining locations", 0.05 * d / l); });
+        if (got.length >= (vers.length ? 50 : 1)){ list = got; ver = cands[vi]; break; }
+      }
+      if (!list.length) throw new Error("The wiki has no mining data yet for " + (cands[0] ? baseVer(cands[0]) + " or the " + (cands.length - 1) + " versions before it" : "any game version"));
+      var latestV = cands[0] || "", vsuf = ver ? "&version=" + encodeURIComponent(ver) : "";
       var det = [], done = 0;
       await pool(6, list, async function(u){
-        try { var r = await getJSON(WIKI + "locations/" + encodeURIComponent(u) + "?include=resources"); var c = compactLoc(r && r.data); if (c) det.push(c); } catch (e){}
+        try { var r = await getJSON(WIKI + "locations/" + encodeURIComponent(u) + "?include=resources" + vsuf); var c = compactLoc(r && r.data); if (c) det.push(c); } catch (e){}
         done++; progress("Reading locations " + done + " of " + list.length, 0.05 + 0.8 * done / list.length);
       });
       if (!det.length || det.length < Math.min(list.length, 20) * 0.8) throw new Error("Only " + det.length + " of " + list.length + " locations loaded");
@@ -4184,7 +4193,7 @@ async function computeExactItems(cat, patchCode, progress){
           else if (Number(c.price_sell) > 0 && Number(c.is_raw) === 1) sell[k] = Number(c.price_sell);
         });
       } catch (e){ mineErr = "Locations loaded, but refinery data from UEX did not (" + (e && e.message ? e.message : e) + "). Press Refresh to try again."; }
-      var nm = sanitizeMine({ v: 1, t: new Date().toISOString(), locs: det, yields: yields, prices: pr, sell: sell, methods: methods });
+      var nm = sanitizeMine({ v: 1, t: new Date().toISOString(), ver: ver, lv: latestV, locs: det, yields: yields, prices: pr, sell: sell, methods: methods });
       if (!nm) throw new Error("No usable mining data");
       if (!nm.yields.length && mine && mine.yields.length){ nm.yields = mine.yields; nm.prices = mine.prices; nm.methods = mine.methods; }
       mineSet(nm); await idbSet("mine", nm);
