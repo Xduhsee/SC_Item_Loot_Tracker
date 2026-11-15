@@ -139,6 +139,14 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 - **No automatic downloads.** The app never downloads anything until you press the green **Update item database** button. That button now does everything: items and blueprints, UEX prices, mining data and mission data. Each also keeps its own Refresh button.
 
+## v1.21.0
+- My Stuff > Inventory: under each location, items are grouped into collapsible sections by category, then by item type (Armor > Undersuit, Weapon > Primary). A category with only one type skips the type level.
+- Each header shows its stack count, sell value and how many items in it are selected.
+- Collapse all / Expand all folds every category. Collapse types / Open types folds the type level only.
+- Group by category switches grouping off for the old flat list, which is also the way to sort across a whole location.
+- Which sections you folded is remembered between sessions. Typing in the search box opens every match, so nothing is hidden from a search.
+- Select all shown still selects every matching stack, including ones inside folded sections.
+
 ## v1.20.3
 
 - **Mining and Salvage data updates again.** The Star Citizen Wiki fills in mining data a few days after a new game version appears, so for the newest version (4.10.3) it returned no locations and the download failed with a connection-style error. The app now uses the newest game version that has mining data, and the Mining bar says which version that is, for example "game version 4.10.2: the wiki has not published 4.10.3 mining data yet, so Refresh again later". When the wiki catches up, Refresh switches to the new version by itself. Your saved data is never replaced by an empty download. If no recent version has data, the message says so instead of blaming your connection.

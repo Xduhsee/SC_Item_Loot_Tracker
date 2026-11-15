@@ -73,6 +73,14 @@
   .pricebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}
   .pricebar .note{margin:0;flex:1 1 260px}
   .selall{flex-direction:row;align-items:center;gap:8px;margin:0 0 8px;font-size:12px}
+  .invtools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+  .invbtns{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .invbtns .selall{margin:0}
+  .fold{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);border-radius:0;background:var(--panel2);color:var(--text);padding:0 12px;min-height:40px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+  .fold.l2{background:transparent;padding-left:30px;min-height:36px;color:var(--accent2);font-weight:600;text-transform:none;letter-spacing:0;font-size:13px}
+  .fold .chev{display:inline-block;transition:transform .15s;color:var(--mute)}
+  .fold[aria-expanded="true"] .chev{transform:rotate(90deg)}
+  .fold .meta{margin-left:auto;color:var(--mute);font-weight:400;text-transform:none;letter-spacing:0;font-size:12px}
   .crow{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 12px}
   .mat{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:6px 12px;border:1px solid var(--line);border-top:0;background:var(--panel);font-size:13px}
   .mat:first-child{border-top:1px solid var(--line);border-radius:8px 8px 0 0}.mat:last-child{border-radius:0 0 8px 8px}
@@ -617,7 +625,14 @@
           <button type="button" id="scrapDo">Add to Materials and remove these items</button>
         </div>
       </div>
-      <label class="selall"><input type="checkbox" id="selAll"> Select all shown</label>
+      <div class="invtools">
+        <label class="selall"><input type="checkbox" id="selAll"> Select all shown</label>
+        <span class="invbtns">
+          <label class="selall"><input type="checkbox" id="grpOn" checked> Group by category</label>
+          <button type="button" class="ghost smallbtn" id="foldAll">Collapse all</button>
+          <button type="button" class="ghost smallbtn" id="foldSub">Collapse types</button>
+        </span>
+      </div>
       <div id="list"></div>
     </div>
   </section>
@@ -2726,6 +2741,21 @@ async function computeExactItems(cat, patchCode, progress){
     if (how === "value"){ var va = valueOf(a), vb = valueOf(b); return ((vb ? vb.v : -1) - (va ? va.v : -1)) || byName; }
     return byName;
   }
+  var FOLD_KEY = "sc-loot-invfold", folds = {}, groupOn = true;
+  try { var fr = JSON.parse(localStorage.getItem(FOLD_KEY) || "{}"); if (fr && typeof fr === "object"){ groupOn = fr.g !== false; (Array.isArray(fr.c) ? fr.c : []).slice(0, 2000).forEach(function(k){ if (typeof k === "string") folds[k.slice(0, 240)] = true; }); } } catch (e){}
+  function saveFolds(){ try { localStorage.setItem(FOLD_KEY, JSON.stringify({ g: groupOn, c: Object.keys(folds) })); } catch (e){} }
+  function foldHead(key, label, meta, level, open){
+    var b = h("button", { type: "button", class: "fold" + (level === 2 ? " l2" : ""), "aria-expanded": open ? "true" : "false" },
+      h("span", { class: "chev", "aria-hidden": "true", text: "\u25B8" }), h("span", { text: label }), h("span", { class: "meta", text: meta }));
+    b.onclick = function(){ if (folds[key]) delete folds[key]; else folds[key] = true; saveFolds(); renderInventory(); var again = $("list").querySelector('.fold[data-k="' + key.replace(/"/g, "'") + '"]'); if (again) again.focus(); };
+    b.setAttribute("data-k", key.replace(/"/g, "'"));
+    return b;
+  }
+  function foldKeys(shown){
+    var cats = {}, subs = {};
+    shown.forEach(function(i){ var c = i.loc + "|" + i.cat; cats[c] = 1; subs[c + "|" + (i.sub || "")] = 1; });
+    return { cats: Object.keys(cats), subs: Object.keys(subs) };
+  }
   function renderInventory(){
     var q = $("qSearch").value.trim().toLowerCase(), cat = $("qCat").value, sub = $("qSub").value, loc = $("qLoc").value, size = $("qSize").value, sortBy = $("qSort").value, tag = $("qTag").value;
     var shown = items.filter(function(i){
@@ -2746,7 +2776,7 @@ async function computeExactItems(cat, patchCode, progress){
       });
     }
     $("priceNote").textContent = priceNoteText();
-    updateBulk();
+    updateBulk(); syncFoldBtns();
     var list = $("list"); list.textContent = "";
     if (!shown.length){
       list.appendChild(emptyState(items.length ? "Nothing matches those filters." : "No items yet."));
@@ -2759,7 +2789,29 @@ async function computeExactItems(cat, patchCode, progress){
       var g = groups[L].sort(function(a, b){ return cmpItems(a, b, sortBy); });
       var gv = 0; if (prices) g.forEach(function(i){ var pi = priceInfo(i); if (pi && pi.sell > 0) gv += pi.sell * i.qty; });
       var box = h("div", { class: "loc" }, h("h3", null, L, h("span", { text: g.length + " stack" + (g.length === 1 ? "" : "s") + (gv > 0 ? " · " + fmt(Math.round(gv)) + " aUEC" : "") })));
-      g.forEach(function(i){ box.appendChild(rowFor(i)); });
+      if (!groupOn){ g.forEach(function(i){ box.appendChild(rowFor(i)); }); list.appendChild(box); return; }
+      var byCat = {};
+      g.forEach(function(i){ (byCat[i.cat] = byCat[i.cat] || []).push(i); });
+      Object.keys(byCat).sort(function(a, b){ return a.localeCompare(b); }).forEach(function(C){
+        var ci = byCat[C], ck = L + "|" + C, bySub = {};
+        ci.forEach(function(i){ (bySub[i.sub || ""] = bySub[i.sub || ""] || []).push(i); });
+        var subNames = Object.keys(bySub).sort(function(a, b){ return a.localeCompare(b); });
+        var cv = 0; if (prices) ci.forEach(function(i){ var pi = priceInfo(i); if (pi && pi.sell > 0) cv += pi.sell * i.qty; });
+        var forced = !!q || ci.some(function(i){ return editNoteId === i.id || armedId === i.id; });
+        var cOpen = forced || !folds[ck];
+        var nsel = ci.filter(function(i){ return sel[i.id]; }).length;
+        box.appendChild(foldHead(ck, C, ci.length + " stack" + (ci.length === 1 ? "" : "s") + (subNames.length > 1 ? " · " + subNames.length + " types" : "") + (cv > 0 ? " · " + fmt(Math.round(cv)) + " aUEC" : "") + (nsel ? " · " + nsel + " selected" : ""), 1, cOpen));
+        if (!cOpen) return;
+        subNames.forEach(function(S){
+          var si = bySub[S];
+          if (subNames.length > 1){
+            var sk = ck + "|" + S, sOpen = forced || !folds[sk], ns = si.filter(function(i){ return sel[i.id]; }).length;
+            box.appendChild(foldHead(sk, S || "Other", si.length + " stack" + (si.length === 1 ? "" : "s") + (ns ? " · " + ns + " selected" : ""), 2, sOpen));
+            if (!sOpen) return;
+          }
+          si.forEach(function(i){ box.appendChild(rowFor(i)); });
+        });
+      });
       list.appendChild(box);
     });
     var focusNote = list.querySelector(".noteinput"); if (focusNote) focusNote.focus();
@@ -2837,6 +2889,15 @@ async function computeExactItems(cat, patchCode, progress){
     var bt = $("bulkTag"); bt.textContent = "";
     [["", "Set tag…"]].concat(TAGS.map(function(x){ return [x, x]; })).concat([["-", "Clear tag"]]).forEach(function(p){ bt.appendChild(h("option", { value: p[0], text: p[1] })); });
   };
+  function syncFoldBtns(){
+    var k = foldKeys(items.filter(function(i){ return true; }));
+    var allC = k.cats.length && k.cats.every(function(x){ return folds[x]; }), allS = k.subs.length && k.subs.every(function(x){ return folds[x]; });
+    $("foldAll").textContent = allC ? "Expand all" : "Collapse all"; $("foldSub").textContent = allS ? "Open types" : "Collapse types";
+    $("foldAll").disabled = $("foldSub").disabled = !groupOn || !items.length; $("grpOn").checked = groupOn;
+  }
+  $("grpOn").onchange = function(){ groupOn = $("grpOn").checked; saveFolds(); renderInventory(); };
+  $("foldAll").onclick = function(){ var k = foldKeys(items), all = k.cats.length && k.cats.every(function(x){ return folds[x]; }); k.cats.forEach(function(x){ if (all) delete folds[x]; else folds[x] = true; }); saveFolds(); renderInventory(); };
+  $("foldSub").onclick = function(){ var k = foldKeys(items), all = k.subs.length && k.subs.every(function(x){ return folds[x]; }); k.subs.forEach(function(x){ if (all) delete folds[x]; else folds[x] = true; }); saveFolds(); renderInventory(); };
   $("selAll").onchange = function(){
     if ($("selAll").checked) lastShown.forEach(function(id){ sel[id] = true; }); else lastShown.forEach(function(id){ delete sel[id]; });
     renderInventory();
