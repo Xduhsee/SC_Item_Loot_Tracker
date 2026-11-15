@@ -139,6 +139,10 @@ Press Update once (about a minute, ~60 MB) to fill autocomplete and blueprints.
 
 - **No automatic downloads.** The app never downloads anything until you press the green **Update item database** button. That button now does everything: items and blueprints, UEX prices, mining data and mission data. Each also keeps its own Refresh button.
 
+## v1.20.2
+
+- **Quick add overlay:** the search results (and the Location list) now scroll instead of stopping at a few rows. Up to 80 matches are listed, the arrow keys keep the highlighted row in view, and the mouse wheel or the thin scrollbar works while you hold F.
+
 ## v1.20.1
 
 - **Rank names fixed:** the mission data uses its own generic rank names (for example "Jr. Runner" for Covalex, or Contractor names for Eckhart), and these were overwriting the names from the game. Every faction whose ladder has been checked in game now keeps those names. The data's names are only used for factions that are not checked yet.

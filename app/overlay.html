@@ -26,7 +26,8 @@
   .f{margin-top:10px}.f label{display:block;font-size:12px;color:var(--mute);margin-bottom:4px}
   .inp{width:100%;min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);font-size:14px}
   .inp:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 2px rgba(52,224,74,.25)}
-  .list{margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--field);overflow:hidden}
+  .list{position:relative;margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--field);overflow-x:hidden;overflow-y:auto;max-height:178px;overscroll-behavior:contain}
+  .list::-webkit-scrollbar{width:9px}.list::-webkit-scrollbar-track{background:transparent}.list::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:2px solid var(--field)}.list::-webkit-scrollbar-thumb:hover{background:var(--mute)}
   .opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;font-size:13px;cursor:pointer}
   .opt small{color:var(--mute);font-size:11px;white-space:nowrap}
   .opt.on,.opt:hover{background:var(--sel);font-weight:600}
@@ -159,7 +160,7 @@
     if (!$("qLoc").value) $("qLoc").value = lastLoc;
   }
   function list(box, rows, sel, onPick){
-    box.textContent = "";
+    var keep = box.scrollTop; box.textContent = "";
     rows.forEach(function(o, i){
       var d = el("div", "opt" + (i === sel ? " on" : "")); d.setAttribute("role", "option");
       d.appendChild(el("span", "", o.label)); if (o.hint) d.appendChild(el("small", "", o.hint));
@@ -167,7 +168,11 @@
       box.appendChild(d);
     });
     box.hidden = !rows.length;
+    box.scrollTop = keep;
+    if (sel >= 0 && box.children[sel]){ var r = box.children[sel], top = r.offsetTop, bot = top + r.offsetHeight; if (top < box.scrollTop) box.scrollTop = top; else if (bot > box.scrollTop + box.clientHeight) box.scrollTop = bot - box.clientHeight; }
   }
+  // Clicking the scrollbar must not take focus from the box, or the list would close.
+  ["qBox", "lBox"].forEach(function(id){ var b = $(id); if (b) b.addEventListener("mousedown", function(ev){ ev.preventDefault(); }); });
   var nameRows = [], nameSel = -1;
   function drawNames(){ list($("qBox"), nameRows, nameSel, pickName); $("qName").setAttribute("aria-expanded", nameRows.length ? "true" : "false"); }
   function matchNames(){
@@ -181,8 +186,8 @@
       }
       res.sort(function(a, b){ return (a.l.indexOf(toks[0]) === 0 ? 0 : 1) - (b.l.indexOf(toks[0]) === 0 ? 0 : 1) || a.n.length - b.n.length; });
     }
-    nameRows = res.slice(0, 4).map(function(e){ return { label: e.n, hint: e.s || e.c, data: e }; });
-    nameSel = nameRows.length ? 0 : -1; drawNames();
+    nameRows = res.slice(0, 80).map(function(e){ return { label: e.n, hint: e.s || e.c, data: e }; });
+    nameSel = nameRows.length ? 0 : -1; $("qBox").scrollTop = 0; drawNames();
   }
   function pickName(o){ picked = o.data; $("qName").value = o.label; nameRows = []; nameSel = -1; drawNames(); }
   $("qName").addEventListener("input", matchNames);
@@ -195,8 +200,8 @@
   function drawLocs(){ list($("lBox"), locRows, -1, function(o){ $("qLoc").value = o.label; lastLoc = o.label; locRows = []; drawLocs(); }); }
   function showLocs(all){
     var t = all ? "" : nk($("qLoc").value);
-    locRows = LOCS.filter(function(l){ return !t || nk(l).indexOf(t) >= 0; }).slice(0, 6).map(function(l){ return { label: l }; });
-    drawLocs();
+    locRows = LOCS.filter(function(l){ return !t || nk(l).indexOf(t) >= 0; }).slice(0, 60).map(function(l){ return { label: l }; });
+    $("lBox").scrollTop = 0; drawLocs();
   }
   $("qLocBtn").addEventListener("mousedown", function(ev){ ev.preventDefault(); if (locRows.length) { locRows = []; drawLocs(); } else showLocs(true); });
   $("qLoc").addEventListener("input", function(){ showLocs(false); });
